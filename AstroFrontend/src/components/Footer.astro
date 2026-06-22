@@ -1,0 +1,109 @@
+---
+import { categories } from '@/data/gallery';
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container site-footer__top">
+    <div class="brand-col">
+      <div class="brand">VERSO</div>
+      <p>An independent index of contemporary visual artists. Published quarterly.</p>
+    </div>
+    <div class="cols">
+      <div>
+        <div class="col-label">Browse</div>
+        {
+          categories.map((c) => (
+            <a class="col-link" href={`/categories/${c.slug}`}>
+              {c.name}
+            </a>
+          ))
+        }
+      </div>
+      <div>
+        <div class="col-label">Verso</div>
+        <a class="col-link" href="/artists">Artists</a>
+        <a class="col-link" href="/categories">Categories</a>
+        <span class="col-link is-static">About</span>
+        <span class="col-link is-static">Submit work</span>
+      </div>
+    </div>
+  </div>
+  <div class="site-footer__bar">
+    <div class="container site-footer__bar-inner">
+      <span>© {year} Verso Index</span>
+      <span>Set in Spectral &amp; Archivo</span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--border-soft);
+    margin-top: clamp(50px, 8vw, 110px);
+  }
+  .site-footer__top {
+    padding: clamp(40px, 5vw, 72px) 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 48px;
+    flex-wrap: wrap;
+  }
+  .brand-col {
+    max-width: 300px;
+  }
+  .brand {
+    font-family: 'Spectral', serif;
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: 0.02em;
+  }
+  .brand-col p {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+    margin-top: 12px;
+  }
+  .cols {
+    display: flex;
+    gap: clamp(40px, 6vw, 80px);
+    flex-wrap: wrap;
+  }
+  .col-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin-bottom: 14px;
+  }
+  .col-link {
+    display: block;
+    font-size: 14px;
+    color: var(--text-2);
+    padding: 5px 0;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .col-link:hover {
+    color: var(--accent);
+  }
+  .col-link.is-static {
+    cursor: default;
+  }
+  .col-link.is-static:hover {
+    color: var(--text-2);
+  }
+  .site-footer__bar {
+    border-top: 1px solid var(--border-soft);
+  }
+  .site-footer__bar-inner {
+    padding: 22px 0;
+    font-size: 12px;
+    color: var(--faint);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+</style>

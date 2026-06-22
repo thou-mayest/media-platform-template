@@ -1,0 +1,218 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import WorkCard from '@/components/WorkCard.astro';
+import CategoryCard from '@/components/CategoryCard.astro';
+import { artworks, artists, categories, artworksByArtist } from '@/data/gallery';
+
+const heroIds = [0, 24, 12];
+const heroWorks = heroIds.map((i) => artworks[i]!);
+
+const spotlightName = 'Mira Okafor';
+const spotlight = artists.find((a) => a.name === spotlightName) ?? artists[0]!;
+const spotlightWorks = artworksByArtist(spotlight.id).slice(0, 3);
+
+const newIds = [4, 20, 28, 8, 16, 32, 14, 2, 27, 18, 6, 35];
+const newWorks = newIds.map((i) => artworks[i]!).filter(Boolean);
+---
+
+<Layout>
+  <main>
+    <section class="container hero">
+      <div class="eyebrow">Index № 04 — Summer 2026</div>
+      <h1 class="h-display hero__h1">An index of contemporary visual artists.</h1>
+      <p class="hero__lede">
+        Verso is a slow place to discover painters, photographers, printmakers and digital artists from around the world — one work at a time.
+      </p>
+      <div class="hero__ctas">
+        <a class="btn btn-primary" href="/artists">Browse artists</a>
+        <a class="btn btn-ghost" href="/categories">Explore categories</a>
+      </div>
+    </section>
+
+    <section class="container hero-works">
+      <div class="hero-works__grid">
+        {heroWorks.map((w) => <WorkCard work={w} variant="pin" />)}
+      </div>
+    </section>
+
+    <section class="spotlight">
+      <div class="container spotlight__inner">
+        <div class="eyebrow">Artist in focus</div>
+        <div class="spotlight__grid">
+          <div>
+            <h2 class="spotlight__name">
+              <a href={`/artists/${spotlight.slug}`}>{spotlight.name}</a>
+            </h2>
+            <div class="spotlight__meta">
+              {spotlight.location} — {spotlight.disciplines}
+            </div>
+            <p class="spotlight__bio">{spotlight.bio}</p>
+            <a class="btn btn-ghost btn-sm" href={`/artists/${spotlight.slug}`}>View profile</a>
+          </div>
+          <div class="spotlight__works">
+            {spotlightWorks.map((w) => <WorkCard work={w} variant="spotlight" />)}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="container recent">
+      <div class="recent__head">
+        <h2 class="h-section recent__h2">Recently added</h2>
+        <a class="recent__more" href="/artists">All artists →</a>
+      </div>
+      <div class="masonry">
+        {newWorks.map((w) => <WorkCard work={w} variant="pin" />)}
+      </div>
+    </section>
+
+    <section class="container browse">
+      <h2 class="h-section browse__h2">Browse by category</h2>
+      <div class="cat-grid">
+        {categories.map((c) => <CategoryCard name={c.name} count={c.count} bg={c.bg} slug={c.slug} />)}
+      </div>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  .hero {
+    padding: clamp(44px, 8vw, 104px) 0 clamp(28px, 4vw, 52px);
+  }
+  .hero__h1 {
+    font-size: clamp(40px, 7.4vw, 104px);
+    margin: 0.22em 0 0;
+    max-width: 16ch;
+    text-wrap: balance;
+  }
+  .hero__lede {
+    max-width: 52ch;
+    color: var(--muted);
+    font-size: clamp(15px, 1.4vw, 18px);
+    line-height: 1.62;
+    margin: 28px 0 0;
+  }
+  .hero__ctas {
+    display: flex;
+    gap: 14px;
+    margin-top: 32px;
+    flex-wrap: wrap;
+  }
+
+  .hero-works {
+    padding-bottom: clamp(40px, 6vw, 80px);
+  }
+  .hero-works__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 28px;
+  }
+
+  .spotlight {
+    background: var(--surface);
+    border-top: 1px solid var(--border-soft);
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .spotlight__inner {
+    padding: clamp(40px, 6vw, 84px) 0;
+  }
+  .spotlight__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: clamp(24px, 4vw, 56px);
+    margin-top: 22px;
+    align-items: start;
+  }
+  .spotlight__name {
+    font-family: 'Spectral', serif;
+    font-weight: 400;
+    font-size: clamp(30px, 4.2vw, 54px);
+    line-height: 1.02;
+    margin: 0;
+  }
+  .spotlight__name a {
+    color: var(--text);
+  }
+  .spotlight__meta {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 13px;
+  }
+  .spotlight__bio {
+    color: var(--text-3);
+    font-size: clamp(15px, 1.4vw, 18px);
+    line-height: 1.6;
+    margin: 20px 0 0;
+    max-width: 42ch;
+  }
+  .spotlight__bio + .btn {
+    margin-top: 26px;
+  }
+  .spotlight__works {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+
+  .recent {
+    padding: clamp(44px, 6vw, 84px) 0;
+  }
+  .recent__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .recent__h2 {
+    font-size: clamp(24px, 3vw, 38px);
+  }
+  .recent__more {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    transition: color 0.2s;
+  }
+  .recent__more:hover {
+    color: var(--accent);
+  }
+
+  .masonry {
+    column-count: 2;
+    column-gap: 22px;
+  }
+  @media (min-width: 640px) {
+    .masonry {
+      column-count: 3;
+    }
+  }
+  @media (min-width: 980px) {
+    .masonry {
+      column-count: 4;
+    }
+  }
+  @media (min-width: 1280px) {
+    .masonry {
+      column-count: 5;
+    }
+  }
+
+  .browse {
+    padding: 0 0 clamp(50px, 7vw, 90px);
+  }
+  .browse__h2 {
+    font-size: clamp(24px, 3vw, 38px);
+    margin: 0 0 28px;
+  }
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 26px;
+  }
+</style>
