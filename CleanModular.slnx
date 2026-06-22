@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/BuildingBlocks/" />
+  <Folder Name="/src/Hosts/">
+    <Project Path="CleanModular.AppHost/CleanModular.AppHost.csproj" Id="e04bb1ac-0845-4144-a9a7-97d03ba21a1e" />
+    <Project Path="CleanModular.ServiceDefaults/CleanModular.ServiceDefaults.csproj" />
+    <Project Path="Host.WebApi/Host.WebApi.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Posts/" />
+  <Folder Name="/src/Modules/Storage/" />
+  <Folder Name="/src/Modules/Users/" />
+</Solution>
