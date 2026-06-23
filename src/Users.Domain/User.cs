@@ -2,7 +2,7 @@
 
 namespace Users.Domain;
 
-internal class User : BaseEntity
+public class User : BaseEntity
 {
     public Guid Id { get; set; }
 
