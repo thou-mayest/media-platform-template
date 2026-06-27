@@ -12,9 +12,9 @@ public class User : BaseEntity
 
     public string Password { get; set; }
 
-   public string Role { get; set; }
+   public Role Role { get; set; }
 
-    public User(string name, string email, string password, string role)
+    public User(string name, string email, string password, Role role)
     {
         Id = Guid.NewGuid();
         Name = name;
@@ -23,7 +23,7 @@ public class User : BaseEntity
         Role = role;
     }
 
-    public void Update(string name, string email, string password, string role)
+    public void Update(string name, string email, string password, Role role)
     {
         Name = name;
         Email = email;

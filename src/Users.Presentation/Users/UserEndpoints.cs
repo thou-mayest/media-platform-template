@@ -7,6 +7,7 @@ using Users.Application.Users.Commands.DeleteUser;
 using Users.Application.Users.Commands.UpdateUser;
 using Users.Application.Users.Queries.GetAllUsers;
 using Users.Application.Users.Queries.GetUserById;
+using Users.Domain;
 
 namespace Users.Presentation.Users;
 
@@ -54,7 +55,7 @@ public static class UserEndpoints
 
 
     // extract into separate files later
-    public sealed record CreateUserRequest(string Name, string Email, string Password, string Role);
+    public sealed record CreateUserRequest(string Name, string Email, string Password, Role Role);
 
-    public sealed record UpdateUserRequest(string Name, string Email, string Password, string Role);
+    public sealed record UpdateUserRequest(string Name, string Email, string Password, Role Role);
 }
