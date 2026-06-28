@@ -1,4 +1,5 @@
 ﻿using SharedKernal.Entities;
+using Users.Common;
 
 namespace Users.Domain;
 

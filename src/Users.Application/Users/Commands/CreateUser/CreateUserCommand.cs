@@ -1,5 +1,5 @@
 using SharedKernal.Messaging;
-using Users.Domain;
+using Users.Common;
 
 namespace Users.Application.Users.Commands.CreateUser;
 
