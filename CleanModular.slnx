@@ -21,7 +21,9 @@
     <Project Path="src/Users.Presentation/Users.Presentation.csproj" Id="83de914e-9b2d-42bf-996a-a71b68206efb" />
   </Folder>
   <Folder Name="/src/Tests/" />
-  <Folder Name="/src/Tests/ArchTests/" />
+  <Folder Name="/src/Tests/ArchTests/">
+    <Project Path="src/Tests/ArchTests/CleanModular.ArchTests.csproj" />
+  </Folder>
   <Folder Name="/src/Tests/IntegrationTests/" />
   <Folder Name="/src/Tests/UnitTests/" />
 </Solution>
