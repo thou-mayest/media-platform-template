@@ -1,6 +1,7 @@
 using SharedKernal.Messaging;
 using Users.Application.Abstractions;
 using Users.Domain;
+using Users.Common;
 
 namespace Users.Application.Users.Commands.CreateUser;
 

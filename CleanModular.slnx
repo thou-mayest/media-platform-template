@@ -19,9 +19,12 @@
     <Project Path="src/Users.Domain/Users.Domain.csproj" Id="c2766ecf-7937-4dc4-a833-52de2c8a1d75" />
     <Project Path="src/Users.Infrastracture/Users.Infrastracture.csproj" Id="8aa7539d-824a-4491-83d4-f83792bc8cc2" />
     <Project Path="src/Users.Presentation/Users.Presentation.csproj" Id="83de914e-9b2d-42bf-996a-a71b68206efb" />
+    <Project Path="Users.Common/Users.Common.csproj" Id="e2eeefd6-1679-4e83-9dc0-59270478303d" />
   </Folder>
   <Folder Name="/src/Tests/" />
-  <Folder Name="/src/Tests/ArchTests/" />
+  <Folder Name="/src/Tests/ArchTests/">
+    <Project Path="src/Tests/ArchTests/CleanModular.ArchTests.csproj" />
+  </Folder>
   <Folder Name="/src/Tests/IntegrationTests/" />
   <Folder Name="/src/Tests/UnitTests/" />
 </Solution>

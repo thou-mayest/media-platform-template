@@ -7,7 +7,7 @@ using Users.Application.Users.Commands.DeleteUser;
 using Users.Application.Users.Commands.UpdateUser;
 using Users.Application.Users.Queries.GetAllUsers;
 using Users.Application.Users.Queries.GetUserById;
-using Users.Domain;
+using Users.Common;
 
 namespace Users.Presentation.Users;
 
