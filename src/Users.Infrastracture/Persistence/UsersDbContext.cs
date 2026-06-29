@@ -13,6 +13,9 @@ public class UsersDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasDefaultSchema("Users");
+
+        // move to seperate configuration files later
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasKey(u => u.Id);

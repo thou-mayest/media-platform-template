@@ -1,3 +1,4 @@
+using Host.WebApi;
 using Users.Infrastracture;
 using Users.Presentation;
 
@@ -26,8 +27,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
 
+await app.MigrateUsersDbAsync();
+
+app.UseHttpsRedirection();
 app.UseAuthorization();
 
 // map endpoints

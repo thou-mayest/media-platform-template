@@ -24,9 +24,12 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("MainDbConnectionString");
-        services.AddDbContext<UsersDbContext>(options =>
-            options.UseNpgsql(connectionString));
+        var connectionString = configuration.GetConnectionString("PostgreConnectionString");
+
+        services.AddDbContextPool<UsersDbContext>(options =>
+            options.UseNpgsql(connectionString, npgsql =>
+        npgsql.MigrationsHistoryTable("__UsersMigrations", "Users")));
+
         return services;
     }
 
