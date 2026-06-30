@@ -32,7 +32,7 @@ public static class UserEndpoints
                 new CreateUserCommand(request.Name, request.Email, request.Password, request.Role),
                 ct);
 
-            return Results.CreatedAtRoute(null, new { id }, new { id });
+            return Results.Created($"/api/users/{id}", new { id });
         });
 
         group.MapPut("/{id:guid}", async (Guid id, UpdateUserRequest request, ISender sender, CancellationToken ct) =>
