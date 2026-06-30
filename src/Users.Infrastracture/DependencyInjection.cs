@@ -3,7 +3,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Users.Application.Abstractions;
 using Users.Application;
+using Users.Domain.Abstractions;
 using Users.Infrastracture.Persistence;
+using Users.Infrastracture.Security;
 
 namespace Users.Infrastracture;
 
@@ -16,6 +18,8 @@ public static class DependencyInjection
         services.AddDbContext(configuration);
 
         services.AddUsersApplication();
+
+        services.AddScoped<IPasswordHasher, Argon2PasswordHasher>();
 
         return services;
     }

@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Users.Domain;
-
 namespace Users.Infrastracture.Persistence;
 
 public class UsersDbContext : DbContext
@@ -8,13 +7,10 @@ public class UsersDbContext : DbContext
     public UsersDbContext(DbContextOptions<UsersDbContext> options) : base(options)
     {
     }
-
     public DbSet<User> Users { get; set; }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("Users");
-
         // move to seperate configuration files later
         modelBuilder.Entity<User>(entity =>
         {
@@ -24,18 +20,26 @@ public class UsersDbContext : DbContext
                 .IsRequired()
                 .HasMaxLength(200);
 
-            entity.Property(u => u.Email)
-                .IsRequired()
-                .HasMaxLength(200);
+            entity.OwnsOne(u => u.Email, email =>
+            {
+                email.Property(e => e.Value)
+                    .HasColumnName("Email")
+                    .IsRequired()
+                    .HasMaxLength(256);
+            });
 
-            entity.Property(u => u.Password)
-                .IsRequired();
+            entity.OwnsOne(u => u.Password, password =>
+            {
+                password.Property(p => p.HashedValue)
+                    .HasColumnName("Password")
+                    .IsRequired();
+            });
 
             entity.Property(u => u.Role)
                 .IsRequired()
+                .HasConversion<string>()
                 .HasMaxLength(100);
         });
-
         base.OnModelCreating(modelBuilder);
     }
 }

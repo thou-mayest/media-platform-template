@@ -12,6 +12,6 @@ internal sealed class GetUserByIdQueryHandler(IUserRepository userRepository)
 
         return user is null
             ? null
-            : new UserDto(user.Id, user.Name, user.Email, user.Role, user.CreatedDate, user.UpdateDate);
+            : new UserDto(user.Id, user.Name, user.Email.Value, user.Role, user.CreatedDate, user.UpdateDate);
     }
 }
