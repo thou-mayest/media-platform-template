@@ -3,7 +3,7 @@ using Users.Domain;
 
 namespace Users.Infrastracture.Persistence;
 
-public class UsersDbContext : DbContext
+internal class UsersDbContext : DbContext
 {
     public UsersDbContext(DbContextOptions<UsersDbContext> options) : base(options)
     {
