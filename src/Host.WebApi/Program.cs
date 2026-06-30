@@ -1,8 +1,15 @@
+using Host.WebApi;
+using Users.Infrastracture;
+using Users.Presentation;
+
 var builder = WebApplication.CreateBuilder(args);
+
+
 
 builder.AddServiceDefaults();
 
-// Add services to the container.
+// register modules
+builder.Services.AddUsersInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -20,10 +27,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
 
+await app.MigrateUsersDbAsync();
+
+app.UseHttpsRedirection();
 app.UseAuthorization();
 
-app.MapControllers();
+// map endpoints
+app.MapUsersEndpoints();
 
 app.Run();

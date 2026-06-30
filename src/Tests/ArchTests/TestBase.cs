@@ -29,7 +29,7 @@ public abstract class TestBase
     // ── Users Module ─────────────────────────────────────────────
     protected static readonly Assembly UsersDomainAssembly       = typeof(User).Assembly;
     protected static readonly Assembly UsersApplicationAssembly  = typeof(IUserRepository).Assembly;
-    protected static readonly Assembly UsersInfraAssembly        = typeof(Users.Infrastracture.Class1).Assembly;
+    protected static readonly Assembly UsersInfraAssembly        = typeof(Users.Infrastracture.DependencyInjection).Assembly;
     protected static readonly Assembly UsersPresentationAssembly = typeof(Extension).Assembly;
 
     // All Users assemblies together — used in module isolation tests

@@ -7,13 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MediatR" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Entities\Enums\" />
-    <Folder Include="Validations\" />
-    <Folder Include="Shared\" />
+    <ProjectReference Include="..\src\SharedKernal\SharedKernal.csproj" />
   </ItemGroup>
 
 </Project>

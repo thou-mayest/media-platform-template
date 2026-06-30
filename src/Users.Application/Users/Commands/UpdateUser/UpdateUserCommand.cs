@@ -1,4 +1,5 @@
 using SharedKernal.Messaging;
+using Users.Common;
 
 namespace Users.Application.Users.Commands.UpdateUser;
 
@@ -7,4 +8,4 @@ public sealed record UpdateUserCommand(
     string Name,
     string Email,
     string Password,
-    string Role) : ICommand;
+    Role Role) : ICommand;
