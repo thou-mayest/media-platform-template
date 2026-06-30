@@ -3,7 +3,7 @@ using Users.Common;
 
 namespace Users.Application.Users.Commands.CreateUser;
 
-public sealed record CreateUserCommand(
+internal sealed record CreateUserCommand(
     string Name,
     string Email,
     string Password,

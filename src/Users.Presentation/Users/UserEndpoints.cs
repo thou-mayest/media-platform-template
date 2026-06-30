@@ -11,7 +11,7 @@ using Users.Common;
 
 namespace Users.Presentation.Users;
 
-public static class UserEndpoints
+internal static class UserEndpoints
 {
     public static IEndpointRouteBuilder MapUserEndpoints(this IEndpointRouteBuilder app)
     {

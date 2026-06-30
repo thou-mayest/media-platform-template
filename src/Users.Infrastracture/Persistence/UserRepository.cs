@@ -4,7 +4,7 @@ using Users.Domain;
 
 namespace Users.Infrastracture.Persistence;
 
-public class UserRepository : IUserRepository
+internal class UserRepository : IUserRepository
 {
     private readonly UsersDbContext _context;
 
