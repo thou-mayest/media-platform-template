@@ -1,0 +1,26 @@
+name: Run Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  arch-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore test project
+        run: dotnet restore ./src/Tests/ArchTests/CleanModular.ArchTests.csproj
+
+      - name: Run architecture tests
+        run: dotnet test ./src/Tests/ArchTests/CleanModular.ArchTests.csproj --configuration Release --no-restore
