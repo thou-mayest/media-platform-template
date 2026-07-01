@@ -10,8 +10,6 @@ internal sealed class GetUserByIdQueryHandler(IUserRepository userRepository)
     {
         var user = await userRepository.GetByIdAsync(request.Id, cancellationToken);
 
-        return user is null
-            ? null
-            : new UserDto(user.Id, user.Name, user.Email.Value, user.Role, user.CreatedDate, user.UpdateDate);
+        return user?.ToDto();
     }
 }

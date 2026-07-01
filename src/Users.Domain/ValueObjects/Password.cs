@@ -21,7 +21,7 @@ public sealed class Password : ValueObject
         HashedValue = hashedValue;
     }
 
-    public static Result<Password> Create(string? plainTextPassword, IPasswordHasher hasher)
+    internal static Result<Password> Create(string? plainTextPassword, IPasswordHasher hasher)
     {
         if (string.IsNullOrWhiteSpace(plainTextPassword))
             return Result.Failure<Password>(Error.Validation("Password.Empty", "Password cannot be empty."));

@@ -2,7 +2,7 @@ using Users.Domain;
 
 namespace Users.Application.Abstractions;
 
-public interface IUserRepository
+internal interface IUserRepository
 {
     Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 

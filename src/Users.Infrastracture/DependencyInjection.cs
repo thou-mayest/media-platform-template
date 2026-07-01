@@ -9,7 +9,7 @@ using Users.Infrastracture.Security;
 
 namespace Users.Infrastracture;
 
-public static class DependencyInjection
+internal static class DependencyInjection
 {
     public static IServiceCollection AddUsersInfrastructure(
         this IServiceCollection services,
@@ -19,7 +19,7 @@ public static class DependencyInjection
 
         services.AddUsersApplication();
 
-        services.AddScoped<IPasswordHasher, Argon2PasswordHasher>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
 
         return services;
     }
