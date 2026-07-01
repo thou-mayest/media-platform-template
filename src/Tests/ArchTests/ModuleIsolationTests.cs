@@ -15,11 +15,8 @@ namespace CleanModular.ArchTests;
 ///            Users → Storage       (cross-module direct reference)
 ///
 /// HOW MODULES COMMUNICATE (without direct references):
-///   Option A — Integration Events in SharedKernal:
-///              Users publishes IUserCreatedEvent; Posts subscribes to it.
-///   Option B — MediatR INotification:
+///   Option  — MediatR INotification:
 ///              Users publishes a notification; Posts has a handler for it.
-///   Both options keep modules decoupled at the assembly level.
 ///
 /// HOW TO EXTEND:
 /// When Posts module is added, mirror the same pattern:

@@ -2,11 +2,9 @@ using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Users.Application.Users.Commands.CreateUser;
-using Users.Application.Users.Commands.DeleteUser;
-using Users.Application.Users.Commands.UpdateUser;
 using Users.Application.Users.Queries.GetAllUsers;
 using Users.Application.Users.Queries.GetUserById;
+using Users.Application.Users.Commands.DeleteUser;
 using Users.Common;
 
 namespace Users.Presentation.Users;
@@ -18,29 +16,24 @@ internal static class UserEndpoints
         var group = app.MapGroup("/api/users").WithTags("Users");
 
         group.MapGet("/", async (ISender sender, CancellationToken ct) =>
-            Results.Ok(await sender.Send(new GetAllUsersQuery(), ct)));
+            Results.Ok((await sender.Send(new GetAllUsersQuery(), ct))
+                .Select(u => u.ToResponse())));
 
         group.MapGet("/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
         {
             var user = await sender.Send(new GetUserByIdQuery(id), ct);
-            return user is null ? Results.NotFound() : Results.Ok(user);
+            return user is null ? Results.NotFound() : Results.Ok(user.ToResponse());
         });
 
         group.MapPost("/", async (CreateUserRequest request, ISender sender, CancellationToken ct) =>
         {
-            var id = await sender.Send(
-                new CreateUserCommand(request.Name, request.Email, request.Password, request.Role),
-                ct);
-
+            var id = await sender.Send(request.ToCommand(), ct);
             return Results.Created($"/api/users/{id}", new { id });
         });
 
         group.MapPut("/{id:guid}", async (Guid id, UpdateUserRequest request, ISender sender, CancellationToken ct) =>
         {
-            await sender.Send(
-                new UpdateUserCommand(id, request.Name, request.Email, request.Password, request.Role),
-                ct);
-
+            await sender.Send(request.ToCommand(id), ct);
             return Results.NoContent();
         });
 
@@ -53,9 +46,6 @@ internal static class UserEndpoints
         return app;
     }
 
-
-    // extract into separate files later
     public sealed record CreateUserRequest(string Name, string Email, string Password, Role Role);
-
     public sealed record UpdateUserRequest(string Name, string Email, string Password, Role Role);
 }

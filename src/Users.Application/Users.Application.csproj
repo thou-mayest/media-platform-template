@@ -6,9 +6,12 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="MediatR" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="MediatR" />
+		<PackageReference Include="Riok.Mapperly">
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+	</ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Users.Common\Users.Common.csproj" />
