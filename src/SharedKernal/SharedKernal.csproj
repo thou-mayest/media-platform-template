@@ -11,7 +11,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Entities\Enums\" />
     <Folder Include="Validations\" />
     <Folder Include="Shared\" />
   </ItemGroup>

@@ -19,7 +19,7 @@ internal static class DependencyInjection
 
         services.AddUsersApplication();
 
-        services.AddScoped<IPasswordHasher, PasswordHasher>();
+        
 
         return services;
     }
@@ -42,6 +42,7 @@ internal static class DependencyInjection
         services.InitializeApplication();
 
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
         return services;
     }
 }
