@@ -10,6 +10,6 @@ internal sealed class GetUserByIdQueryHandler(IUserRepository userRepository)
     {
         var user = await userRepository.GetByIdAsync(request.Id, cancellationToken);
 
-       return user?.ToDto();
+        return user?.ToDto();
     }
 }

@@ -13,6 +13,5 @@ internal sealed class GetAllUsersQueryHandler(IUserRepository userRepository)
         return users
             .Select(u => u.ToDto())
             .ToList();
-
     }
 }

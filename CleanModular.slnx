@@ -25,6 +25,10 @@
   <Folder Name="/src/Tests/ArchTests/">
     <Project Path="src/Tests/ArchTests/CleanModular.ArchTests.csproj" />
   </Folder>
-  <Folder Name="/src/Tests/IntegrationTests/" />
-  <Folder Name="/src/Tests/UnitTests/" />
+  <Folder Name="/src/Tests/IntegrationTests/">
+    <File Path="src/Tests/UnitTests/Users.Domain.UnitTests/EmailTests.cs" />
+  </Folder>
+  <Folder Name="/src/Tests/UnitTests/">
+    <Project Path="src/Tests/UnitTests/Users.Domain.UnitTests/Users.Domain.UnitTests.csproj" />
+  </Folder>
 </Solution>
