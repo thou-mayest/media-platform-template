@@ -2,6 +2,7 @@
 using SharedKernal.Results;
 using Users.Common;
 using Users.Domain.Abstractions;
+using Users.Domain.DomainEvents;
 using Users.Domain.ValueObjects;
 
 namespace Users.Domain;
@@ -46,6 +47,7 @@ public class User : AggregateRoot
             return Result.Failure<User>(passwordResult.Errors);
 
         var user = new User(Guid.NewGuid(), name.Trim(), emailResult.Value, passwordResult.Value, role);
+        user.RaiseDomainEvent(new UserCreatedDomainEvent(user.Id, user.Name, user.Email.Value));
         return Result.Success(user);
     }
 
@@ -61,6 +63,7 @@ public class User : AggregateRoot
         Name = name.Trim();
         Email = emailResult.Value;
         UpdateDate = DateTime.UtcNow;
+        RaiseDomainEvent(new UserUpdatedDomainEvent(Id, Name, Email.Value));
         return Result.Success();
     }
 
@@ -73,6 +76,11 @@ public class User : AggregateRoot
         Password = passwordResult.Value;
         UpdateDate = DateTime.UtcNow;
         return Result.Success();
+    }
+
+    public void Delete()
+    {
+        RaiseDomainEvent(new UserDeletedDomainEvent(Id));
     }
 
     public Result ChangeRole(Role newRole)
