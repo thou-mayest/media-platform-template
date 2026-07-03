@@ -11,6 +11,7 @@ internal sealed class DeleteUserCommandHandler(IUserRepository userRepository)
         var user = await userRepository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new KeyNotFoundException($"User '{request.Id}' was not found.");
 
+        user.Delete();
         userRepository.Remove(user);
         await userRepository.SaveChangesAsync(cancellationToken);
     }

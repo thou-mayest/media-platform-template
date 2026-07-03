@@ -1,3 +1,6 @@
+using MediatR;
+
 namespace SharedKernal.Messaging;
 
-public interface IDomainEvent;
+public interface IDomainEvent : INotification;
+

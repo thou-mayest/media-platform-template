@@ -1,8 +1,11 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Users.Application.Abstractions;
+using SharedKernal.Messaging;
 using Users.Application;
+using Users.Application.Abstractions;
+using Users.Application.Messaging;
 using Users.Domain.Abstractions;
 using Users.Infrastracture.Persistence;
 using Users.Infrastracture.Security;
@@ -19,7 +22,7 @@ internal static class DependencyInjection
 
         services.AddUsersApplication();
 
-        
+        services.AddUsersMessageBus();
 
         return services;
     }
@@ -43,6 +46,26 @@ internal static class DependencyInjection
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
+
+        services.AddScoped<IDomainEventDispatcher, MediatRDomainEventDispatcher>();
+
+        return services;
+    }
+
+    private static IServiceCollection AddUsersMessageBus(this IServiceCollection services)
+    {
+
+        // later when we have consumer move this into host project and only keep consumer registration here
+        services.AddMassTransit(bus =>
+        {
+            bus.SetKebabCaseEndpointNameFormatter();
+
+            bus.UsingInMemory((ctx, cfg) =>
+            {
+                cfg.ConfigureEndpoints(ctx);
+            });
+        });
+
         return services;
     }
 }
