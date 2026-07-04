@@ -16,9 +16,6 @@ internal class UsersDbContext : DbContext
         {
             entity.HasKey(u => u.Id);
 
-            entity.HasIndex(u => u.Email)
-                .IsUnique();
-
             entity.Property(u => u.Name)
                 .IsRequired()
                 .HasMaxLength(200);
