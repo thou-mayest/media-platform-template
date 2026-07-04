@@ -7,11 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MassTransit" />
     <PackageReference Include="MediatR" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Entities\Enums\" />
     <Folder Include="Validations\" />
     <Folder Include="Shared\" />
   </ItemGroup>

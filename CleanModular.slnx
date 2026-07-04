@@ -16,15 +16,19 @@
   <Folder Name="/src/Modules/Storage/" />
   <Folder Name="/src/Modules/Users/">
     <Project Path="src/Users.Application/Users.Application.csproj" Id="e13a39c5-587f-4df6-9012-378224f2aee0" />
+    <Project Path="src/Users.Contracts/Users.Contracts.csproj" Id="470187e7-c8b8-4332-b0f5-ffb7bfb4cfef" />
     <Project Path="src/Users.Domain/Users.Domain.csproj" Id="c2766ecf-7937-4dc4-a833-52de2c8a1d75" />
     <Project Path="src/Users.Infrastracture/Users.Infrastracture.csproj" Id="8aa7539d-824a-4491-83d4-f83792bc8cc2" />
     <Project Path="src/Users.Presentation/Users.Presentation.csproj" Id="83de914e-9b2d-42bf-996a-a71b68206efb" />
-    <Project Path="Users.Common/Users.Common.csproj" Id="e2eeefd6-1679-4e83-9dc0-59270478303d" />
   </Folder>
   <Folder Name="/src/Tests/" />
   <Folder Name="/src/Tests/ArchTests/">
     <Project Path="src/Tests/ArchTests/CleanModular.ArchTests.csproj" />
   </Folder>
-  <Folder Name="/src/Tests/IntegrationTests/" />
-  <Folder Name="/src/Tests/UnitTests/" />
+  <Folder Name="/src/Tests/IntegrationTests/">
+    <File Path="src/Tests/UnitTests/Users.Domain.UnitTests/EmailTests.cs" />
+  </Folder>
+  <Folder Name="/src/Tests/UnitTests/">
+    <Project Path="src/Tests/UnitTests/Users.Domain.UnitTests/Users.Domain.UnitTests.csproj" />
+  </Folder>
 </Solution>
