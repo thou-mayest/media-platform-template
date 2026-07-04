@@ -8,3 +8,4 @@ internal sealed record CreateUserCommand(
     string Email,
     string Password,
     Role Role) : ICommand<Result<Guid>>;
+ 
