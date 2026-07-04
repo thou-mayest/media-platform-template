@@ -8,4 +8,4 @@ public sealed record UpdateUserCommand(
     string Name,
     string Email,
     string Password,
-    Role Role) : ICommand;
+    Role Role) : ICommand<Result>;
