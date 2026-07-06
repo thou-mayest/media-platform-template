@@ -44,7 +44,7 @@ internal static class UserEndpoints
             var result = await sender.Send(request.ToCommand(id), ct);
             return result.IsSuccess 
             ? Results.NoContent() 
-            : Results.NotFound(result.Error);
+            : Results.BadRequest(result.Error);
         });
 
         group.MapDelete("/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
