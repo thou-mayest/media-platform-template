@@ -2,18 +2,18 @@ using SharedKernal.Messaging;
 using Users.Application.Abstractions;
 using Users.Domain;
 using Users.Domain.Abstractions;
-using Users.Common;
+using SharedKernal.Results;
 namespace Users.Application.Users.Commands.CreateUser;
 
 internal sealed class CreateUserCommandHandler(IUserRepository userRepository, IPasswordHasher passwordHasher)
-    : ICommandHandler<CreateUserCommand, Guid>
+    : ICommandHandler<CreateUserCommand, Result<Guid>>
 {
-    public async Task<Guid> Handle(CreateUserCommand request, CancellationToken cancellationToken)
+    public async Task<Result<Guid>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
-        var result = User.Create(request.Name, request.Email, request.Password, request.Role, passwordHasher);
+        Result<User> result = User.Create(request.Name, request.Email, request.Password, request.Role, passwordHasher);
 
         if (result.IsFailure)
-            throw new InvalidOperationException(string.Join("; ", result.Errors.Select(e => e.Message)));
+            return result.Error;
 
         var user = result.Value;
         await userRepository.AddAsync(user, cancellationToken);

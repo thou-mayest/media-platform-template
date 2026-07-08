@@ -20,17 +20,17 @@ public sealed class Email : ValueObject
     internal static Result<Email> Create(string? email)
     {
         if (string.IsNullOrWhiteSpace(email))
-            return Result.Failure<Email>(Error.Validation("Email.Empty", "Email cannot be empty."));
+            return Error.Validation("Email.Empty", "Email cannot be empty.");
 
         email = email.Trim();
 
         if (email.Length > 256)
-            return Result.Failure<Email>(Error.Validation("Email.TooLong", "Email must not exceed 256 characters."));
+            return Error.Validation("Email.TooLong", "Email must not exceed 256 characters.");
 
         if (!EmailRegex.IsMatch(email))
-            return Result.Failure<Email>(Error.Validation("Email.InvalidFormat", "Email format is invalid."));
+            return Error.Validation("Email.InvalidFormat", "Email format is invalid.");
 
-        return Result.Success(new Email(email.ToLowerInvariant()));
+        return new Email(email.ToLowerInvariant());
     }
 
     protected override IEnumerable<object?> GetEqualityComponents()

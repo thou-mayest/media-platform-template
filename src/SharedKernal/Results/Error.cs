@@ -17,4 +17,12 @@
         NotFound = 2,
         Conflict = 3
     }
+
+    public static class ErrorCodes
+    {
+        public const string NotFound = "NotFound";
+        public const string Validation = "Validation";
+        public const string Conflict = "Conflict";
+        public const string Failure = "Failure";
+    }
 }

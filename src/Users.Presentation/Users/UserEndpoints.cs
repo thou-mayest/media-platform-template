@@ -16,31 +16,43 @@ internal static class UserEndpoints
         var group = app.MapGroup("/api/users").WithTags("Users");
 
         group.MapGet("/", async (ISender sender, CancellationToken ct) =>
-            Results.Ok((await sender.Send(new GetAllUsersQuery(), ct))
-                .Select(u => u.ToResponse())));
+        {
+            var result = await sender.Send(new GetAllUsersQuery(), ct);
+            return result.IsSuccess 
+            ? Results.Ok(result.Value.Select(u => u.ToResponse())) 
+            : Results.NotFound(result.Error);
+        });
 
         group.MapGet("/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
         {
-            var user = await sender.Send(new GetUserByIdQuery(id), ct);
-            return user is null ? Results.NotFound() : Results.Ok(user.ToResponse());
+            var result = await sender.Send(new GetUserByIdQuery(id), ct);
+            return result.IsSuccess 
+            ? Results.Ok(result.Value.ToResponse()) 
+            : Results.NotFound(result.Error);
         });
 
         group.MapPost("/", async (CreateUserRequest request, ISender sender, CancellationToken ct) =>
         {
-            var id = await sender.Send(request.ToCommand(), ct);
-            return Results.Created($"/api/users/{id}", new { id });
+            var result = await sender.Send(request.ToCommand(), ct);
+            return result.IsSuccess 
+            ? Results.Created($"/api/users/{result.Value}", new { id = result.Value }) 
+            : Results.BadRequest(result.Error);
         });
 
         group.MapPut("/{id:guid}", async (Guid id, UpdateUserRequest request, ISender sender, CancellationToken ct) =>
         {
-            await sender.Send(request.ToCommand(id), ct);
-            return Results.NoContent();
+            var result = await sender.Send(request.ToCommand(id), ct);
+            return result.IsSuccess 
+            ? Results.NoContent() 
+            : Results.BadRequest(result.Error);
         });
 
         group.MapDelete("/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
         {
-            await sender.Send(new DeleteUserCommand(id), ct);
-            return Results.NoContent();
+            var result = await sender.Send(new DeleteUserCommand(id), ct);
+            return result.IsSuccess 
+            ? Results.NoContent() 
+            : Results.NotFound(result.Error);
         });
 
         return app;
