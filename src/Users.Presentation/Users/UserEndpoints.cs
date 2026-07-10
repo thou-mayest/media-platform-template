@@ -6,6 +6,7 @@ using Users.Application.Users.Queries.GetAllUsers;
 using Users.Application.Users.Queries.GetUserById;
 using Users.Application.Users.Commands.DeleteUser;
 using Users.Common;
+using SharedKernal.Extensions;
 
 namespace Users.Presentation.Users;
 
@@ -18,41 +19,47 @@ internal static class UserEndpoints
         group.MapGet("/", async (ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new GetAllUsersQuery(), ct);
-            return result.IsSuccess 
-            ? Results.Ok(result.Value.Select(u => u.ToResponse())) 
-            : Results.NotFound(result.Error);
+
+            return result.Match(
+                users => Results.Ok(users.Select(u => u.ToResponse()))
+            );
+
         });
 
         group.MapGet("/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new GetUserByIdQuery(id), ct);
-            return result.IsSuccess 
-            ? Results.Ok(result.Value.ToResponse()) 
-            : Results.NotFound(result.Error);
+
+            return result.Match(
+                user => Results.Ok(user.ToResponse())
+            );
         });
 
         group.MapPost("/", async (CreateUserRequest request, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(request.ToCommand(), ct);
-            return result.IsSuccess 
-            ? Results.Created($"/api/users/{result.Value}", new { id = result.Value }) 
-            : Results.BadRequest(result.Error);
+
+            return result.Match(
+                id => Results.Created($"/api/users/{id}", new { id })
+            );
         });
 
         group.MapPut("/{id:guid}", async (Guid id, UpdateUserRequest request, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(request.ToCommand(id), ct);
-            return result.IsSuccess 
-            ? Results.NoContent() 
-            : Results.BadRequest(result.Error);
+
+            return result.Match(
+                _ => Results.NoContent()
+            );
         });
 
         group.MapDelete("/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new DeleteUserCommand(id), ct);
-            return result.IsSuccess 
-            ? Results.NoContent() 
-            : Results.NotFound(result.Error);
+
+            return result.Match(
+                _ => Results.NoContent()
+            );
         });
 
         return app;
