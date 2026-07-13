@@ -10,6 +10,7 @@ builder.AddServiceDefaults();
 
 // register modules
 builder.Services.AddUsersInfrastructure(builder.Configuration);
+builder.Services.AddUsersPresentation();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -31,6 +32,7 @@ if (app.Environment.IsDevelopment())
 await app.MigrateUsersDbAsync();
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 
 // map endpoints
