@@ -24,8 +24,8 @@ const newWorks = newIds.map((i) => artworks[i]!).filter(Boolean);
         Verso is a slow place to discover painters, photographers, printmakers and digital artists from around the world — one work at a time.
       </p>
       <div class="hero__ctas">
-        <a class="btn btn-primary" href="/artists">Browse artists</a>
-        <a class="btn btn-ghost" href="/categories">Explore categories</a>
+        <a class="btn btn-primary" href="/explore">Explore works</a>
+        <a class="btn btn-ghost" href="/artists">Browse artists</a>
       </div>
     </section>
 
@@ -59,7 +59,7 @@ const newWorks = newIds.map((i) => artworks[i]!).filter(Boolean);
     <section class="container recent">
       <div class="recent__head">
         <h2 class="h-section recent__h2">Recently added</h2>
-        <a class="recent__more" href="/artists">All artists →</a>
+        <a class="recent__more" href="/explore">Explore all works →</a>
       </div>
       <div class="masonry">
         {newWorks.map((w) => <WorkCard work={w} variant="pin" />)}

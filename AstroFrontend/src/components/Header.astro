@@ -3,15 +3,26 @@ interface Props {
   initialQ?: string;
 }
 const { initialQ = '' } = Astro.props;
+const pathname = Astro.url.pathname;
+const navItems = [
+  { href: '/explore', label: 'Explore' },
+  { href: '/artists', label: 'Artists' },
+  { href: '/categories', label: 'Categories' },
+];
 ---
 
 <header class="site-header">
   <div class="container site-header__inner">
     <a href="/" class="brand">VERSO</a>
-    <nav class="nav">
-      <a href="/">Discover</a>
-      <a href="/artists">Artists</a>
-      <a href="/categories">Categories</a>
+    <nav class="nav" aria-label="Primary navigation">
+      {navItems.map((item) => (
+        <a
+          href={item.href}
+          aria-current={pathname.startsWith(item.href) ? 'page' : undefined}
+        >
+          {item.label}
+        </a>
+      ))}
     </nav>
     <form class="search" role="search" action="/search" method="get" data-search-form>
       <svg class="search__icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -138,6 +149,9 @@ const { initialQ = '' } = Astro.props;
     transition: color 0.2s;
   }
   .nav a:hover {
+    color: var(--accent);
+  }
+  .nav a[aria-current='page'] {
     color: var(--accent);
   }
   .search {

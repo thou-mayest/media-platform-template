@@ -1,0 +1,53 @@
+---
+import ExploreGallery from '@/components/ExploreGallery.astro';
+import Layout from '@/layouts/Layout.astro';
+import { artists, artworks } from '@/data/gallery';
+---
+
+<Layout
+  title="Explore works — Verso"
+  description="Explore contemporary works by artist, category and tag."
+>
+  <main class="container explore-page">
+    <header class="explore-page__header">
+      <div>
+        <div class="eyebrow">The index</div>
+        <h1 class="h-display">Explore works.</h1>
+      </div>
+      <p>
+        Browse {artworks.length} works from {artists.length} artists. Search the collection or narrow it by category and tag.
+      </p>
+    </header>
+
+    <ExploreGallery />
+  </main>
+</Layout>
+
+<style>
+  .explore-page {
+    padding: clamp(40px, 6vw, 78px) 0 clamp(64px, 8vw, 110px);
+  }
+  .explore-page__header {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(260px, 0.7fr);
+    gap: clamp(28px, 6vw, 90px);
+    align-items: end;
+    margin-bottom: clamp(34px, 5vw, 60px);
+  }
+  .explore-page h1 {
+    font-size: clamp(46px, 8vw, 108px);
+    margin-top: 0.15em;
+  }
+  .explore-page__header p {
+    color: var(--muted);
+    font-size: clamp(15px, 1.3vw, 18px);
+    line-height: 1.65;
+    margin: 0 0 0.4em;
+    max-width: 42ch;
+  }
+  @media (max-width: 760px) {
+    .explore-page__header {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

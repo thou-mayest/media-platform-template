@@ -1,0 +1,79 @@
+---
+import WorkCard from '@/components/WorkCard.astro';
+import type { Artwork } from '@/data/gallery';
+
+interface Props {
+  works: Artwork[];
+}
+
+const { works } = Astro.props;
+---
+
+<div id="explore-results" class="explore__grid" data-explore-grid>
+  {works.map((work) => (
+    <div
+      class="explore__item"
+      data-explore-item
+      data-title={work.title.toLowerCase()}
+      data-artist={work.artistName.toLowerCase()}
+      data-category={work.categorySlug}
+      data-tags={work.tags.map((tag) => tag.toLowerCase()).join('|')}
+      data-search={`${work.title} ${work.artistName} ${work.category} ${work.tags.join(' ')}`.toLowerCase()}
+      data-year={String(work.year)}
+    >
+      <WorkCard work={work} variant="pin" />
+    </div>
+  ))}
+</div>
+
+<div class="explore__empty" data-explore-empty hidden>
+  <p>No works match those filters.</p>
+  <button class="btn btn-ghost btn-sm" type="button" data-explore-empty-clear>
+    Reset explore
+  </button>
+</div>
+
+<style>
+  .explore__grid {
+    column-count: 2;
+    column-gap: 22px;
+    padding-top: 32px;
+  }
+  .explore__item {
+    break-inside: avoid;
+  }
+  .explore__item[hidden] {
+    display: none;
+  }
+  .explore__empty {
+    border: 1px solid var(--border-soft);
+    margin-top: 32px;
+    padding: clamp(48px, 8vw, 96px) 20px;
+    text-align: center;
+  }
+  .explore__empty p {
+    font-family: 'Spectral', serif;
+    font-size: clamp(24px, 4vw, 42px);
+    margin: 0 0 24px;
+  }
+  @media (min-width: 680px) {
+    .explore__grid {
+      column-count: 3;
+    }
+  }
+  @media (min-width: 1000px) {
+    .explore__grid {
+      column-count: 4;
+    }
+  }
+  @media (min-width: 1280px) {
+    .explore__grid {
+      column-count: 5;
+    }
+  }
+  @media (max-width: 460px) {
+    .explore__grid {
+      column-count: 1;
+    }
+  }
+</style>

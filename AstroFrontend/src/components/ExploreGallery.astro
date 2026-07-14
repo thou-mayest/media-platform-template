@@ -1,0 +1,135 @@
+---
+import ExploreFilters from '@/components/ExploreFilters.astro';
+import ExploreWorkGrid from '@/components/ExploreWorkGrid.astro';
+import { allTags, artworks, categories } from '@/data/gallery';
+
+const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name));
+---
+
+<section class="explore" data-explore-root>
+  <ExploreFilters
+    categories={sortedCategories}
+    tags={allTags}
+    totalWorks={artworks.length}
+  />
+  <ExploreWorkGrid works={artworks} />
+</section>
+
+<script>
+  import { EXPLORE_SORT_MODES, type ExploreSortMode } from '@/types/explore';
+
+  const root = document.querySelector<HTMLElement>('[data-explore-root]');
+
+  if (root) {
+    const search = root.querySelector<HTMLInputElement>('[data-explore-search]')!;
+    const tag = root.querySelector<HTMLSelectElement>('[data-explore-tag]')!;
+    const sort = root.querySelector<HTMLSelectElement>('[data-explore-sort]')!;
+    const grid = root.querySelector<HTMLElement>('[data-explore-grid]')!;
+    const count = root.querySelector<HTMLElement>('[data-explore-count]')!;
+    const empty = root.querySelector<HTMLElement>('[data-explore-empty]')!;
+    const clear = root.querySelector<HTMLButtonElement>('[data-explore-clear]')!;
+    const emptyClear = root.querySelector<HTMLButtonElement>('[data-explore-empty-clear]')!;
+    const categoryButtons = [...root.querySelectorAll<HTMLButtonElement>('[data-category]')];
+    const items = [...root.querySelectorAll<HTMLElement>('[data-explore-item]')];
+    let activeCategory = '';
+
+    const normalize = (value: string): string => value.trim().toLocaleLowerCase();
+
+    function readUrl(): void {
+      const params = new URLSearchParams(window.location.search);
+      const requestedCategory = normalize(params.get('category') ?? '');
+      const requestedTag = normalize(params.get('tag') ?? '');
+      const requestedSort = params.get('sort');
+
+      search.value = params.get('q') ?? '';
+      activeCategory = categoryButtons.some((button) => button.dataset.category === requestedCategory)
+        ? requestedCategory
+        : '';
+      tag.value = [...tag.options].some((option) => option.value === requestedTag)
+        ? requestedTag
+        : '';
+      sort.value = EXPLORE_SORT_MODES.includes(requestedSort as ExploreSortMode)
+        ? requestedSort!
+        : 'newest';
+    }
+
+    function writeUrl(): void {
+      const params = new URLSearchParams();
+      const query = search.value.trim();
+
+      if (query) params.set('q', query);
+      if (activeCategory) params.set('category', activeCategory);
+      if (tag.value) params.set('tag', tag.value);
+      if (sort.value !== 'newest') params.set('sort', sort.value);
+
+      const queryString = params.toString();
+      history.replaceState(null, '', `${window.location.pathname}${queryString ? `?${queryString}` : ''}`);
+    }
+
+    function compareItems(a: HTMLElement, b: HTMLElement): number {
+      const mode = sort.value as ExploreSortMode;
+      if (mode === 'oldest') return Number(a.dataset.year) - Number(b.dataset.year);
+      if (mode === 'title') return (a.dataset.title ?? '').localeCompare(b.dataset.title ?? '');
+      if (mode === 'artist') return (a.dataset.artist ?? '').localeCompare(b.dataset.artist ?? '');
+      return Number(b.dataset.year) - Number(a.dataset.year);
+    }
+
+    function applyFilters(): void {
+      const query = normalize(search.value);
+      const selectedTag = tag.value;
+      let visible = 0;
+
+      items.sort(compareItems).forEach((item) => {
+        const itemTags = (item.dataset.tags ?? '').split('|');
+        const matches =
+          (!query || (item.dataset.search ?? '').includes(query)) &&
+          (!activeCategory || item.dataset.category === activeCategory) &&
+          (!selectedTag || itemTags.includes(selectedTag));
+
+        item.hidden = !matches;
+        grid.append(item);
+        if (matches) visible += 1;
+      });
+
+      categoryButtons.forEach((button) => {
+        const active = button.dataset.category === activeCategory;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-pressed', String(active));
+      });
+
+      count.textContent = `${visible} ${visible === 1 ? 'work' : 'works'}`;
+      empty.hidden = visible !== 0;
+      grid.hidden = visible === 0;
+      clear.hidden = !query && !activeCategory && !selectedTag && sort.value === 'newest';
+      writeUrl();
+    }
+
+    function resetFilters(): void {
+      search.value = '';
+      tag.value = '';
+      sort.value = 'newest';
+      activeCategory = '';
+      applyFilters();
+      search.focus();
+    }
+
+    categoryButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        activeCategory = button.dataset.category ?? '';
+        applyFilters();
+      });
+    });
+    search.addEventListener('input', applyFilters);
+    tag.addEventListener('change', applyFilters);
+    sort.addEventListener('change', applyFilters);
+    clear.addEventListener('click', resetFilters);
+    emptyClear.addEventListener('click', resetFilters);
+    window.addEventListener('popstate', () => {
+      readUrl();
+      applyFilters();
+    });
+
+    readUrl();
+    applyFilters();
+  }
+</script>
