@@ -12,7 +12,6 @@ builder.AddServiceDefaults();
 builder.Services.AddUsersInfrastructure(builder.Configuration);
 builder.Services.AddUsersPresentation();
 
-builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -35,7 +34,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// map endpoints
-app.MapUsersEndpoints();
+// map controllers from all registered application parts (modules)
+app.MapControllers();
 
 app.Run();
