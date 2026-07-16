@@ -1,61 +1,82 @@
 import { expect, test } from '@playwright/test';
 
-test('home page links to the Explore experience', async ({ page }) => {
+test('home renders popular and newest posts from the API', async ({ page }) => {
   await page.goto('/');
 
-  await expect(page.getByRole('heading', { name: 'An index of contemporary visual artists.' })).toBeVisible();
-
-  const primaryNavigation = page.getByRole('navigation', { name: 'Primary navigation' });
-  await primaryNavigation.getByRole('link', { name: 'Explore' }).click();
-
-  await expect(page).toHaveURL(/\/explore$/);
-  await expect(page.getByRole('heading', { name: 'Explore works.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Discover work worth returning to.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Most viewed' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Newest uploads' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'View Market at Noon' }).first()).toBeVisible();
 });
 
-test('search filters works and persists its state in the URL', async ({ page }) => {
+test('Explore filters through normal server-rendered form submissions', async ({ page }) => {
   await page.goto('/explore');
 
-  await expect(page.getByText('36 works', { exact: true })).toBeVisible();
-  await page.getByRole('searchbox', { name: 'Search works' }).fill('Mira Okafor');
+  await expect(page.getByText('24 works')).toBeVisible();
+  await page.getByRole('combobox', { name: 'Category', exact: true }).selectOption('Painting');
+  await page.getByRole('combobox', { name: 'Tag', exact: true }).selectOption('abstract');
+  await page.getByRole('combobox', { name: 'Sort', exact: true }).selectOption('popular');
+  await page.getByRole('button', { name: 'Apply filters' }).click();
 
-  await expect(page.getByText('4 works', { exact: true })).toBeVisible();
-  await expect(page).toHaveURL(/q=Mira(?:\+|%20)Okafor/);
+  await expect(page).toHaveURL(/category=Painting/);
+  await expect(page).toHaveURL(/tag=abstract/);
+  await expect(page).toHaveURL(/sort=popular/);
+  await expect(page.getByText('6 works')).toBeVisible();
 });
 
-test('category, tag and sort controls update the result set', async ({ page }) => {
-  await page.goto('/explore');
+test('tag page renders a dedicated server-side result page', async ({ page }) => {
+  await page.goto('/tag/abstract');
 
-  await page.getByRole('button', { name: 'Painting 11' }).click();
-  await expect(page.getByText('11 works', { exact: true })).toBeVisible();
-  await expect(page).toHaveURL(/category=painting/);
-
-  await page.getByRole('button', { name: 'All works' }).click();
-  await page.getByLabel('Tag').selectOption('portrait');
-  await expect(page.getByText('2 works', { exact: true })).toBeVisible();
-
-  await page.getByRole('button', { name: 'Clear filters' }).click();
-  await page.getByLabel('Sort').selectOption('title');
-
-  const firstVisibleWork = page.locator('[data-explore-item]:visible').first();
-  await expect(firstVisibleWork.getByRole('link', { name: 'Balance no.7', exact: true }).first()).toBeVisible();
+  await expect(page.getByRole('heading', { name: '#abstract' })).toBeVisible();
+  await expect(page.getByText('6 published works')).toBeVisible();
 });
 
-test('empty results can be reset', async ({ page }) => {
-  await page.goto('/explore');
+test('search form redirects to a keyword URL and renders results', async ({ page }) => {
+  await page.goto('/search');
+  await page.getByLabel('Keyword').fill('market');
+  await page.getByRole('button', { name: 'Search' }).click();
 
-  await page.getByRole('searchbox', { name: 'Search works' }).fill('not-a-real-work');
-  await expect(page.getByText('No works match those filters.')).toBeVisible();
+  await expect(page).toHaveURL(/\/search\/market$/);
+  await expect(page.getByRole('heading', { name: '“market”' })).toBeVisible();
+  await expect(page.getByText('1 result')).toBeVisible();
+});
 
-  await page.getByRole('button', { name: 'Reset explore' }).click();
-  await expect(page.getByText('36 works', { exact: true })).toBeVisible();
+test('public SSR pages send cache headers and no browser scripts', async ({ page, request }) => {
+  const publicPages = [
+    { path: '/', maxAge: 60, sharedMaxAge: 300 },
+    { path: '/explore', maxAge: 120, sharedMaxAge: 600 },
+    { path: '/tag/abstract', maxAge: 120, sharedMaxAge: 600 },
+    { path: '/search', maxAge: 120, sharedMaxAge: 600 },
+    { path: '/search/market', maxAge: 120, sharedMaxAge: 600 },
+  ];
+
+  for (const { path, maxAge, sharedMaxAge } of publicPages) {
+    const response = await request.get(path);
+    const cacheControl = response.headers()['cache-control'];
+    expect(cacheControl).toContain(`max-age=${maxAge}`);
+    expect(cacheControl).toContain(`s-maxage=${sharedMaxAge}`);
+    expect(cacheControl).toContain('stale-while-revalidate=3600');
+
+    await page.goto(path);
+    await expect(page.locator('script')).toHaveCount(0);
+  }
+
+  const detailResponse = await request.get(
+    '/posts/10000000-0000-4000-8000-000000000001',
+  );
+  expect(detailResponse.headers()['cache-control']).toBe('no-store');
+
+  const missingResponse = await request.get('/posts/not-a-guid');
+  expect(missingResponse.status()).toBe(404);
+  expect(missingResponse.headers()['cache-control']).toBe('no-store');
 });
 
 test('Explore remains usable on a mobile viewport', async ({ page }) => {
   await page.goto('/explore');
 
-  await expect(page.getByRole('searchbox', { name: 'Search works' })).toBeVisible();
-  await expect(page.getByLabel('Tag')).toBeVisible();
-  await expect(page.getByLabel('Sort')).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Category', exact: true })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Tag', exact: true })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Sort', exact: true })).toBeVisible();
 
   const hasHorizontalOverflow = await page.evaluate(
     () => document.documentElement.scrollWidth > document.documentElement.clientWidth,

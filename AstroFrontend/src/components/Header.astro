@@ -37,80 +37,8 @@ const navItems = [
         autocomplete="off"
       />
     </form>
-    <button
-      type="button"
-      class="theme-toggle"
-      data-theme-toggle
-      aria-label="Toggle dark mode"
-      title="Toggle theme"
-    >
-      <svg class="theme-toggle__icon theme-toggle__icon--sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="4"></circle>
-        <path d="M12 2v2"></path>
-        <path d="M12 20v2"></path>
-        <path d="M4.93 4.93l1.41 1.41"></path>
-        <path d="M17.66 17.66l1.41 1.41"></path>
-        <path d="M2 12h2"></path>
-        <path d="M20 12h2"></path>
-        <path d="M4.93 19.07l1.41-1.41"></path>
-        <path d="M17.66 6.34l1.41-1.41"></path>
-      </svg>
-      <svg class="theme-toggle__icon theme-toggle__icon--moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"></path>
-      </svg>
-    </button>
   </div>
 </header>
-
-<script>
-  function setTheme(theme: 'light' | 'dark', persist = true): void {
-    document.documentElement.setAttribute('data-theme', theme);
-    if (persist) {
-      try {
-        localStorage.setItem('verso:theme', theme);
-      } catch {
-        /* ignore */
-      }
-    }
-    document
-      .querySelectorAll<HTMLButtonElement>('[data-theme-toggle]')
-      .forEach((btn) => {
-        const isDark = theme === 'dark';
-        btn.setAttribute('aria-pressed', String(isDark));
-        btn.setAttribute(
-          'aria-label',
-          isDark ? 'Switch to light mode' : 'Switch to dark mode',
-        );
-      });
-  }
-
-  const current =
-    (document.documentElement.getAttribute('data-theme') as 'light' | 'dark') ||
-    'light';
-  setTheme(current, false);
-
-  document
-    .querySelectorAll<HTMLButtonElement>('[data-theme-toggle]')
-    .forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const next =
-          document.documentElement.getAttribute('data-theme') === 'dark'
-            ? 'light'
-            : 'dark';
-        setTheme(next);
-      });
-    });
-
-  const media = window.matchMedia('(prefers-color-scheme: dark)');
-  media.addEventListener('change', (e) => {
-    try {
-      if (localStorage.getItem('verso:theme')) return;
-    } catch {
-      /* ignore */
-    }
-    setTheme(e.matches ? 'dark' : 'light', false);
-  });
-</script>
 
 <style>
   .site-header {
@@ -178,34 +106,4 @@ const navItems = [
     flex-shrink: 0;
   }
 
-  .theme-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text);
-    border-radius: 999px;
-    cursor: pointer;
-    transition: border-color 0.2s, color 0.2s, background 0.2s;
-  }
-  .theme-toggle:hover {
-    border-color: var(--ink);
-    color: var(--accent);
-  }
-  .theme-toggle__icon {
-    display: block;
-  }
-  .theme-toggle__icon--moon {
-    display: none;
-  }
-  :global([data-theme='dark']) .theme-toggle__icon--sun {
-    display: none;
-  }
-  :global([data-theme='dark']) .theme-toggle__icon--moon {
-    display: block;
-  }
 </style>

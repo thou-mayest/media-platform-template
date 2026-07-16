@@ -8,14 +8,19 @@
     "aaWatch": "npm install && astro build && nodemon --import ./instrumentation.js app.js",
     "start": "astro dev",
     "build": "astro build",
+    "check": "astro check",
     "test:smoke": "playwright test",
+    "test:mock-api": "node tests/mock-posts-api.mjs",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^4.16.18"
+    "@astrojs/node": "^11.0.2",
+    "astro": "^7.0.9"
   },
   "devDependencies": {
-    "@playwright/test": "^1.61.1"
+    "@astrojs/check": "^0.9.9",
+    "@playwright/test": "^1.61.1",
+    "typescript": "^5.9.3"
   }
 }
