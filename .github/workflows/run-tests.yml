@@ -7,7 +7,7 @@ on:
   pull_request:
 
 jobs:
-  arch-tests:
+  all-tests:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,8 +19,17 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Restore test project
-        run: dotnet restore ./src/Tests/ArchTests/CleanModular.ArchTests.csproj
+      - name: Run all test projects
+        shell: bash
+        run: |
+          mapfile -d '' test_projects < <(find ./src/Tests -name '*Tests.csproj' -print0)
 
-      - name: Run architecture tests
-        run: dotnet test ./src/Tests/ArchTests/CleanModular.ArchTests.csproj --configuration Release --no-restore
+          if [ "${#test_projects[@]}" -eq 0 ]; then
+            echo "No test projects were found."
+            exit 1
+          fi
+
+          for project in "${test_projects[@]}"; do
+            echo "Running $project"
+            dotnet test "$project" --configuration Release
+          done
