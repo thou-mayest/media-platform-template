@@ -23,6 +23,12 @@ internal class UserRepository(UsersDbContext context, IDomainEventDispatcher dis
         return await context.Users.FindAsync([id], cancellationToken);
     }
 
+    public async Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        return await context.Users
+            .FirstOrDefaultAsync(u => u.Email.Value == email, cancellationToken);
+    }
+
     public void Remove(User user)
     {
         context.Users.Remove(user);
