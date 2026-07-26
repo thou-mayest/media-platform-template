@@ -12,6 +12,7 @@ const { initialQ = '' } = Astro.props;
       <a href="/">Discover</a>
       <a href="/artists">Artists</a>
       <a href="/categories">Categories</a>
+      <a href="/login" id="auth-link">Login</a>
     </nav>
     <form class="search" role="search" action="/search" method="get" data-search-form>
       <svg class="search__icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -92,13 +93,29 @@ const { initialQ = '' } = Astro.props;
 
   const media = window.matchMedia('(prefers-color-scheme: dark)');
   media.addEventListener('change', (e) => {
-    try {
-      if (localStorage.getItem('verso:theme')) return;
-    } catch {
-      /* ignore */
-    }
-    setTheme(e.matches ? 'dark' : 'light', false);
-  });
+      try {
+        if (localStorage.getItem('verso:theme')) return;
+      } catch {
+        /* ignore */
+      }
+      setTheme(e.matches ? 'dark' : 'light', false);
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const authLink = document.getElementById('auth-link');
+      const token = localStorage.getItem('authToken');
+
+      if (token) {
+        authLink.textContent = 'Logout';
+        authLink.href = '#';
+        authLink.addEventListener('click', (e) => {
+          e.preventDefault();
+          localStorage.removeItem('authToken');
+          window.location.href = '/';
+        });
+      }
+    });
+  </script>
 </script>
 
 <style>

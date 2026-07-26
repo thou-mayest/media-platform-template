@@ -1,0 +1,94 @@
+---
+import Layout from '@/layouts/Layout.astro';
+---
+
+<Layout title="Sign Up">
+  <main class="container">
+    <div class="signup-form">
+      <h1 class="h-display">Sign Up</h1>
+      <form id="signup-form">
+        <div class="form-group">
+          <label for="name">Name</label>
+          <input type="text" id="name" name="name" required />
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required />
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required />
+        </div>
+        <button type="submit" class="btn btn-primary">Sign Up</button>
+      </form>
+      <p>Already have an account? <a href="/login">Login</a></p>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .signup-form {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 30px;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+  }
+  .form-group {
+    margin-bottom: 20px;
+  }
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-2);
+  }
+  input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: inherit;
+  }
+  button {
+    width: 100%;
+  }
+  p {
+    margin-top: 20px;
+    text-align: center;
+    color: var(--muted);
+  }
+a {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+</style>
+
+<script>
+  import { authApi, ApiError } from '@/api';
+  import { setToken } from '@/lib/auth';
+
+  document.getElementById('signup-form')!.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const name = (form.elements.namedItem('name') as HTMLInputElement).value;
+    const email = (form.elements.namedItem('email') as HTMLInputElement).value;
+    const password = (form.elements.namedItem('password') as HTMLInputElement).value;
+
+    try {
+      const { token } = await authApi.register({ name, email, password });
+      setToken(token);
+      window.location.href = '/';
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409) {
+        alert('An account with this email already exists.');
+      } else {
+        console.error('Sign up error:', error);
+        alert('An error occurred during sign up.');
+      }
+    }
+  });
+</script>
