@@ -78,11 +78,11 @@ import Layout from '@/layouts/Layout.astro';
       setToken(token);
       window.location.href = '/';
     } catch (error) {
-      if (error instanceof ApiError && error.status === 401) {
+      if (error instanceof ApiError) {
         alert('Login failed. Please check your credentials.');
-      } else {
-        console.error('Login error:', error);
-        alert('An error occurred during login.');
+      // } else {
+      //   console.error('Login error:', error);
+      //   alert('An error occurred during login.');
       }
     }
   });

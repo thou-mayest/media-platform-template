@@ -39,9 +39,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowSpecificOrigin", policy =>
+    options.AddPolicy(name: MyAllowSpecificOrigins, policy =>
     {
         policy.WithOrigins("http://localhost:4321") // get from config
               .AllowAnyHeader()
@@ -63,6 +65,7 @@ if (app.Environment.IsDevelopment())
 
 await app.MigrateUsersDbAsync();
 
+app.UseCors(MyAllowSpecificOrigins);
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

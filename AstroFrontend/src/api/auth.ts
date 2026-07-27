@@ -20,8 +20,8 @@ export type AuthResponse = {
 
 export const authApi = {
   login: (body: LoginRequest) =>
-    apiFetch<AuthResponse>('/api/users/login', { method: 'POST', body }),
+    apiFetch<AuthResponse>('/api/auth/login', { method: 'POST', body }),
 
   register: (body: RegisterRequest) =>
-    apiFetch<AuthResponse>('/api/users/signup', { method: 'POST', body }),
+    apiFetch<AuthResponse>('/api/auth/signup', { method: 'POST', body }),
 };
