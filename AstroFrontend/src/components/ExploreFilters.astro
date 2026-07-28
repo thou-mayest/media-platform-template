@@ -1,0 +1,163 @@
+---
+interface CategoryFilter {
+  name: string;
+  count: number;
+  slug: string;
+}
+
+interface Props {
+  categories: CategoryFilter[];
+  tags: string[];
+  totalWorks: number;
+}
+
+const { categories, tags, totalWorks } = Astro.props;
+---
+
+<div class="explore__toolbar" aria-label="Explore filters">
+  <label class="explore__search">
+    <span>Search works</span>
+    <input
+      type="search"
+      placeholder="Title, artist, category or tag"
+      autocomplete="off"
+      aria-controls="explore-results"
+      aria-describedby="explore-result-count"
+      data-explore-search
+    />
+  </label>
+
+  <label class="explore__select">
+    <span>Tag</span>
+    <select data-explore-tag aria-controls="explore-results">
+      <option value="">All tags</option>
+      {tags.map((tag) => <option value={tag.toLowerCase()}>{tag}</option>)}
+    </select>
+  </label>
+
+  <label class="explore__select">
+    <span>Sort</span>
+    <select data-explore-sort aria-controls="explore-results">
+      <option value="newest">Newest first</option>
+      <option value="oldest">Oldest first</option>
+      <option value="title">Title A–Z</option>
+      <option value="artist">Artist A–Z</option>
+    </select>
+  </label>
+</div>
+
+<div class="explore__categories" aria-label="Filter by category">
+  <button
+    class="chip is-active"
+    type="button"
+    data-category=""
+    aria-controls="explore-results"
+    aria-pressed="true"
+  >
+    All works
+  </button>
+  {categories.map((category) => (
+    <button
+      class="chip"
+      type="button"
+      data-category={category.slug}
+      aria-controls="explore-results"
+      aria-pressed="false"
+    >
+      {category.name} <span>{category.count}</span>
+    </button>
+  ))}
+</div>
+
+<div class="explore__summary" aria-live="polite">
+  <p id="explore-result-count" data-explore-count>{totalWorks} works</p>
+  <button type="button" data-explore-clear hidden>Clear filters</button>
+</div>
+
+<style>
+  .explore__toolbar {
+    display: grid;
+    grid-template-columns: minmax(240px, 1fr) repeat(2, minmax(160px, 220px));
+    gap: 18px;
+    padding: 22px;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+  }
+  .explore__toolbar label {
+    display: grid;
+    gap: 8px;
+  }
+  .explore__toolbar label > span {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .explore__toolbar input,
+  .explore__toolbar select {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid var(--border);
+    border-radius: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+    font-size: 14px;
+    padding: 0 13px;
+  }
+  .explore__toolbar input:focus,
+  .explore__toolbar select:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .explore__categories {
+    display: flex;
+    gap: 9px;
+    overflow-x: auto;
+    padding: 22px 0 8px;
+    scrollbar-width: thin;
+  }
+  .explore__categories .chip {
+    flex: 0 0 auto;
+  }
+  .explore__categories span {
+    margin-left: 4px;
+    opacity: 0.65;
+  }
+  .explore__summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 58px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .explore__summary p {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    margin: 0;
+    text-transform: uppercase;
+  }
+  .explore__summary button {
+    border: 0;
+    background: transparent;
+    color: var(--accent);
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  @media (max-width: 760px) {
+    .explore__toolbar {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 460px) {
+    .explore__toolbar {
+      margin-inline: -4vw;
+      padding-inline: 4vw;
+    }
+  }
+</style>
