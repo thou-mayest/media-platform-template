@@ -30,5 +30,6 @@
   </Folder>
   <Folder Name="/src/Tests/UnitTests/">
     <Project Path="src/Tests/UnitTests/Users.Domain.UnitTests/Users.Domain.UnitTests.csproj" />
+    <Project Path="src/Tests/UnitTests/Users.Presentation.UnitTests/Users.Presentation.UnitTests.csproj" />
   </Folder>
 </Solution>
