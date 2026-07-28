@@ -1,10 +1,12 @@
 ---
 import Layout from '@/layouts/Layout.astro';
-import { cleanFilter, setCollectionCache } from '@/lib/server/page';
+import { cleanFilter, parseSort, setCollectionCache } from '@/lib/server/page';
 
 const keyword = cleanFilter(Astro.url.searchParams.get('q'), 100);
+const sort = parseSort(Astro.url.searchParams.get('sort'));
 if (keyword) {
-  return Astro.redirect(`/search/${encodeURIComponent(keyword)}`);
+  if (sort === 'newest') return Astro.redirect(`/search/${encodeURIComponent(keyword)}`);
+  return Astro.redirect(`/search/${encodeURIComponent(keyword)}?sort=${encodeURIComponent(sort)}`);
 }
 
 setCollectionCache(Astro.response.headers);
