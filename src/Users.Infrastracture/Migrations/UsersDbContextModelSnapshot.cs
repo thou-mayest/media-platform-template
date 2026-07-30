@@ -18,7 +18,7 @@ namespace Users.Infrastracture.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("Users")
-                .HasAnnotation("ProductVersion", "8.0.0")
+                .HasAnnotation("ProductVersion", "8.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -42,23 +42,30 @@ namespace Users.Infrastracture.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<string>("Password")
+                    b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("Role")
-                        .HasMaxLength(100)
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdateDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users", "Users");
+                    b.HasIndex("Email")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Users_Email");
+
+                    b.ToTable("Users", "Users", t =>
+                        {
+                            t.HasCheckConstraint("CK_Users_Role", "\"Role\" IN (1, 2, 3)");
+                        });
                 });
 #pragma warning restore 612, 618
         }

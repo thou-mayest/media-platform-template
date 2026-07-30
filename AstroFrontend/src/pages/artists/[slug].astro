@@ -17,7 +17,7 @@ const works = artworksByArtist(artist.id);
 const tagSet = [...new Set(works.flatMap((w) => w.tags))];
 ---
 
-<Layout title={`${artist.name} — Verso`} description={artist.bio}>
+<Layout title={`${artist.name} — Verso`} description={artist.bio} canonicalPath={`/artists/${artist.slug}`}>
   <main>
     <section class="container artist-head">
       <a class="back-link" href="/artists">← All artists</a>
@@ -135,10 +135,15 @@ const tagSet = [...new Set(works.flatMap((w) => w.tags))];
   .artist-works .masonry {
     border-top: 1px solid var(--border-soft);
     padding-top: 30px;
-    column-count: 2;
+    column-count: 1;
     column-gap: 30px;
   }
-  @media (min-width: 700px) {
+  @media (min-width: 560px) {
+    .artist-works .masonry {
+      column-count: 2;
+    }
+  }
+  @media (min-width: 800px) {
     .artist-works .masonry {
       column-count: 3;
     }

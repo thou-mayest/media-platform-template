@@ -7,6 +7,7 @@ public static class Extension
 {
     public static IEndpointRouteBuilder MapUsersEndpoints(this IEndpointRouteBuilder app)
     {
+        app.MapAuthEndpoints();
         app.MapUserEndpoints();
         return app;
     }

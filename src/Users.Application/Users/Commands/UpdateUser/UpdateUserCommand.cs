@@ -3,7 +3,7 @@ using Users.Common;
 
 namespace Users.Application.Users.Commands.UpdateUser;
 
-public sealed record UpdateUserCommand(
+internal sealed record UpdateUserCommand(
     Guid Id,
     string Name,
     string Email,

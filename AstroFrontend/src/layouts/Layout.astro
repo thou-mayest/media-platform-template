@@ -23,6 +23,9 @@ const {
 const canonicalUrl = canonicalPath
   ? new URL(canonicalPath, Astro.site ?? Astro.url.origin).toString()
   : undefined;
+const serializedJsonLd = jsonLd
+  ? JSON.stringify(jsonLd).replace(/</g, '\\u003c')
+  : undefined;
 ---
 
 <!doctype html>
@@ -42,7 +45,7 @@ const canonicalUrl = canonicalPath
     {canonicalUrl && <meta name="twitter:card" content="summary" />}
     {canonicalUrl && <meta name="twitter:title" content={title} />}
     {canonicalUrl && <meta name="twitter:description" content={description} />}
-    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+    {serializedJsonLd && <script is:inline type="application/ld+json" set:html={serializedJsonLd}></script>}
     <meta name="theme-color" content="#f5f2ec" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#14110e" media="(prefers-color-scheme: dark)" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -384,6 +387,16 @@ const canonicalUrl = canonicalPath
         to {
           opacity: 1;
           transform: none;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
         }
       }
     </style>

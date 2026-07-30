@@ -5,6 +5,8 @@ namespace Users.Infrastracture.Persistence;
 
 internal class UsersDbContext : DbContext
 {
+    internal const string EmailUniqueIndexName = "UX_Users_Email";
+
     public UsersDbContext(DbContextOptions<UsersDbContext> options) : base(options)
     {
     }
@@ -18,6 +20,10 @@ internal class UsersDbContext : DbContext
         // move to seperate configuration files later
         modelBuilder.Entity<User>(entity =>
         {
+            entity.ToTable(table => table.HasCheckConstraint(
+                "CK_Users_Role",
+                "\"Role\" IN (1, 2, 3)"));
+
             entity.HasKey(u => u.Id);
 
             entity.Property(u => u.Name)
@@ -28,12 +34,18 @@ internal class UsersDbContext : DbContext
                 .IsRequired()
                 .HasMaxLength(200);
 
-            entity.Property(u => u.Password)
+            entity.HasIndex(u => u.Email)
+                .IsUnique()
+                .HasDatabaseName(EmailUniqueIndexName);
+
+            entity.Property(u => u.PasswordHash)
                 .IsRequired();
 
             entity.Property(u => u.Role)
-                .IsRequired()
-                .HasMaxLength(100);
+                .IsRequired();
+
+            entity.Property(u => u.Version)
+                .IsConcurrencyToken();
         });
 
         base.OnModelCreating(modelBuilder);

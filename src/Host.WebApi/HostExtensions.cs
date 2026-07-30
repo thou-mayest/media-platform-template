@@ -1,5 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Users.Infrastracture.Persistence;
+using Users.Application.Abstractions;
+using Users.Common;
+using Users.Domain;
+using System.ComponentModel.DataAnnotations;
 
 namespace Host.WebApi;
 
@@ -13,5 +17,52 @@ public static class HostExtensions
         var db = scope.ServiceProvider.GetRequiredService<UsersDbContext>();
 
         await db.Database.MigrateAsync();
+    }
+
+    public static async Task SeedBootstrapAdminAsync(this WebApplication app)
+    {
+        var email = app.Configuration["BootstrapAdmin:Email"];
+        var password = app.Configuration["BootstrapAdmin:Password"];
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+        {
+            return;
+        }
+        if (!new EmailAddressAttribute().IsValid(email) || password.Length is < 8 or > 128)
+        {
+            throw new InvalidOperationException(
+                "Bootstrap administrator email must be valid and its password must contain 8 to 128 characters.");
+        }
+
+        await using var scope = app.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<UsersDbContext>();
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(73420519)");
+        var normalizedEmail = User.NormalizeEmail(email);
+        var existing = await db.Users.SingleOrDefaultAsync(user => user.Email == normalizedEmail);
+        if (existing is not null)
+        {
+            if (existing.Role != Role.Admin)
+            {
+                throw new InvalidOperationException(
+                    "Bootstrap administrator email belongs to a non-administrator account.");
+            }
+            if (existing.PasswordHash == User.InvalidatedPasswordHash)
+            {
+                var existingHasher = scope.ServiceProvider.GetRequiredService<IPasswordHashingService>();
+                existing.SetPasswordHash(existingHasher.Hash(password));
+                await db.SaveChangesAsync();
+            }
+            await transaction.CommitAsync();
+            return;
+        }
+
+        var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHashingService>();
+        db.Users.Add(new User(
+            app.Configuration["BootstrapAdmin:Name"] ?? "Administrator",
+            normalizedEmail,
+            hasher.Hash(password),
+            Role.Admin));
+        await db.SaveChangesAsync();
+        await transaction.CommitAsync();
     }
 }

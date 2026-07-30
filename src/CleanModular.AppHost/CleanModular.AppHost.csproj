@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <Sdk Name="Aspire.AppHost.Sdk" Version="9.5.0" />
+  <Sdk Name="Aspire.AppHost.Sdk" Version="9.5.2" />
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -14,10 +14,6 @@
     <PackageReference Include="Aspire.Hosting.AppHost" />
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
     <PackageReference Include="CommunityToolkit.Aspire.Hosting.NodeJS.Extensions" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>

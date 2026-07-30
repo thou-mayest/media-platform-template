@@ -205,10 +205,15 @@ const jsonLd = {
   }
 
   .masonry {
-    column-count: 2;
+    column-count: 1;
     column-gap: 22px;
   }
-  @media (min-width: 640px) {
+  @media (min-width: 500px) {
+    .masonry {
+      column-count: 2;
+    }
+  }
+  @media (min-width: 720px) {
     .masonry {
       column-count: 3;
     }

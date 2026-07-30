@@ -1,0 +1,67 @@
+name: Quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: media_platform_tests
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d media_platform_tests"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_CONNECTION: Host=127.0.0.1;Port=5432;Database=media_platform_tests;Username=postgres;Password=postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - run: dotnet restore CleanModular.slnx
+      - run: dotnet build CleanModular.slnx --no-restore --configuration Release --warnaserror
+      - run: dotnet test CleanModular.slnx --no-build --no-restore --configuration Release
+      - name: Audit NuGet packages
+        shell: bash
+        run: |
+          output="$(dotnet list CleanModular.slnx package --vulnerable --include-transitive)"
+          echo "$output"
+          if echo "$output" | grep -q "has the following vulnerable packages"; then
+            exit 1
+          fi
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: AstroFrontend
+    env:
+      SITE_URL: https://example.test
+      PUBLIC_INQUIRY_EMAIL: inquiries@example.test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: AstroFrontend/package-lock.json
+      - run: npm ci
+      - run: npm run check
+      - run: npm run audit
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build --file src/Host.WebApi/Dockerfile --tag media-platform-api:ci .

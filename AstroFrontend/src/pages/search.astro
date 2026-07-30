@@ -27,15 +27,16 @@ const searchIndex = {
     haystack: `${tag.name} ${tag.description}`.toLowerCase(),
   })),
 };
+const serializedSearchIndex = JSON.stringify(searchIndex).replace(/</g, '\\u003c');
 ---
 
 <Layout title="Search — Verso" robots="noindex, follow">
   <main class="container page">
     <div class="eyebrow">Search</div>
     <h1 class="page__h1" data-search-h1>&ldquo;<span data-search-q></span>&rdquo;</h1>
-    <p class="page__lede"><span data-search-count>0</span> <span data-search-noun>results</span></p>
+    <p class="page__lede" role="status" aria-live="polite"><span data-search-count>0</span> <span data-search-noun>results</span></p>
 
-    <p class="empty" data-search-empty hidden>
+    <p class="empty" data-search-empty role="status" hidden>
       Nothing found. Try a medium, an artist, or a tag like &ldquo;Minimal&rdquo;.
     </p>
 
@@ -59,7 +60,7 @@ const searchIndex = {
     </div>
   </main>
 
-  <script type="application/json" data-search-index set:html={JSON.stringify(searchIndex)} />
+  <script is:inline type="application/json" data-search-index set:html={serializedSearchIndex}></script>
 
   <script>
     type WorkRow = {
@@ -123,10 +124,16 @@ const searchIndex = {
     } else {
       qSpan.textContent = q;
       document.title = `“${q}” — Verso`;
-      const qLower = q.toLowerCase();
-      const works = idx.works.filter((w) => w.haystack.includes(qLower));
-      const artists = idx.artists.filter((a) => a.haystack.includes(qLower));
-      const tags = idx.tags.filter((tag) => tag.haystack.includes(qLower));
+      const normalize = (value: string): string =>
+        value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').trim();
+      const terms = normalize(q).split(/\s+/).filter(Boolean);
+      const matches = (haystack: string): boolean => {
+        const normalizedHaystack = normalize(haystack);
+        return terms.every((term) => normalizedHaystack.includes(term));
+      };
+      const works = idx.works.filter((work) => matches(work.haystack));
+      const artists = idx.artists.filter((artist) => matches(artist.haystack));
+      const tags = idx.tags.filter((tag) => matches(tag.haystack));
       const total = works.length + artists.length + tags.length;
       countEl.textContent = String(total);
       nounEl.textContent = total === 1 ? 'result' : 'results';
@@ -280,10 +287,15 @@ const searchIndex = {
     line-height: 1.6;
   }
   .masonry {
-    column-count: 2;
+    column-count: 1;
     column-gap: 30px;
   }
-  @media (min-width: 700px) {
+  @media (min-width: 560px) {
+    .masonry {
+      column-count: 2;
+    }
+  }
+  @media (min-width: 800px) {
     .masonry {
       column-count: 3;
     }

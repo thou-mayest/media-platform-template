@@ -6,7 +6,11 @@ import { artists, artworks } from '@/data/gallery';
 const dirCount = `${artists.length} artists · ${artworks.length} works in the index`;
 ---
 
-<Layout title="Artists — Verso">
+<Layout
+  title="Contemporary Artists — Verso"
+  description={`Discover ${artists.length} contemporary visual artists and their work in the Verso index.`}
+  canonicalPath="/artists"
+>
   <main class="container page">
     <div class="eyebrow">Directory</div>
     <h1 class="h-display page__h1">Artists</h1>

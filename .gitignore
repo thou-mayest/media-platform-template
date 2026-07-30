@@ -9,6 +9,10 @@
 *.userosscache
 *.sln.docstates
 postgres-data/
+*.binlog
+.env
+.env.*
+!.env.example
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

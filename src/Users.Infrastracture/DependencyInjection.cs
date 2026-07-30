@@ -4,6 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Users.Application.Abstractions;
 using Users.Application;
 using Users.Infrastracture.Persistence;
+using Users.Infrastracture.Health;
+using Users.Infrastracture.Security;
 
 namespace Users.Infrastracture;
 
@@ -24,11 +26,15 @@ internal static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("PostgreConnectionString");
+        var connectionString = configuration.GetConnectionString("MainDb")
+            ?? throw new InvalidOperationException("Connection string 'MainDb' is not configured.");
 
         services.AddDbContextPool<UsersDbContext>(options =>
             options.UseNpgsql(connectionString, npgsql =>
         npgsql.MigrationsHistoryTable("__UsersMigrations", "Users")));
+
+        services.AddHealthChecks()
+            .AddCheck<MainDbHealthCheck>("MainDb", tags: ["ready"]);
 
         return services;
     }
@@ -38,6 +44,7 @@ internal static class DependencyInjection
         services.InitializeApplication();
 
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddSingleton<IPasswordHashingService, AspNetPasswordHashingService>();
         return services;
     }
 }

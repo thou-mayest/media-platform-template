@@ -171,7 +171,7 @@ const jsonLd = [
     border-color: var(--ink);
   }
   .masonry {
-    column-count: 2;
+    column-count: 1;
     column-gap: 30px;
     margin-top: 26px;
   }
@@ -196,7 +196,12 @@ const jsonLd = [
     letter-spacing: 0.09em;
     text-transform: uppercase;
   }
-  @media (min-width: 700px) {
+  @media (min-width: 560px) {
+    .masonry {
+      column-count: 2;
+    }
+  }
+  @media (min-width: 800px) {
     .masonry {
       column-count: 3;
     }

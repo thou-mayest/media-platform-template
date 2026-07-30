@@ -8,7 +8,7 @@ internal sealed class GetAllUsersQueryHandler(IUserRepository userRepository)
 {
     public async Task<IReadOnlyList<UserDto>> Handle(GetAllUsersQuery request, CancellationToken cancellationToken)
     {
-        var users = await userRepository.GetAllAsync(cancellationToken);
+        var users = await userRepository.GetAllAsync(request.Page, request.PageSize, cancellationToken);
 
         return users
             .Select(u => u.ToDto())

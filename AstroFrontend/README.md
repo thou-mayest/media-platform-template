@@ -10,8 +10,8 @@ Procedurally generated CSS gradients stand in for the artwork images, and the
 
 ## Prerequisites
 
-Node.js 18.17+ (or 20+) and npm. **No global Astro install needed** — Astro
-is a project dev-dependency and is invoked via npm scripts.
+Node.js 22.12+ and npm. **No global Astro install needed** — Astro is a
+project dependency and is invoked via npm scripts.
 
 ### Install Node.js
 
@@ -65,6 +65,10 @@ npm run preview   # serve the built ./dist locally
 
 That's the full loop.
 
+Production builds require `SITE_URL` and `PUBLIC_INQUIRY_EMAIL` as process or
+deployment environment variables. `npm run check` runs both Astro's type check
+and a production build.
+
 ## Project layout
 
 ```
@@ -93,7 +97,7 @@ verso/
 ## Notes on routing
 
 - All pages are statically prerendered at build time.
-- Astro 4 strips query strings from prerendered pages, so the **search** page
+- Static prerendered pages do not process query strings on the server, so the **search** page
   and the **category tag filter** do their filtering client-side: the page
   ships a JSON index (search) or `data-tags` attributes (category) and a small
   inline script reads `window.location.search` to filter the DOM. No server
@@ -116,4 +120,5 @@ code --install-extension astro-build.astro-vscode
 | `npm run dev`      | Local dev server, HMR, port 4321              |
 | `npm run build`    | Static build to `./dist`                      |
 | `npm run preview`  | Serves `./dist` locally to smoke-test a build |
-| `npx astro check`  | Type-check `.astro` files                     |
+| `npm run check`    | Type-check and build the site                  |
+| `npm run audit`    | Check production dependencies                 |
