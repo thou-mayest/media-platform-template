@@ -12,8 +12,8 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0.202 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Directory.Packages.props", "./"]
-COPY ["Users.Common/Users.Common.csproj", "Users.Common/"]
 COPY ["src/SharedKernal/SharedKernal.csproj", "src/SharedKernal/"]
+COPY ["src/Users.Contracts/Users.Contracts.csproj", "src/Users.Contracts/"]
 COPY ["src/Users.Domain/Users.Domain.csproj", "src/Users.Domain/"]
 COPY ["src/Users.Application/Users.Application.csproj", "src/Users.Application/"]
 COPY ["src/Users.Infrastracture/Users.Infrastracture.csproj", "src/Users.Infrastracture/"]
