@@ -3,6 +3,11 @@ using System.Net.Http.Json;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Users.Common;
+using Users.Domain;
+using Users.Domain.Abstractions;
+using Users.Infrastracture.Persistence;
 
 namespace CleanModular.IntegrationTests;
 
@@ -13,6 +18,7 @@ public sealed class ApiSecurityTests
 
     public ApiSecurityTests(ApiFactory factory)
     {
+        _clientFactory = factory;
         _client = factory.CreateClient(new WebApplicationFactoryClientOptions
         {
             AllowAutoRedirect = false
@@ -84,23 +90,22 @@ public sealed class ApiSecurityTests
     {
         if (!DatabaseIsConfigured()) return;
 
-        var adminToken = await LoginAsync("admin@example.test", "IntegrationAdmin123");
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
         var email = $"user-{Guid.NewGuid():N}@example.test";
-        var create = await _client.PostAsJsonAsync("/api/users", new
+        Guid userId;
+        await using (var scope = _clientFactory.Services.CreateAsyncScope())
         {
-            name = "Normal User",
-            email,
-            password = "NormalUser123",
-            role = 2
-        });
-        create.EnsureSuccessStatusCode();
-        var created = await create.Content.ReadFromJsonAsync<CreatedUser>();
-        Assert.NotNull(created);
+            var db = scope.ServiceProvider.GetRequiredService<UsersDbContext>();
+            var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+            var created = User.Create("Normal User", email, "NormalUser123", Role.User, hasher);
+            Assert.True(created.IsSuccess);
+            db.Users.Add(created.Value);
+            await db.SaveChangesAsync();
+            userId = created.Value.Id;
+        }
 
         var userToken = await LoginAsync(email, "NormalUser123");
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", userToken);
-        var promote = await _client.PutAsJsonAsync($"/api/users/{created.Id}", new
+        var promote = await _client.PutAsJsonAsync($"/api/users/{userId}", new
         {
             name = "Normal User",
             email,
@@ -129,7 +134,8 @@ public sealed class ApiSecurityTests
     }
 
     private sealed record LoginPayload(string AccessToken);
-    private sealed record CreatedUser(Guid Id);
+
+    private readonly ApiFactory _clientFactory;
 }
 
 public sealed class ApiFactory : WebApplicationFactory<Program>

@@ -2,3 +2,4 @@
 
 [assembly: InternalsVisibleTo("Host.WebApi")]
 [assembly: InternalsVisibleTo("CleanModular.ArchTests")]
+[assembly: InternalsVisibleTo("CleanModular.IntegrationTests")]
