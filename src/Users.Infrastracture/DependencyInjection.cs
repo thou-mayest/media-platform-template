@@ -31,11 +31,15 @@ internal static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("PostgreConnectionString");
+        var connectionString = configuration.GetConnectionString("MainDb")
+            ?? throw new InvalidOperationException("Connection string 'MainDb' is not configured.");
 
         services.AddDbContextPool<UsersDbContext>(options =>
             options.UseNpgsql(connectionString, npgsql =>
         npgsql.MigrationsHistoryTable("__UsersMigrations", "Users")));
+
+        services.AddHealthChecks()
+            .AddCheck<Health.MainDbHealthCheck>("MainDb", tags: ["ready"]);
 
         return services;
     }

@@ -89,4 +89,6 @@ public class User : AggregateRoot
         UpdateDate = DateTime.UtcNow;
         return Result.Success();
     }
+
+    public void RotateVersion() => Version = Guid.NewGuid();
 }

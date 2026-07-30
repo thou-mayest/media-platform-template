@@ -1,7 +1,7 @@
 ---
 import Layout from '@/layouts/Layout.astro';
 import WorkCard from '@/components/WorkCard.astro';
-import { artworks, artists, categories } from '@/data/gallery';
+import { artworks, artists, categories, slugify } from '@/data/gallery';
 
 export function getStaticPaths() {
   return artworks.map((w) => ({ params: { slug: w.slug } }));
@@ -18,17 +18,32 @@ const cat = categories.find((c) => c.name === work.category);
 const related = artworks
   .filter((x) => x.id !== work.id && (x.category === work.category || x.tags.some((t) => work.tags.includes(t))))
   .slice(0, 4);
+const description = `${work.title} (${work.year}) by ${work.artistName}. ${work.medium}, ${work.size}. View this ${work.category.toLowerCase()} work and related art on Verso.`;
+const canonicalPath = `/works/${work.slug}`;
+const workUrl = new URL(canonicalPath, Astro.site ?? Astro.url.origin).toString();
+const inquiryEmail = import.meta.env.PUBLIC_INQUIRY_EMAIL?.trim();
+const inquirySubject = `Inquiry about "${work.title}" by ${work.artistName}`;
+const inquiryBody = [
+  'Hello,',
+  '',
+  `I would like to inquire about "${work.title}" by ${work.artistName}.`,
+  '',
+  `Work: ${workUrl}`,
+].join('\n');
+const inquiryHref = inquiryEmail
+  ? `mailto:${inquiryEmail}?subject=${encodeURIComponent(inquirySubject)}&body=${encodeURIComponent(inquiryBody)}`
+  : undefined;
 ---
 
-<Layout title={`${work.title} — ${work.artistName} — Verso`}>
-  <main class="container page">
-    <div class="crumbs">
+<Layout title={`${work.title} — ${work.artistName} — Verso`} description={description} canonicalPath={canonicalPath}>
+  <main class="container page" data-artwork-detail-slug={work.slug}>
+    <nav class="crumbs" aria-label="Breadcrumb">
       <a href="/">Index</a>
-      <span class="crumb-sep">/</span>
+      <span class="crumb-sep" aria-hidden="true">/</span>
       <a href={cat ? `/categories/${cat.slug}` : '/categories'}>{work.category}</a>
-      <span class="crumb-sep">/</span>
-      <span class="crumbs__current">{work.title}</span>
-    </div>
+      <span class="crumb-sep" aria-hidden="true">/</span>
+      <span class="crumbs__current" aria-current="page">{work.title}</span>
+    </nav>
 
     <div class="detail">
       <div class="detail__art" style={`background:${work.bg};aspect-ratio:${work.ar};`}></div>
@@ -36,21 +51,21 @@ const related = artworks
         <h1 class="detail__title">{work.title}</h1>
         <a class="detail__artist" href={`/artists/${artist.slug}`}>{work.artistName} →</a>
         <dl class="facts">
-          <div class="fact"><span class="fact__k">Year</span><span>{work.year}</span></div>
-          <div class="fact"><span class="fact__k">Medium</span><span class="fact__v">{work.medium}</span></div>
-          <div class="fact"><span class="fact__k">Dimensions</span><span>{work.size}</span></div>
+          <div class="fact"><dt class="fact__k">Year</dt><dd>{work.year}</dd></div>
+          <div class="fact"><dt class="fact__k">Medium</dt><dd class="fact__v">{work.medium}</dd></div>
+          <div class="fact"><dt class="fact__k">Dimensions</dt><dd>{work.size}</dd></div>
           <div class="fact">
-            <span class="fact__k">Category</span>
-            <a class="fact__link" href={cat ? `/categories/${cat.slug}` : '/categories'}>{work.category}</a>
+            <dt class="fact__k">Category</dt>
+            <dd><a class="fact__link" href={cat ? `/categories/${cat.slug}` : '/categories'}>{work.category}</a></dd>
           </div>
         </dl>
         <div class="detail__tags">
           {work.tags.map((t) => (
-            <a class="tag-pill" href={`/tags/${encodeURIComponent(t.toLowerCase())}`}>{t}</a>
+            <a class="tag-pill" href={`/tags/${slugify(t)}`}>{t}</a>
           ))}
         </div>
         <div class="detail__cta">
-          <button class="btn btn-primary">Inquire</button>
+          {inquiryHref && <a class="btn btn-primary" href={inquiryHref}>Inquire</a>}
           <button
             class="btn btn-ghost"
             data-save-toggle
@@ -69,6 +84,13 @@ const related = artworks
       </div>
     </section>
   </main>
+  <script>
+    import { recordArtworkViewOnce } from '@/lib/artworkViews';
+
+    const detail = document.querySelector<HTMLElement>('[data-artwork-detail-slug]');
+    const slug = detail?.dataset.artworkDetailSlug;
+    if (slug) void recordArtworkViewOnce(slug);
+  </script>
 </Layout>
 
 <style>
@@ -137,6 +159,9 @@ const related = artworks
     padding: 13px 0;
     border-bottom: 1px solid var(--border-soft);
     font-size: 14px;
+  }
+  .fact dd {
+    margin: 0;
   }
   .fact__k {
     color: var(--muted);

@@ -1,7 +1,7 @@
 ---
 import Layout from '@/layouts/Layout.astro';
 import WorkCard from '@/components/WorkCard.astro';
-import { artists, artworksByArtist } from '@/data/gallery';
+import { artists, artworksByArtist, slugify } from '@/data/gallery';
 
 export function getStaticPaths() {
   return artists.map((a) => ({ params: { slug: a.slug } }));
@@ -17,7 +17,7 @@ const works = artworksByArtist(artist.id);
 const tagSet = [...new Set(works.flatMap((w) => w.tags))];
 ---
 
-<Layout title={`${artist.name} — Verso`} description={artist.bio}>
+<Layout title={`${artist.name} — Verso`} description={artist.bio} canonicalPath={`/artists/${artist.slug}`}>
   <main>
     <section class="container artist-head">
       <a class="back-link" href="/artists">← All artists</a>
@@ -40,7 +40,7 @@ const tagSet = [...new Set(works.flatMap((w) => w.tags))];
         <div>
           <p class="artist-head__bio">{artist.bio}</p>
           <div class="artist-head__tags">
-            {tagSet.map((t) => <a class="tag-pill" href={`/tags/${encodeURIComponent(t.toLowerCase())}`}>{t}</a>)}
+            {tagSet.map((t) => <a class="tag-pill" href={`/tags/${slugify(t)}`}>{t}</a>)}
           </div>
         </div>
       </div>
@@ -135,10 +135,15 @@ const tagSet = [...new Set(works.flatMap((w) => w.tags))];
   .artist-works .masonry {
     border-top: 1px solid var(--border-soft);
     padding-top: 30px;
-    column-count: 2;
+    column-count: 1;
     column-gap: 30px;
   }
-  @media (min-width: 700px) {
+  @media (min-width: 560px) {
+    .artist-works .masonry {
+      column-count: 2;
+    }
+  }
+  @media (min-width: 800px) {
     .artist-works .masonry {
       column-count: 3;
     }

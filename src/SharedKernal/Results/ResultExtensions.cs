@@ -47,6 +47,7 @@ public static class ResultExtensions
             ErrorType.Validation => HttpResults.BadRequest(new { error.Code, error.Message }),
             ErrorType.NotFound => HttpResults.NotFound(new { error.Code, error.Message }),
             ErrorType.Conflict => HttpResults.Conflict(new { error.Code, error.Message }),
+            ErrorType.Unauthorized => HttpResults.Unauthorized(),
             _ => HttpResults.Problem(error.Message)
         };
 }

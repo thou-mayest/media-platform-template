@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedKernal.Extensions;
 using Users.Application.Users.Commands.DeleteUser;
+using Users.Application.Users.Commands.UpdateUser;
 using Users.Application.Users.Queries.GetAllUsers;
 using Users.Application.Users.Queries.GetUserById;
 using Users.Presentation.Authorization;
@@ -56,6 +57,26 @@ public sealed class UsersController(ISender sender) : ControllerBase
         return result.Match(
             _ => (IActionResult)NoContent()
         );
+    }
+
+    [HttpPut("{id:guid}/role")]
+    [Authorize(Policy = UsersPolicies.RequireAdmin)]
+    public async Task<IActionResult> ChangeRole(
+        Guid id,
+        [FromBody] ChangeUserRoleRequest request,
+        CancellationToken ct)
+    {
+        var userResult = await sender.Send(new GetUserByIdQuery(id), ct);
+        if (userResult.IsFailure)
+        {
+            return userResult.Match(user => Ok(user.ToResponse()));
+        }
+
+        var current = userResult.Value;
+        var result = await sender.Send(
+            new UpdateUserCommand(id, current.Name, current.Email, null, request.Role!.Value),
+            ct);
+        return result.Match(_ => (IActionResult)NoContent());
     }
 
     [HttpDelete("{id:guid}")]

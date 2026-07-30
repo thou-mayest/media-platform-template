@@ -9,6 +9,12 @@ public sealed class PasswordHasher : IPasswordHasher
     private const int HashSize = 32;
     private const int Iterations = 350000;
     private static readonly HashAlgorithmName Algorithm = HashAlgorithmName.SHA256;
+    private readonly string _dummyHash;
+
+    public PasswordHasher()
+    {
+        _dummyHash = Hash("DummyPassword123");
+    }
 
     public string Hash(string plainTextPassword)
     {
@@ -26,20 +32,33 @@ public sealed class PasswordHasher : IPasswordHasher
 
     public bool Verify(string plainTextPassword, string hashedPassword)
     {
-        var parts = hashedPassword.Split('.', 2);
-        if (parts.Length != 2)
+        try
+        {
+            var parts = hashedPassword.Split('.', 2);
+            if (parts.Length != 2)
+            {
+                VerifyDummy(plainTextPassword);
+                return false;
+            }
+
+            var salt = Convert.FromBase64String(parts[0]);
+            var expectedHash = Convert.FromBase64String(parts[1]);
+
+            var actualHash = Rfc2898DeriveBytes.Pbkdf2(
+                plainTextPassword,
+                salt,
+                Iterations,
+                Algorithm,
+                HashSize);
+
+            return CryptographicOperations.FixedTimeEquals(actualHash, expectedHash);
+        }
+        catch (FormatException)
+        {
+            VerifyDummy(plainTextPassword);
             return false;
-
-        var salt = Convert.FromBase64String(parts[0]);
-        var expectedHash = Convert.FromBase64String(parts[1]);
-
-        var actualHash = Rfc2898DeriveBytes.Pbkdf2(
-            plainTextPassword,
-            salt,
-            Iterations,
-            Algorithm,
-            HashSize);
-
-        return CryptographicOperations.FixedTimeEquals(actualHash, expectedHash);
+        }
     }
+
+    public void VerifyDummy(string plainTextPassword) => Verify(plainTextPassword, _dummyHash);
 }

@@ -8,6 +8,7 @@
         public static Error NotFound(string code, string message) => new(code, message, ErrorType.NotFound);
         public static Error Conflict(string code, string message) => new(code, message, ErrorType.Conflict);
         public static Error Failure(string code, string message) => new(code, message, ErrorType.Failure);
+        public static Error Unauthorized(string code, string message) => new(code, message, ErrorType.Unauthorized);
     }
 
     public enum ErrorType
@@ -15,7 +16,8 @@
         Failure = 0,
         Validation = 1,
         NotFound = 2,
-        Conflict = 3
+        Conflict = 3,
+        Unauthorized = 4
     }
 
     public static class ErrorCodes

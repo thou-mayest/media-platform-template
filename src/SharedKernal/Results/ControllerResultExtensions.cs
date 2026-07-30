@@ -50,6 +50,7 @@ public static class ControllerResultExtensions
             ErrorType.Validation => new BadRequestObjectResult(new { error.Code, error.Message }),
             ErrorType.NotFound   => new NotFoundObjectResult(new { error.Code, error.Message }),
             ErrorType.Conflict   => new ConflictObjectResult(new { error.Code, error.Message }),
+            ErrorType.Unauthorized => new UnauthorizedObjectResult(new { error.Code, error.Message }),
             _                    => new ObjectResult(new { error.Code, error.Message }) { StatusCode = 500 }
         };
 }

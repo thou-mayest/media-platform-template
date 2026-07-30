@@ -1,5 +1,5 @@
 ---
-import type { Artwork } from '@/data/gallery';
+import { slugify, type Artwork } from '@/data/gallery';
 
 interface Props {
   work: Artwork;
@@ -16,9 +16,9 @@ const visibleTags = work.tags.slice(0, maxTags);
 
 {
   variant === 'pin' ? (
-    <article class="work-pin">
+    <article class="work-pin" data-work-slug={work.slug}>
       <a class="work-pin__art-link" href={`/works/${work.slug}`} aria-label={work.title}>
-        <div class="work-pin__art" style={`background:${work.bg};aspect-ratio:${work.ar};`} />
+        <div class="work-pin__art" style={`background:${work.bg};aspect-ratio:${work.ar};`}></div>
       </a>
       <div class="work-pin__body">
         <a class="work-pin__title" href={`/works/${work.slug}`}>{work.title}</a>
@@ -33,7 +33,7 @@ const visibleTags = work.tags.slice(0, maxTags);
             {work.category}
           </a>
           {visibleTags.map((t) => (
-            <a class="work-pin__chip" href={`/tags/${encodeURIComponent(t.toLowerCase())}`}>
+            <a class="work-pin__chip" href={`/tags/${slugify(t)}`}>
               #{t}
             </a>
           ))}
@@ -41,8 +41,8 @@ const visibleTags = work.tags.slice(0, maxTags);
       </div>
     </article>
   ) : (
-    <a class={`work-card work-card--${variant}`} href={`/works/${work.slug}`}>
-      <div class="work-card__art" style={`background:${work.bg};aspect-ratio:${work.ar};`} />
+    <a class={`work-card work-card--${variant}`} href={`/works/${work.slug}`} data-work-slug={work.slug}>
+      <div class="work-card__art" style={`background:${work.bg};aspect-ratio:${work.ar};`}></div>
       {variant === 'spotlight' ? (
         <div class="work-card__title work-card__title--spotlight">{work.title}</div>
       ) : (

@@ -26,6 +26,9 @@ internal class UsersDbContext : DbContext
                     .HasColumnName("Email")
                     .IsRequired()
                     .HasMaxLength(256);
+                email.HasIndex(e => e.Value)
+                    .IsUnique()
+                    .HasDatabaseName("UX_Users_Email");
             });
 
             entity.OwnsOne(u => u.Password, password =>
@@ -39,6 +42,9 @@ internal class UsersDbContext : DbContext
                 .IsRequired()
                 .HasConversion<string>()
                 .HasMaxLength(100);
+
+            entity.Property(u => u.Version)
+                .IsConcurrencyToken();
         });
         base.OnModelCreating(modelBuilder);
     }

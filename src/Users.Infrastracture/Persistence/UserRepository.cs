@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using SharedKernal.Messaging;
 using Users.Domain;
+using Npgsql;
 
 namespace Users.Infrastracture.Persistence;
 
@@ -23,6 +24,18 @@ internal class UserRepository(UsersDbContext context, IDomainEventDispatcher dis
         return await context.Users.FindAsync([id], cancellationToken);
     }
 
+    public Task<User?> GetByEmailAsync(string normalizedEmail, CancellationToken cancellationToken = default) =>
+        context.Users.SingleOrDefaultAsync(user => user.Email.Value == normalizedEmail, cancellationToken);
+
+    public Task<bool> EmailExistsAsync(
+        string normalizedEmail,
+        Guid? excludingUserId = null,
+        CancellationToken cancellationToken = default) =>
+        context.Users.AnyAsync(
+            user => user.Email.Value == normalizedEmail &&
+                    (!excludingUserId.HasValue || user.Id != excludingUserId.Value),
+            cancellationToken);
+
     public void Remove(User user)
     {
         context.Users.Remove(user);
@@ -42,7 +55,24 @@ internal class UserRepository(UsersDbContext context, IDomainEventDispatcher dis
 
         aggregates.ForEach(a => a.ClearDomainEvents());
 
-        var result = await context.SaveChangesAsync(cancellationToken);
+        int result;
+        try
+        {
+            result = await context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException exception)
+            when (exception.InnerException is PostgresException
+            {
+                SqlState: PostgresErrorCodes.UniqueViolation,
+                ConstraintName: "UX_Users_Email"
+            })
+        {
+            throw new UserEmailConflictException(exception);
+        }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            throw new UserConcurrencyException(exception);
+        }
 
         await dispatcher.DispatchAsync(domainEvents, cancellationToken);
 

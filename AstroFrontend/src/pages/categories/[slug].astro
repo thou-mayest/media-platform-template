@@ -15,9 +15,11 @@ if (!cat) {
 
 const baseWorks = artworksByCategory(cat.name);
 const tags = [...new Set(baseWorks.flatMap((w) => w.tags))].sort();
+const workNoun = baseWorks.length === 1 ? 'work' : 'works';
+const description = `Browse ${baseWorks.length} contemporary ${cat.name.toLowerCase()} ${workNoun} by artists in the Verso art index.`;
 ---
 
-<Layout title={`${cat.name} — Verso`}>
+<Layout title={`${cat.name} Art — Verso`} description={description} canonicalPath={`/categories/${cat.slug}`}>
   <main class="container page">
     <a class="back-link" href="/categories">← All categories</a>
     <h1 class="h-display page__h1">{cat.name}</h1>
@@ -32,7 +34,7 @@ const tags = [...new Set(baseWorks.flatMap((w) => w.tags))].sort();
       ))}
     </div>
 
-    <p class="empty" data-cat-empty hidden>No works match this filter.</p>
+    <p class="empty" data-cat-empty role="status" hidden>No works match this filter.</p>
 
     <div class="masonry">
       {baseWorks.map((w) => (
@@ -95,10 +97,15 @@ const tags = [...new Set(baseWorks.flatMap((w) => w.tags))].sort();
     font-size: 18px;
   }
   .masonry {
-    column-count: 2;
+    column-count: 1;
     column-gap: 30px;
   }
-  @media (min-width: 700px) {
+  @media (min-width: 560px) {
+    .masonry {
+      column-count: 2;
+    }
+  }
+  @media (min-width: 800px) {
     .masonry {
       column-count: 3;
     }

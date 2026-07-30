@@ -1,13 +1,9 @@
-﻿using Riok.Mapperly.Abstractions;
-using Users.Domain;
-using Users.Domain.ValueObjects;
+﻿using Users.Domain;
 
 namespace Users.Application.Users;
 
-[Mapper]
-internal static partial class UserMapper
+internal static class UserMapper
 {
-    internal static partial UserDto ToDto(this User user);
-
-    private static string MapEmail(Email email) => email.Value;
+    internal static UserDto ToDto(this User user) =>
+        new(user.Id, user.Name, user.Email.Value, user.Role, user.CreatedDate, user.UpdateDate);
 }

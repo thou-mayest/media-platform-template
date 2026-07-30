@@ -1,31 +1,91 @@
-# Project Overview
+# Media Platform Template
 
-A production-ready template for building modular monolith applications using .NET and Clean Architecture. Each module is fully isolated with its own clean architecture: application, domain, infrastructure, and presentation layers, enabling independent development while maintaining a single deployable application.
+Modular .NET 8 API, .NET Aspire development host, PostgreSQL persistence, and a static Astro frontend.
 
-The frontend is built with Astro, providing a modern, high-performance web experience. The development environment is orchestrated using .NET Aspire, while production deployments are containerized with Docker Compose and fronted by Traefik as a reverse proxy.
+## Prerequisites
 
-## Architecture Overview
+- .NET SDK 10.0.202, used to build the `net8.0` projects and `.slnx` solution
+- Node.js 22.12 or newer
+- Docker Desktop for Aspire PostgreSQL and container builds
 
-- Modular Monolith architecture
-- Clean Architecture per module
-- CQRS and Domain-Driven Design (DDD)
-- Integration events with asynchronous messaging
-- PostgreSQL and Entity Framework Core
-- Docker Compose production deployment
-- .NET Aspire local orchestration
-- Traefik reverse proxy
-- CI/CD ready
+## Local Development
 
-# docs
+Configure Aspire secrets once:
 
-# migrations
-
-- create migraitons, example for user module:
 ```powershell
-dotnet ef migrations add Initial --project .\src\Users.Infrastracture\Users.Infrastracture.csproj --startup-project .\src\Host.WebApi\Host.WebApi.csproj -o Migrations
+dotnet user-secrets set "Parameters:password" "a-strong-postgres-password" --project src/CleanModular.AppHost
+dotnet user-secrets set "Parameters:jwt-signing-key" "a-random-signing-key-with-at-least-32-characters" --project src/CleanModular.AppHost
+dotnet user-secrets set "Parameters:bootstrap-admin-password" "StrongAdminPassword123" --project src/CleanModular.AppHost
 ```
 
-start container without aspire (for persistent container aspire doesnt allow port mapping and persistent containers are acting up)
-```bash
-docker run --name postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -v ./postgres-data:/var/lib/postgresql postgres:18.3
+Then run the complete development environment:
+
+```powershell
+dotnet run --project src/CleanModular.AppHost
+```
+
+The bootstrap administrator email defaults to `admin@example.test` in Development. Change `BootstrapAdmin__Email` and `BootstrapAdmin__Name` as needed. The bootstrap password is never stored as plaintext.
+
+## Authentication
+
+Obtain a bearer token:
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.test",
+  "password": "your-bootstrap-password"
+}
+```
+
+User endpoints require a JWT. Listing, creating, and deleting users require an
+administrator; profile reads/updates allow either the same user or an administrator.
+
+## Production Configuration
+
+Required API settings:
+
+- `ConnectionStrings__MainDb`
+- `Jwt__SigningKey` with at least 32 characters
+- `Jwt__Issuer`
+- `Jwt__Audience`
+- `BootstrapAdmin__Email` and `BootstrapAdmin__Password` for initial provisioning
+- `ReverseProxy__KnownProxies__0` (and subsequent indexes) for each trusted proxy address
+- `Cors__AllowedOrigins__0` (and subsequent indexes) for each deployed frontend origin
+
+Set `Database__ApplyMigrations=true` only for a controlled migration instance or job. Normal production API replicas should not perform schema changes during startup.
+
+Required frontend build settings:
+
+- `SITE_URL`, an HTTPS public origin
+- `PUBLIC_INQUIRY_EMAIL`, the public artwork inquiry address
+- `PUBLIC_API_URL`, the public API root origin used for artwork view tracking
+
+Artwork views are aggregate counts only. The API does not persist IP addresses,
+user agents, referrers, or visitor identifiers. The browser attempts one view per
+artwork per tab session, while API and edge rate limits mitigate automated inflation.
+The homepage's Newest section uses explicit catalog-added dates; Most viewed is
+shown only after the API has real view data and displays the recorded counts.
+
+## Validation
+
+```powershell
+dotnet restore CleanModular.slnx
+dotnet build CleanModular.slnx --no-restore --configuration Release --warnaserror
+dotnet test src/Tests/ArchTests/CleanModular.ArchTests.csproj --no-build --configuration Release
+
+$env:SITE_URL = "https://example.test"
+$env:PUBLIC_INQUIRY_EMAIL = "inquiries@example.test"
+$env:PUBLIC_API_URL = "https://api.example.test"
+npm ci --prefix AstroFrontend
+npm run check --prefix AstroFrontend
+npm run audit --prefix AstroFrontend
+```
+
+Build the API container from the repository root:
+
+```powershell
+docker build --file src/Host.WebApi/Dockerfile --tag media-platform-api .
 ```

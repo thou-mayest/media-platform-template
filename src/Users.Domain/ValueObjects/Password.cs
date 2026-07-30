@@ -12,6 +12,7 @@ namespace Users.Domain.ValueObjects;
 
 public sealed class Password : ValueObject
 {
+    public const string InvalidatedHash = "!PASSWORD-RESET-REQUIRED!";
     private const int MinLength = 8;
 
     public string HashedValue { get; }

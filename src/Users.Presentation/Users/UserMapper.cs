@@ -8,12 +8,11 @@ namespace Users.Presentation.Users;
 [Mapper]
 internal static partial class UserMapper
 {
-    // Mapperly-generated — fields match exactly
-    internal static partial CreateUserCommand ToCommand(this CreateUserRequest request);
+    internal static CreateUserCommand ToCommand(this CreateUserRequest request) =>
+        new(request.Name!, request.Email!, request.Password!, request.Role!.Value);
 
-    // Manual — Id comes from the route, not the request body
-    internal static UpdateUserCommand ToCommand(this UpdateUserRequest request, Guid id)
-        => new(id, request.Name, request.Email, request.Password, request.Role);
+    internal static UpdateUserCommand ToCommand(this UpdateUserRequest request, Guid id) =>
+        new(id, request.Name!, request.Email!, request.Password, null);
 
     // Mapperly-generated — fields match exactly
     internal static partial UserResponse ToResponse(this UserDto dto);

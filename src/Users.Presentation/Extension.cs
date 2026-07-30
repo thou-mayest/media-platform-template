@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Users.Presentation.Users;
 using Users.Presentation.Authorization;
 
 namespace Users.Presentation;
@@ -15,5 +16,10 @@ public static class Extension
 
         return services;
     }
-}
 
+    public static IEndpointRouteBuilder MapUsersAuthentication(this IEndpointRouteBuilder endpoints)
+    {
+        endpoints.MapAuthEndpoints();
+        return endpoints;
+    }
+}
