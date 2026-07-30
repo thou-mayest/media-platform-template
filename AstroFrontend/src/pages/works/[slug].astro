@@ -36,7 +36,7 @@ const inquiryHref = inquiryEmail
 ---
 
 <Layout title={`${work.title} — ${work.artistName} — Verso`} description={description} canonicalPath={canonicalPath}>
-  <main class="container page">
+  <main class="container page" data-artwork-detail-slug={work.slug}>
     <nav class="crumbs" aria-label="Breadcrumb">
       <a href="/">Index</a>
       <span class="crumb-sep" aria-hidden="true">/</span>
@@ -84,6 +84,13 @@ const inquiryHref = inquiryEmail
       </div>
     </section>
   </main>
+  <script>
+    import { recordArtworkViewOnce } from '@/lib/artworkViews';
+
+    const detail = document.querySelector<HTMLElement>('[data-artwork-detail-slug]');
+    const slug = detail?.dataset.artworkDetailSlug;
+    if (slug) void recordArtworkViewOnce(slug);
+  </script>
 </Layout>
 
 <style>

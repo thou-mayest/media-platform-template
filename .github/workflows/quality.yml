@@ -24,6 +24,8 @@ jobs:
           --health-retries 10
     env:
       TEST_DATABASE_CONNECTION: Host=127.0.0.1;Port=5432;Database=media_platform_tests;Username=postgres;Password=postgres
+      REQUIRE_TEST_DATABASE: "true"
+      Cors__AllowedOrigins__0: https://example.test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -49,6 +51,7 @@ jobs:
     env:
       SITE_URL: https://example.test
       PUBLIC_INQUIRY_EMAIL: inquiries@example.test
+      PUBLIC_API_URL: https://api.example.test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

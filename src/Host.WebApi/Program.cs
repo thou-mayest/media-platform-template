@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Users.Infrastracture.Persistence;
 using Microsoft.AspNetCore.HttpOverrides;
 using System.Net;
+using Host.WebApi.ArtworkViews;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,22 @@ builder.AddServiceDefaults();
 
 // register modules
 builder.Services.AddUsersInfrastructure(builder.Configuration);
+var mainDbConnectionString = builder.Configuration.GetConnectionString("MainDb")
+    ?? throw new InvalidOperationException("Connection string 'MainDb' is not configured.");
+builder.Services.AddDbContextPool<ArtworkViewsDbContext>(options =>
+    options.UseNpgsql(mainDbConnectionString, npgsql =>
+        npgsql.MigrationsHistoryTable("__artwork_view_migrations", "analytics")));
+builder.Services.AddSingleton<ArtworkSlugCatalog>();
+builder.Services.AddScoped<ArtworkViewStore>();
+
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+builder.Services.AddCors(options => options.AddPolicy("public-frontend", policy =>
+{
+    if (allowedOrigins.Length > 0)
+    {
+        policy.WithOrigins(allowedOrigins).WithMethods("GET", "POST").AllowAnyHeader();
+    }
+}));
 
 var jwtSection = builder.Configuration.GetSection(JwtOptions.SectionName);
 var jwtOptions = jwtSection.Get<JwtOptions>()
@@ -91,6 +108,22 @@ builder.Services.AddRateLimiter(options =>
             Window = TimeSpan.FromMinutes(1),
             QueueLimit = 0
         }));
+    options.AddPolicy("artwork-view-recording", context => RateLimitPartition.GetFixedWindowLimiter(
+        GetClientAddress(context),
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 30,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
+    options.AddPolicy("artwork-view-ranking", context => RateLimitPartition.GetFixedWindowLimiter(
+        GetClientAddress(context),
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 120,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
 });
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -112,6 +145,7 @@ var app = builder.Build();
 app.MapDefaultEndpoints();
 app.UseExceptionHandler();
 app.UseForwardedHeaders();
+app.UseCors();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -124,6 +158,7 @@ if (app.Environment.IsDevelopment())
 if (app.Configuration.GetValue<bool>("Database:ApplyMigrations"))
 {
     await app.MigrateUsersDbAsync();
+    await app.MigrateArtworkViewsDbAsync();
 }
 
 await app.SeedBootstrapAdminAsync();
@@ -135,7 +170,18 @@ app.UseAuthorization();
 
 // map endpoints
 app.MapUsersEndpoints();
+app.MapArtworkViewEndpoints();
 
 app.Run();
+
+static string GetClientAddress(HttpContext context)
+{
+    var address = context.Connection.RemoteIpAddress;
+    if (address?.IsIPv4MappedToIPv6 == true)
+    {
+        address = address.MapToIPv4();
+    }
+    return address?.ToString() ?? "unknown";
+}
 
 public partial class Program;

@@ -65,9 +65,9 @@ npm run preview   # serve the built ./dist locally
 
 That's the full loop.
 
-Production builds require `SITE_URL` and `PUBLIC_INQUIRY_EMAIL` as process or
-deployment environment variables. `npm run check` runs both Astro's type check
-and a production build.
+Production builds require `SITE_URL`, `PUBLIC_INQUIRY_EMAIL`, and `PUBLIC_API_URL`
+as process or deployment environment variables. `npm run check` runs both Astro's
+type check and a production build.
 
 ## Project layout
 

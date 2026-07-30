@@ -3,6 +3,7 @@
 
 interface ImportMetaEnv {
   readonly PUBLIC_INQUIRY_EMAIL?: string;
+  readonly PUBLIC_API_URL?: string;
 }
 
 interface ImportMeta {

@@ -4,6 +4,7 @@ using Users.Application.Abstractions;
 using Users.Common;
 using Users.Domain;
 using System.ComponentModel.DataAnnotations;
+using Host.WebApi.ArtworkViews;
 
 namespace Host.WebApi;
 
@@ -64,5 +65,12 @@ public static class HostExtensions
             Role.Admin));
         await db.SaveChangesAsync();
         await transaction.CommitAsync();
+    }
+
+    public static async Task MigrateArtworkViewsDbAsync(this WebApplication app)
+    {
+        await using var scope = app.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<ArtworkViewsDbContext>();
+        await db.Database.MigrateAsync();
     }
 }

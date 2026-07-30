@@ -52,6 +52,7 @@ Required API settings:
 - `Jwt__Audience`
 - `BootstrapAdmin__Email` and `BootstrapAdmin__Password` for initial provisioning
 - `ReverseProxy__KnownProxies__0` (and subsequent indexes) for each trusted proxy address
+- `Cors__AllowedOrigins__0` (and subsequent indexes) for each deployed frontend origin
 
 Set `Database__ApplyMigrations=true` only for a controlled migration instance or job. Normal production API replicas should not perform schema changes during startup.
 
@@ -59,6 +60,13 @@ Required frontend build settings:
 
 - `SITE_URL`, an HTTPS public origin
 - `PUBLIC_INQUIRY_EMAIL`, the public artwork inquiry address
+- `PUBLIC_API_URL`, the public API root origin used for artwork view tracking
+
+Artwork views are aggregate counts only. The API does not persist IP addresses,
+user agents, referrers, or visitor identifiers. The browser attempts one view per
+artwork per tab session, while API and edge rate limits mitigate automated inflation.
+The homepage's Newest section uses explicit catalog-added dates; Most viewed is
+shown only after the API has real view data and displays the recorded counts.
 
 ## Validation
 

@@ -6,7 +6,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace CleanModular.IntegrationTests;
 
-public sealed class ApiSecurityTests : IClassFixture<ApiFactory>
+[Collection(IntegrationTestCollection.Name)]
+public sealed class ApiSecurityTests
 {
     private readonly HttpClient _client;
 
@@ -44,6 +45,7 @@ public sealed class ApiSecurityTests : IClassFixture<ApiFactory>
     {
         if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("TEST_DATABASE_CONNECTION")))
         {
+            Assert.NotEqual("true", Environment.GetEnvironmentVariable("REQUIRE_TEST_DATABASE"));
             return;
         }
 
