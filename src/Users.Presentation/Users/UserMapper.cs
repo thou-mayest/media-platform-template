@@ -12,7 +12,7 @@ internal static partial class UserMapper
         new(request.Name!, request.Email!, request.Password!, request.Role!.Value);
 
     internal static UpdateUserCommand ToCommand(this UpdateUserRequest request, Guid id) =>
-        new(id, request.Name!, request.Email!, request.Password, request.Role);
+        new(id, request.Name!, request.Email!, request.Password, null);
 
     // Mapperly-generated — fields match exactly
     internal static partial UserResponse ToResponse(this UserDto dto);

@@ -12,5 +12,7 @@ public sealed record CreateUserRequest(
 public sealed record UpdateUserRequest(
     [property: Required, StringLength(200, MinimumLength = 1)] string? Name,
     [property: Required, StringLength(256), EmailAddress] string? Email,
-    [property: StringLength(128, MinimumLength = 8)] string? Password,
-    [property: EnumDataType(typeof(Role))] Role? Role);
+    [property: StringLength(128, MinimumLength = 8)] string? Password);
+
+public sealed record ChangeUserRoleRequest(
+    [property: Required, EnumDataType(typeof(Role))] Role? Role);

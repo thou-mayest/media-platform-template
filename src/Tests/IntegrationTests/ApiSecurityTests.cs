@@ -105,11 +105,8 @@ public sealed class ApiSecurityTests
 
         var userToken = await LoginAsync(email, "NormalUser123");
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", userToken);
-        var promote = await _client.PutAsJsonAsync($"/api/users/{userId}", new
+        var promote = await _client.PutAsJsonAsync($"/api/users/{userId}/role", new
         {
-            name = "Normal User",
-            email,
-            password = (string?)null,
             role = 1
         });
 
