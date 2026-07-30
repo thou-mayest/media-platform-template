@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Users.Application.Users.Commands.Login;
 using Users.Presentation.Validation;
+using SharedKernal.Extensions;
 
 namespace Users.Presentation.Users;
 
@@ -21,9 +22,9 @@ internal static class AuthEndpoints
                     new LoginCommand(request.Email!, request.Password!),
                     cancellationToken);
 
-                return Results.Ok(new LoginResponse(
-                    result.AccessToken,
-                    result.User.ToResponse()));
+                return result.Match(login => Results.Ok(new LoginResponse(
+                    login.AccessToken,
+                    login.User.ToResponse())));
             })
             .AllowAnonymous()
             .RequireRateLimiting("login")

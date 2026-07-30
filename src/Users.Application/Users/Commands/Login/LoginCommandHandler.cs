@@ -1,33 +1,31 @@
 using SharedKernal.Messaging;
 using Users.Application.Abstractions;
-using Users.Application.Users.Exceptions;
-using Users.Domain;
+using SharedKernal.Results;
+using Users.Domain.Abstractions;
 
 namespace Users.Application.Users.Commands.Login;
 
 internal sealed class LoginCommandHandler(
     IUserRepository userRepository,
-    IPasswordHashingService passwordHashingService,
-    ITokenService tokenService) : ICommandHandler<LoginCommand, LoginResult>
+    IPasswordHasher passwordHasher,
+    ITokenService tokenService) : ICommandHandler<LoginCommand, Result<LoginResult>>
 {
-    public async Task<LoginResult> Handle(LoginCommand request, CancellationToken cancellationToken)
+    public async Task<Result<LoginResult>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
-        var user = await userRepository.GetByEmailAsync(
-            User.NormalizeEmail(request.Email),
-            cancellationToken);
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var user = await userRepository.GetByEmailAsync(normalizedEmail, cancellationToken);
 
         if (user is null)
         {
-            passwordHashingService.VerifyDummy(request.Password);
-            throw new InvalidCredentialsException();
+            passwordHasher.VerifyDummy(request.Password);
+            return AuthenticationErrors.InvalidCredentials;
         }
 
-        if (!passwordHashingService.Verify(user.PasswordHash, request.Password))
-        {
-            throw new InvalidCredentialsException();
-        }
+        if (!passwordHasher.Verify(request.Password, user.Password.HashedValue))
+            return AuthenticationErrors.InvalidCredentials;
 
-        var token = tokenService.Create(user.Id, user.Name, user.Email, user.Role, user.Version);
+        var token = tokenService.Create(user.Id, user.Name, user.Email.Value, user.Role, user.Version);
         return new LoginResult(token, user.ToDto());
     }
+
 }

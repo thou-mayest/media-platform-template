@@ -13,10 +13,7 @@ internal interface IUserRepository
         Guid? excludingUserId = null,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<User>> GetAllAsync(
-        int page,
-        int pageSize,
-        CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<User>> GetAllAsync(CancellationToken cancellationToken = default);
 
     Task AddAsync(User user, CancellationToken cancellationToken = default);
 

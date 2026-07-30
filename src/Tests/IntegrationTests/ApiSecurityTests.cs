@@ -52,7 +52,7 @@ public sealed class ApiSecurityTests
         var login = await _client.PostAsJsonAsync("/api/auth/login", new
         {
             email = "admin@example.test",
-            password = "integration-admin-password"
+            password = "IntegrationAdmin123"
         });
         login.EnsureSuccessStatusCode();
         var payload = await login.Content.ReadFromJsonAsync<LoginPayload>();
@@ -65,7 +65,71 @@ public sealed class ApiSecurityTests
         Assert.Equal(HttpStatusCode.OK, users.StatusCode);
     }
 
+    [Fact]
+    public async Task ValidFormatInvalidCredentials_ReturnUnauthorized()
+    {
+        if (!DatabaseIsConfigured()) return;
+
+        var response = await _client.PostAsJsonAsync("/api/auth/login", new
+        {
+            email = "missing@example.test",
+            password = "MissingPassword123"
+        });
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UserCannotPromoteOwnRoleToAdmin()
+    {
+        if (!DatabaseIsConfigured()) return;
+
+        var adminToken = await LoginAsync("admin@example.test", "IntegrationAdmin123");
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+        var email = $"user-{Guid.NewGuid():N}@example.test";
+        var create = await _client.PostAsJsonAsync("/api/users", new
+        {
+            name = "Normal User",
+            email,
+            password = "NormalUser123",
+            role = 2
+        });
+        create.EnsureSuccessStatusCode();
+        var created = await create.Content.ReadFromJsonAsync<CreatedUser>();
+        Assert.NotNull(created);
+
+        var userToken = await LoginAsync(email, "NormalUser123");
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", userToken);
+        var promote = await _client.PutAsJsonAsync($"/api/users/{created.Id}", new
+        {
+            name = "Normal User",
+            email,
+            password = (string?)null,
+            role = 1
+        });
+
+        Assert.Equal(HttpStatusCode.Forbidden, promote.StatusCode);
+    }
+
+    private bool DatabaseIsConfigured()
+    {
+        var configured = !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("TEST_DATABASE_CONNECTION"));
+        if (!configured)
+            Assert.NotEqual("true", Environment.GetEnvironmentVariable("REQUIRE_TEST_DATABASE"));
+        return configured;
+    }
+
+    private async Task<string> LoginAsync(string email, string password)
+    {
+        var response = await _client.PostAsJsonAsync("/api/auth/login", new { email, password });
+        response.EnsureSuccessStatusCode();
+        var payload = await response.Content.ReadFromJsonAsync<LoginPayload>();
+        Assert.False(string.IsNullOrWhiteSpace(payload?.AccessToken));
+        return payload.AccessToken;
+    }
+
     private sealed record LoginPayload(string AccessToken);
+    private sealed record CreatedUser(Guid Id);
 }
 
 public sealed class ApiFactory : WebApplicationFactory<Program>
@@ -84,6 +148,6 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             .UseSetting("Database:ApplyMigrations", useDatabase.ToString())
             .UseSetting("BootstrapAdmin:Name", "Integration Administrator")
             .UseSetting("BootstrapAdmin:Email", "admin@example.test")
-            .UseSetting("BootstrapAdmin:Password", useDatabase ? "integration-admin-password" : string.Empty);
+            .UseSetting("BootstrapAdmin:Password", useDatabase ? "IntegrationAdmin123" : string.Empty);
     }
 }

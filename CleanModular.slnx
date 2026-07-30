@@ -2,31 +2,24 @@
   <Folder Name="/Solution Items/">
     <File Path="Directory.Packages.props" />
   </Folder>
-  <Folder Name="/src/" />
   <Folder Name="/src/BuildingBlocks/">
-    <Project Path="src/SharedKernal/SharedKernal.csproj" Id="9ab825b8-c8d4-4439-ac7a-9bc609651398" />
+    <Project Path="src/SharedKernal/SharedKernal.csproj" />
   </Folder>
   <Folder Name="/src/Hosts/">
-    <Project Path="src/CleanModular.AppHost/CleanModular.AppHost.csproj" Id="e04bb1ac-0845-4144-a9a7-97d03ba21a1e" />
+    <Project Path="src/CleanModular.AppHost/CleanModular.AppHost.csproj" />
     <Project Path="src/CleanModular.ServiceDefaults/CleanModular.ServiceDefaults.csproj" />
     <Project Path="src/Host.WebApi/Host.WebApi.csproj" />
   </Folder>
-  <Folder Name="/src/Modules/" />
-  <Folder Name="/src/Modules/Posts/" />
-  <Folder Name="/src/Modules/Storage/" />
   <Folder Name="/src/Modules/Users/">
-    <Project Path="src/Users.Application/Users.Application.csproj" Id="e13a39c5-587f-4df6-9012-378224f2aee0" />
-    <Project Path="src/Users.Domain/Users.Domain.csproj" Id="c2766ecf-7937-4dc4-a833-52de2c8a1d75" />
-    <Project Path="src/Users.Infrastracture/Users.Infrastracture.csproj" Id="8aa7539d-824a-4491-83d4-f83792bc8cc2" />
-    <Project Path="src/Users.Presentation/Users.Presentation.csproj" Id="83de914e-9b2d-42bf-996a-a71b68206efb" />
-    <Project Path="Users.Common/Users.Common.csproj" Id="e2eeefd6-1679-4e83-9dc0-59270478303d" />
+    <Project Path="src/Users.Application/Users.Application.csproj" />
+    <Project Path="src/Users.Contracts/Users.Contracts.csproj" />
+    <Project Path="src/Users.Domain/Users.Domain.csproj" />
+    <Project Path="src/Users.Infrastracture/Users.Infrastracture.csproj" />
+    <Project Path="src/Users.Presentation/Users.Presentation.csproj" />
   </Folder>
-  <Folder Name="/src/Tests/" />
-  <Folder Name="/src/Tests/ArchTests/">
+  <Folder Name="/src/Tests/">
     <Project Path="src/Tests/ArchTests/CleanModular.ArchTests.csproj" />
-  </Folder>
-  <Folder Name="/src/Tests/IntegrationTests/">
     <Project Path="src/Tests/IntegrationTests/CleanModular.IntegrationTests.csproj" />
+    <Project Path="src/Tests/UnitTests/Users.Domain.UnitTests/Users.Domain.UnitTests.csproj" />
   </Folder>
-  <Folder Name="/src/Tests/UnitTests/" />
 </Solution>

@@ -15,7 +15,7 @@ Configure Aspire secrets once:
 ```powershell
 dotnet user-secrets set "Parameters:password" "a-strong-postgres-password" --project src/CleanModular.AppHost
 dotnet user-secrets set "Parameters:jwt-signing-key" "a-random-signing-key-with-at-least-32-characters" --project src/CleanModular.AppHost
-dotnet user-secrets set "Parameters:bootstrap-admin-password" "a-strong-admin-password" --project src/CleanModular.AppHost
+dotnet user-secrets set "Parameters:bootstrap-admin-password" "StrongAdminPassword123" --project src/CleanModular.AppHost
 ```
 
 Then run the complete development environment:
@@ -40,7 +40,8 @@ Content-Type: application/json
 }
 ```
 
-All `/api/users` endpoints require an administrator JWT.
+User endpoints require a JWT. Listing, creating, and deleting users require an
+administrator; profile reads/updates allow either the same user or an administrator.
 
 ## Production Configuration
 
@@ -77,6 +78,7 @@ dotnet test src/Tests/ArchTests/CleanModular.ArchTests.csproj --no-build --confi
 
 $env:SITE_URL = "https://example.test"
 $env:PUBLIC_INQUIRY_EMAIL = "inquiries@example.test"
+$env:PUBLIC_API_URL = "https://api.example.test"
 npm ci --prefix AstroFrontend
 npm run check --prefix AstroFrontend
 npm run audit --prefix AstroFrontend

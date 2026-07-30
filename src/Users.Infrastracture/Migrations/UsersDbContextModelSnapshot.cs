@@ -32,22 +32,15 @@ namespace Users.Infrastracture.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<string>("PasswordHash")
+                    b.Property<string>("Role")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Role")
-                        .HasColumnType("integer");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime?>("UpdateDate")
                         .HasColumnType("timestamp with time zone");
@@ -58,14 +51,57 @@ namespace Users.Infrastracture.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Email")
-                        .IsUnique()
-                        .HasDatabaseName("UX_Users_Email");
+                    b.ToTable("Users", "Users");
+                });
 
-                    b.ToTable("Users", "Users", t =>
+            modelBuilder.Entity("Users.Domain.User", b =>
+                {
+                    b.OwnsOne("Users.Domain.ValueObjects.Email", "Email", b1 =>
                         {
-                            t.HasCheckConstraint("CK_Users_Role", "\"Role\" IN (1, 2, 3)");
+                            b1.Property<Guid>("UserId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(256)
+                                .HasColumnType("character varying(256)")
+                                .HasColumnName("Email");
+
+                            b1.HasKey("UserId");
+
+                            b1.HasIndex("Value")
+                                .IsUnique()
+                                .HasDatabaseName("UX_Users_Email");
+
+                            b1.ToTable("Users", "Users");
+
+                            b1.WithOwner()
+                                .HasForeignKey("UserId");
                         });
+
+                    b.OwnsOne("Users.Domain.ValueObjects.Password", "Password", b1 =>
+                        {
+                            b1.Property<Guid>("UserId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("HashedValue")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("Password");
+
+                            b1.HasKey("UserId");
+
+                            b1.ToTable("Users", "Users");
+
+                            b1.WithOwner()
+                                .HasForeignKey("UserId");
+                        });
+
+                    b.Navigation("Email")
+                        .IsRequired();
+
+                    b.Navigation("Password")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

@@ -1,14 +1,25 @@
 ﻿using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using Users.Presentation.Users;
+using Users.Presentation.Authorization;
 
 namespace Users.Presentation;
 
 public static class Extension
 {
-    public static IEndpointRouteBuilder MapUsersEndpoints(this IEndpointRouteBuilder app)
+    public static IServiceCollection AddUsersPresentation(this IServiceCollection services)
     {
-        app.MapAuthEndpoints();
-        app.MapUserEndpoints();
-        return app;
+        services.AddControllers()
+            .AddApplicationPart(typeof(Extension).Assembly);
+
+        services.AddUsersAuthorization();
+
+        return services;
+    }
+
+    public static IEndpointRouteBuilder MapUsersAuthentication(this IEndpointRouteBuilder endpoints)
+    {
+        endpoints.MapAuthEndpoints();
+        return endpoints;
     }
 }

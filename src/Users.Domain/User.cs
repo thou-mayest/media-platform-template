@@ -1,51 +1,94 @@
 ﻿using SharedKernal.Entities;
+using SharedKernal.Results;
 using Users.Common;
+using Users.Domain.Abstractions;
+using Users.Domain.DomainEvents;
+using Users.Domain.ValueObjects;
 
 namespace Users.Domain;
 
-public class User : BaseEntity
+public class User : AggregateRoot
 {
-    public const string InvalidatedPasswordHash = "!PASSWORD-RESET-REQUIRED!";
+    public string Name { get; private set; }
+    public Email Email { get; private set; }
+    public Password Password { get; private set; }
+    public Role Role { get; private set; }
+
+    private User(Guid id, string name, Email email, Password password, Role role)
+        : base(id)
+    {
+        Name = name;
+        Email = email;
+        Password = password;
+        Role = role;
+    }
 
     private User()
     {
+        Name = null!;
+        Email = null!;
+        Password = null!;
     }
 
-    public Guid Id { get; private set; }
-
-    public string Name { get; private set; } = string.Empty;
-
-    public string Email { get; private set; } = string.Empty;
-
-    public string PasswordHash { get; private set; } = string.Empty;
-
-    public Role Role { get; private set; }
-
-    public User(string name, string email, string passwordHash, Role role)
+    public static Result<User> Create(string? name, string? email, string? plainTextPassword, Role role, IPasswordHasher hasher)
     {
-        Id = Guid.NewGuid();
+        if (string.IsNullOrWhiteSpace(name))
+            return Result.Failure<User>(Error.Validation("User.NameEmpty", "Name cannot be empty."));
+
+        if (name.Length > 200)
+            return Result.Failure<User>(Error.Validation("User.NameTooLong", "Name must not exceed 200 characters."));
+
+        var emailResult = Email.Create(email);
+        if (emailResult.IsFailure)
+            return Result.Failure<User>(emailResult.Errors);
+
+        var passwordResult = Password.Create(plainTextPassword, hasher);
+        if (passwordResult.IsFailure)
+            return Result.Failure<User>(passwordResult.Errors);
+
+        var user = new User(Guid.NewGuid(), name.Trim(), emailResult.Value, passwordResult.Value, role);
+        user.RaiseDomainEvent(new UserCreatedDomainEvent(user.Id, user.Name, user.Email.Value));
+        return Result.Success(user);
+    }
+
+    public Result UpdateProfile(string? name, string? email)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return Result.Failure(Error.Validation("User.NameEmpty", "Name cannot be empty."));
+
+        var emailResult = Email.Create(email);
+        if (emailResult.IsFailure)
+            return Result.Failure(emailResult.Errors);
+
         Name = name.Trim();
-        Email = NormalizeEmail(email);
-        PasswordHash = passwordHash;
-        Role = role;
-    }
-
-    public void Update(string name, string email, string passwordHash, Role role)
-    {
-        Name = name.Trim();
-        Email = NormalizeEmail(email);
-        PasswordHash = passwordHash;
-        Role = role;
+        Email = emailResult.Value;
         UpdateDate = DateTime.UtcNow;
-        Version = Guid.NewGuid();
+        RaiseDomainEvent(new UserUpdatedDomainEvent(Id, Name, Email.Value));
+        return Result.Success();
     }
 
-    public static string NormalizeEmail(string email) => email.Trim().ToUpperInvariant();
-
-    public void SetPasswordHash(string passwordHash)
+    public Result ChangePassword(string? newPlainTextPassword, IPasswordHasher hasher)
     {
-        PasswordHash = passwordHash;
+        var passwordResult = Password.Create(newPlainTextPassword, hasher);
+        if (passwordResult.IsFailure)
+            return Result.Failure(passwordResult.Errors);
+
+        Password = passwordResult.Value;
         UpdateDate = DateTime.UtcNow;
-        Version = Guid.NewGuid();
+        return Result.Success();
     }
+
+    public void Delete()
+    {
+        RaiseDomainEvent(new UserDeletedDomainEvent(Id));
+    }
+
+    public Result ChangeRole(Role newRole)
+    {
+        Role = newRole;
+        UpdateDate = DateTime.UtcNow;
+        return Result.Success();
+    }
+
+    public void RotateVersion() => Version = Guid.NewGuid();
 }

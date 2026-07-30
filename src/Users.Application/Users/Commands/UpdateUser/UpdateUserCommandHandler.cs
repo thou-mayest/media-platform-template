@@ -1,36 +1,42 @@
 using SharedKernal.Messaging;
+using SharedKernal.Results;
 using Users.Application.Abstractions;
-using Users.Application.Users.Exceptions;
-using Users.Domain;
-
+using Users.Domain.Abstractions;
 namespace Users.Application.Users.Commands.UpdateUser;
 
-internal sealed class UpdateUserCommandHandler(
-    IUserRepository userRepository,
-    IPasswordHashingService passwordHashingService)
-    : ICommandHandler<UpdateUserCommand>
+internal sealed class UpdateUserCommandHandler(IUserRepository userRepository, IPasswordHasher passwordHasher)
+    : ICommandHandler<UpdateUserCommand, Result<UserDto>>
 {
-    public async Task Handle(UpdateUserCommand request, CancellationToken cancellationToken)
+    public async Task<Result<UserDto>> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
     {
-        var user = await userRepository.GetByIdAsync(request.Id, cancellationToken)
-            ?? throw new UserNotFoundException(request.Id);
+        var user = await userRepository.GetByIdAsync(request.Id, cancellationToken);
 
-        var normalizedEmail = User.NormalizeEmail(request.Email);
-        if (await userRepository.EmailExistsAsync(
-                normalizedEmail,
-                request.Id,
-                cancellationToken))
+        if (user is null)
+            return Error.NotFound(ErrorCodes.NotFound, $"user with Id {request.Id} not found");
+
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        if (await userRepository.EmailExistsAsync(normalizedEmail, request.Id, cancellationToken))
+            return Error.Conflict("User.EmailExists", "A user with that email already exists.");
+
+        var profileResult = user.UpdateProfile(request.Name, request.Email);
+        if (profileResult.IsFailure)
+            return profileResult.Error;
+
+        if (!string.IsNullOrWhiteSpace(request.Password))
         {
-            throw new EmailAlreadyExistsException();
+            var passwordResult = user.ChangePassword(request.Password, passwordHasher);
+            if (passwordResult.IsFailure)
+                return passwordResult.Error;
         }
 
-        user.Update(
-            request.Name,
-            normalizedEmail,
-            passwordHashingService.Hash(request.Password),
-            request.Role);
+        if (request.Role.HasValue)
+        {
+            user.ChangeRole(request.Role.Value);
+        }
+        user.RotateVersion();
 
         userRepository.Update(user);
         await userRepository.SaveChangesAsync(cancellationToken);
+        return user.ToDto();
     }
 }
