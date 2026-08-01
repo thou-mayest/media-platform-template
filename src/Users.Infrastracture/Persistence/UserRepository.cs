@@ -25,6 +25,8 @@ internal class UserRepository(UsersDbContext context, IDomainEventDispatcher dis
 
     public async Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
+        email = email.Trim().ToLowerInvariant();
+
         return await context.Users
             .FirstOrDefaultAsync(u => u.Email.Value == email, cancellationToken);
     }

@@ -16,7 +16,12 @@ internal sealed class LoginCommandHandler(
         var user = await userRepository.GetByEmailAsync(request.Email, cancellationToken);
 
         if (user is null)
+        {
+            // timing attack protection to prevent user enumeration
+            passwordHasher.PerformFakeVerification();
             return Error.NotFound("User.InvalidCredentials", "Email or password is incorrect.");
+        }
+            
 
         var passwordValid = passwordHasher.Verify(request.Password, user.Password.HashedValue);
         if (!passwordValid)
