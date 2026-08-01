@@ -17,19 +17,13 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 10.0.x
 
-      - name: Run all test projects
-        shell: bash
-        run: |
-          mapfile -d '' test_projects < <(find ./src/Tests -name '*Tests.csproj' -print0)
+      - name: Restore dependencies
+        run: dotnet restore
 
-          if [ "${#test_projects[@]}" -eq 0 ]; then
-            echo "No test projects were found."
-            exit 1
-          fi
+      - name: Build solution
+        run: dotnet build --no-restore --configuration Release
 
-          for project in "${test_projects[@]}"; do
-            echo "Running $project"
-            dotnet test "$project" --configuration Release
-          done
+      - name: Run tests
+        run: dotnet test --no-build --configuration Release
