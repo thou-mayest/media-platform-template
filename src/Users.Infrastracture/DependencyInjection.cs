@@ -20,7 +20,7 @@ internal static class DependencyInjection
     {
         services.AddDbContext(configuration);
 
-        services.AddUsersApplication();
+        services.AddUsersApplication(configuration);
 
         services.AddUsersMessageBus();
 
@@ -40,9 +40,12 @@ internal static class DependencyInjection
         return services;
     }
 
-    private static IServiceCollection AddUsersApplication(this IServiceCollection services)
+    private static IServiceCollection AddUsersApplication(this IServiceCollection services, IConfiguration configuration)
     {
         services.InitializeApplication();
+
+        services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.AddScoped<ITokenService, TokenService>();
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();

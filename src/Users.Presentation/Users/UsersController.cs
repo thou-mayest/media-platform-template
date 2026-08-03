@@ -26,7 +26,7 @@ public sealed class UsersController(ISender sender) : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    [Authorize(Policy = UsersPolicies.CanManageUsers)]
+    [Authorize(Policy = UsersPolicies.RequireAdmin)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
     {
         var result = await sender.Send(new GetUserByIdQuery(id), ct);
@@ -48,7 +48,7 @@ public sealed class UsersController(ISender sender) : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Policy = UsersPolicies.CanManageUsers)]
+    [Authorize(Policy = UsersPolicies.RequireAdmin)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserRequest request, CancellationToken ct)
     {
         var result = await sender.Send(request.ToCommand(id), ct);
