@@ -1,6 +1,8 @@
 using Host.WebApi;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Storage.Infrastracture;
+using Storage.Presentation;
 using System.Text;
 using Users.Infrastracture;
 using Users.Presentation;
@@ -14,6 +16,8 @@ builder.AddServiceDefaults();
 // register modules
 builder.Services.AddUsersInfrastructure(builder.Configuration);
 builder.Services.AddUsersPresentation();
+builder.Services.AddStorageInfrastructure(builder.Configuration);
+builder.Services.AddStoragePresentation();
 
 var jwtSection = builder.Configuration.GetSection("Jwt");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -64,6 +68,7 @@ if (app.Environment.IsDevelopment())
 
 
 await app.MigrateUsersDbAsync();
+await app.MigrateStorageDbAsync();
 
 app.UseCors(MyAllowSpecificOrigins);
 app.UseHttpsRedirection();
