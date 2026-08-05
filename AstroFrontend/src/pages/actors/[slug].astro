@@ -1,6 +1,6 @@
 ---
 export const prerender = false;
-
+import { clamp, formatCompact } from '@/lib/text';
 import MediaLayout from '@/layouts/MediaLayout.astro';
 import AlbumCard from '@/components/media/AlbumCard.astro';
 import ActorCard from '@/components/media/ActorCard.astro';
@@ -36,15 +36,6 @@ if (ims && lm && Date.parse(ims) >= Date.parse(lm)) {
 for (const [k, v] of Object.entries(headers)) Astro.response.headers.set(k, v);
 
 // ── Presentation ───────────────────────────────────────────────
-const clamp = (s: string, max = 155) => {
-  if (s.length <= max) return s;
-  const cut = s.slice(0, max - 1);
-  return `${cut.slice(0, cut.lastIndexOf(' ')).trimEnd()}…`;
-};
-
-const fmt = (n: number) =>
-  n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 1 : 2)}k`.replace('.0k', 'k') : String(n);
-
 const onFirst = result.page === 1;
 const title = onFirst
   ? `${actor.displayName} — ${actor.profession}`
@@ -138,7 +129,7 @@ const jsonLd = [
         <dl class="phero-stats">
           <div class="stat"><dt>Albums</dt><dd>{actor.albumCount}</dd></div>
           <div class="stat"><dt>Media</dt><dd>{actor.mediaCount}</dd></div>
-          <div class="stat"><dt>Followers</dt><dd>{fmt(actor.followerCount)}</dd></div>
+          <div class="stat"><dt>Followers</dt><dd>{formatCompact(actor.followerCount)}</dd></div>
         </dl>
       </div>
     </section>
