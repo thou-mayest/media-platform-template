@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Storage.Presentation.Authorization;
 
 namespace Storage.Presentation;
 
@@ -8,6 +9,8 @@ public static class Extension
     {
         services.AddControllers()
             .AddApplicationPart(typeof(Extension).Assembly);
+
+        services.AddStorageAuthorization();
 
         return services;
     }
