@@ -19,8 +19,9 @@ export function pageTitle(title: string): string {
  *  handle is worse than none. */
 export const twitterHandle = '';
 
-/** Album cards per page on the profile grid. Becomes the API's pageSize. */
-export const ALBUMS_PER_PAGE = 6;
+/** Album cards per page. 10 albums + 2 ad slots = 12 cells, which fills the
+ *  4-column grid exactly, matching the design's row rhythm. */
+export const ALBUMS_PER_PAGE = 10;
 
 /** How recently an album must have been published to earn a "New" badge. */
 export const NEW_BADGE_DAYS = 90;

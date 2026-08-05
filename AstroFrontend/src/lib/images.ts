@@ -113,3 +113,12 @@ export function imageSrcSet(
     })
     .join(', ');
 }
+
+/** CSS gradient for decorative surfaces that have no asset of their own —
+ *  the profile cover banner. ActorProfile has no cover field in the domain
+ *  model, so this is a presentation fallback, not missing data. */
+export function placeholderGradient(id: number): string {
+  const [from, to] =
+    PLACEHOLDER_PALETTE[Math.abs(id) % PLACEHOLDER_PALETTE.length]!;
+  return `linear-gradient(115deg, ${from} 0%, ${to} 100%)`;
+}
