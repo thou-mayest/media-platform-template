@@ -131,3 +131,18 @@ export function postsByAlbum(albumId: number): Post[] {
     .filter((p) => p.albumId === albumId)
     .sort((a, b) => a.displayOrder - b.displayOrder);
 }
+
+export function getPostById(albumId: number, postId: number): Post | undefined {
+  return posts.find((p) => p.albumId === albumId && p.id === postId);
+}
+
+/** Neighbours in displayOrder, for the prev/next links. Nulls at the ends. */
+export function adjacentPosts(
+  albumId: number,
+  postId: number,
+): { prev: Post | null; next: Post | null } {
+  const list = postsByAlbum(albumId);
+  const i = list.findIndex((p) => p.id === postId);
+  if (i === -1) return { prev: null, next: null };
+  return { prev: list[i - 1] ?? null, next: list[i + 1] ?? null };
+}

@@ -1,0 +1,345 @@
+---
+export const prerender = false;
+
+import MediaLayout from '@/layouts/MediaLayout.astro';
+import Breadcrumbs from '@/components/media/Breadcrumbs.astro';
+import {
+  getActorBySlug, getAlbumBySlug, getPostById, adjacentPosts, type Post,
+} from '@/data/media';
+import { actorPath, albumPath, postPath, absoluteUrl } from '@/lib/routes';
+import { imageUrl, imageSrcSet } from '@/lib/images';
+import { videoUrl, posterUrl } from '@/lib/video';
+import { clamp } from '@/lib/text';
+import { siteName } from '@/config/site';
+
+const { slug, album: albumSlug, id } = Astro.params;
+const actor = slug ? getActorBySlug(slug) : undefined;
+const album = actor && albumSlug ? getAlbumBySlug(actor.slug, albumSlug) : undefined;
+const postId = Number(id);
+const post = album && Number.isInteger(postId) ? getPostById(album.id, postId) : undefined;
+if (!actor || !album || !post) return new Response(null, { status: 404 });
+
+// ── HTTP caching ───────────────────────────────────────────────
+// A post changes only on edit or delete, so it holds far longer than the
+// profile and album pages, which change whenever anything below them does.
+const headers: Record<string, string> = {
+  'Cache-Control': 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400',
+  'Last-Modified': new Date(post.updatedAt).toUTCString(),
+};
+
+const ims = Astro.request.headers.get('if-modified-since');
+if (ims && Date.parse(ims) >= Date.parse(post.updatedAt)) {
+  return new Response(null, { status: 304, headers });
+}
+for (const [k, v] of Object.entries(headers)) Astro.response.headers.set(k, v);
+
+// ── Presentation ───────────────────────────────────────────────
+/** Post has no title field; the caption names it, the alt text describes it. */
+const displayTitle = (p: Post) => clamp(p.caption ?? p.altText, 70);
+
+const heading = displayTitle(post);
+const isVideo = post.mediaType === 'video';
+
+const RENDER_W = 1400;
+const height = Math.round(RENDER_W / post.aspectRatio);
+const WIDTHS = [480, 720, 960, 1200, 1600, 2000];
+
+const ref = { key: post.storageKey, id: post.id };
+const poster = isVideo ? posterUrl(ref, { width: RENDER_W, height }) : null;
+const src = poster ?? imageUrl(ref, { width: RENDER_W, height, fit: 'contain' });
+const srcset = isVideo ? '' : imageSrcSet(ref, WIDTHS, { aspectRatio: post.aspectRatio, fit: 'contain' });
+const playable = isVideo ? videoUrl(ref) : null;
+const realAsset = !src.startsWith('data:');
+
+const mmss =
+  post.durationSeconds != null
+    ? `${Math.floor(post.durationSeconds / 60)}:${String(post.durationSeconds % 60).padStart(2, '0')}`
+    : null;
+
+/** Schema.org wants ISO 8601, not mm:ss. */
+const iso8601 = (s: number) => `PT${Math.floor(s / 60)}M${s % 60}S`;
+
+const { prev, next } = adjacentPosts(album.id, post.id);
+const path = postPath(actor.slug, album.slug, post.id);
+
+const description = clamp(
+  `${post.altText}. From ${album.title} by ${actor.displayName}, ${actor.profession}.`,
+);
+
+const crumbs = [
+  { label: siteName, href: '/' },
+  { label: actor.displayName, href: actorPath(actor.slug) },
+  { label: album.title, href: albumPath(actor.slug, album.slug) },
+  { label: heading },
+];
+
+// Only emitted with real assets — a data-URI contentUrl or thumbnailUrl is
+// invalid structured data, and an invalid entity is worse than none.
+const mediaLd = realAsset
+  ? {
+      '@context': 'https://schema.org',
+      '@type': isVideo ? 'VideoObject' : 'ImageObject',
+      name: heading,
+      description: post.altText,
+      uploadDate: post.publishedAt,
+      contentUrl: absoluteUrl(src, Astro.site),
+      ...(isVideo && poster ? { thumbnailUrl: absoluteUrl(poster, Astro.site) } : {}),
+      ...(post.durationSeconds != null ? { duration: iso8601(post.durationSeconds) } : {}),
+      representativeOfPage: true,
+      author: {
+        '@type': 'Person',
+        name: actor.displayName,
+        url: absoluteUrl(actorPath(actor.slug), Astro.site),
+      },
+      isPartOf: {
+        '@type': 'ImageGallery',
+        name: album.title,
+        url: absoluteUrl(albumPath(actor.slug, album.slug), Astro.site),
+      },
+    }
+  : null;
+
+const jsonLd = [
+  ...(mediaLd ? [mediaLd] : []),
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: crumbs.map((c, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: c.label,
+      ...(c.href ? { item: absoluteUrl(c.href, Astro.site) } : {}),
+    })),
+  },
+];
+---
+
+<MediaLayout
+  title={`${heading} — ${album.title}`}
+  description={description}
+  path={path}
+  ogType="article"
+  image={realAsset ? { url: absoluteUrl(src, Astro.site), width: RENDER_W, height, alt: post.altText } : null}
+  prevPath={prev ? postPath(actor.slug, album.slug, prev.id) : null}
+  nextPath={next ? postPath(actor.slug, album.slug, next.id) : null}
+  jsonLd={jsonLd}
+>
+  <main>
+    <div class="container post">
+      <Breadcrumbs items={crumbs} />
+
+      <figure class="post-figure" style={`--ar:${post.aspectRatio};`}>
+        {playable ? (
+          <video
+            class="post-media"
+            controls
+            preload="none"
+            playsinline
+            poster={poster}
+            width={RENDER_W}
+            height={height}
+            aria-label={post.altText}
+          >
+            <source src={playable} type="application/x-mpegURL" />
+          </video>
+        ) : (
+          <div class="post-mediawrap">
+            <img
+              class="post-media"
+              src={src}
+              srcset={srcset || undefined}
+              sizes={srcset ? '(min-width: 1040px) 1000px, 94vw' : undefined}
+              width={RENDER_W}
+              height={height}
+              alt={post.altText}
+              loading="eager"
+              decoding="sync"
+              fetchpriority="high"
+            />
+            {isVideo && (
+              <span class="post-play" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+              </span>
+            )}
+          </div>
+        )}
+
+        <h1 class="post-h1">{heading}</h1>
+        {post.caption && post.caption !== heading && (
+          <figcaption class="post-cap">{post.caption}</figcaption>
+        )}
+      </figure>
+
+      <p class="post-metaline">
+        <a class="post-owner" href={actorPath(actor.slug)}>{actor.displayName}</a>
+        <span class="sep" aria-hidden="true">·</span>
+        <a href={albumPath(actor.slug, album.slug)}>{album.title}</a>
+        {mmss && (
+          <Fragment>
+            <span class="sep" aria-hidden="true">·</span>
+            <span>{mmss}</span>
+          </Fragment>
+        )}
+        <span class="sep" aria-hidden="true">·</span>
+        <time datetime={post.publishedAt}>{post.publishedAt}</time>
+      </p>
+
+      <nav class="post-nav" aria-label="Album media">
+        {prev ? (
+          <a class="post-navbtn" href={postPath(actor.slug, album.slug, prev.id)} rel="prev">
+            <span class="pnl">Previous</span>
+            <span class="pnt">{displayTitle(prev)}</span>
+          </a>
+        ) : (
+          <span />
+        )}
+
+        {next && (
+          <a class="post-navbtn next" href={postPath(actor.slug, album.slug, next.id)} rel="next">
+            <span class="pnl">Next</span>
+            <span class="pnt">{displayTitle(next)}</span>
+          </a>
+        )}
+      </nav>
+
+      {album.tags.length > 0 && (
+        <section class="post-tags">
+          <h2 class="post-h2">Tags</h2>
+          <ul class="taglist">
+            {album.tags.map((t) => <li class="tag">{t}</li>)}
+          </ul>
+        </section>
+      )}
+    </div>
+  </main>
+</MediaLayout>
+
+<style>
+  .post { max-width: 1000px; }
+  .post-figure { margin: 0; }
+  .post-mediawrap { position: relative; }
+
+  .post-media {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: var(--ar);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    object-fit: cover;
+  }
+
+  .post-play {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 74px;
+    height: 74px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    padding-left: 4px;
+  }
+
+  .post-h1 {
+    font-family: var(--font-serif);
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 20px 2px 0;
+    color: var(--text);
+    text-wrap: balance;
+  }
+
+  .post-cap {
+    color: var(--text-2);
+    font-size: 15px;
+    line-height: 1.55;
+    margin: 10px 2px 0;
+    max-width: 660px;
+    text-wrap: pretty;
+  }
+
+  .post-metaline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 16px 2px 0;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--hairline);
+    color: var(--muted);
+    font: 600 13px var(--font-sans);
+  }
+  .post-metaline a:hover { color: var(--accent); }
+  .post-owner { color: var(--accent); }
+  .sep { color: var(--faint); }
+
+  .post-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 22px 0 0;
+  }
+  .post-navbtn {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 11px 16px;
+    border: 1px solid var(--border-soft);
+    border-radius: 11px;
+    background: var(--bg);
+    max-width: 47%;
+  }
+  .post-navbtn.next { align-items: flex-end; text-align: right; margin-left: auto; }
+  .post-navbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .pnl {
+    font: 600 10px var(--font-sans);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+  .pnt {
+    font-family: var(--font-serif);
+    font-size: 14px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  .post-navbtn:hover .pnt { color: var(--accent); }
+
+  .post-tags {
+    margin: 36px 0 0;
+    padding-top: 24px;
+    border-top: 1px solid var(--hairline);
+  }
+  .post-h2 {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 14px;
+    color: var(--text);
+  }
+  .taglist {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .tag {
+    font-size: 12px;
+    border-radius: 999px;
+    padding: 6px 12px;
+    background: var(--chip-bg);
+    border: 1px solid var(--border-soft);
+    color: var(--text-2);
+  }
+</style>
