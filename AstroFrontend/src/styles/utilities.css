@@ -1,0 +1,34 @@
+/*
+ * Reusable layout classes. Consumes tokens; defines none.
+ */
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Pushes the footer to the bottom on short pages. */
+.page > main {
+  flex: 1;
+}
+
+/* Consumed by Header and Footer markup. */
+.container {
+  width: min(var(--container-max), var(--container-gutter));
+  margin: 0 auto;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
