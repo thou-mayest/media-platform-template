@@ -1,11 +1,10 @@
 // Public surface of the media mock dataset. Pages import '@/data/media' only,
 // so the internal layout can change without touching templates.
 
-import type { Actor, Album, PagedResult } from './types';
-import { rawActors, rawAlbums } from './fixtures';
+import { rawActors, rawAlbums, rawPosts } from './fixtures';
+import type { Actor, Album, Post, PagedResult } from './types';
 
-export type { Actor, Album, PagedResult, SocialLink, SocialPlatform } from './types';
-
+export type { Actor, Album, Post, MediaType, PagedResult, SocialLink, SocialPlatform } from './types';
 // Duplicated from data/gallery.ts — slugify is not exported there, and
 // exporting it would mean editing a shared file.
 function slugify(s: string): string {
@@ -100,4 +99,35 @@ export function paginate<T>(items: T[], page: number, pageSize: number): PagedRe
     hasPrev: current > 1,
     hasNext: current < totalPages,
   };
+}
+
+export const posts: Post[] = (() => {
+  const perAlbum = new Map<number, number>();
+  return rawPosts.map((r, i) => {
+    const order = perAlbum.get(r[0]) ?? 0;
+    perAlbum.set(r[0], order + 1);
+    const album = albums[r[0]]!;
+    return {
+      id: i,
+      albumId: r[0],
+      actorId: album.actorId,
+      storageKey: '',
+      mediaType: r[1],
+      aspectRatio: r[2],
+      durationSeconds: r[3],
+      altText: r[4],
+      caption: r[5],
+      displayOrder: order,
+      publishedAt: r[6],
+      // Mock treats posts as immutable after publish. The API returns these
+      // independently.
+      updatedAt: r[6],
+    };
+  });
+})();
+
+export function postsByAlbum(albumId: number): Post[] {
+  return posts
+    .filter((p) => p.albumId === albumId)
+    .sort((a, b) => a.displayOrder - b.displayOrder);
 }

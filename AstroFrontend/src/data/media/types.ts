@@ -7,6 +7,7 @@
 
 export type SocialPlatform = 'instagram' | 'youtube' | 'x' | 'website';
 export type SocialLink = { platform: SocialPlatform; url: string };
+export type MediaType = 'photo' | 'video';
 
 /** Read model over the ActorProfile aggregate. */
 export type Actor = {
@@ -75,4 +76,36 @@ export type RawAlbum = readonly [
   actorId: number, title: string, description: string, coverAlt: string,
   coverAspectRatio: number, photos: number, videos: number,
   isSeries: boolean, tags: string, publishedAt: string, updatedAt: string,
+];
+
+/** Read model over the Post aggregate. */
+export type Post = {
+  id: number;
+  albumId: number;
+  actorId: number;
+  /** Post.StorageKey. Empty until real media exists. Video posters are
+   *  derived from the same key by the image service. */
+  storageKey: string;
+  mediaType: MediaType;
+  /** Post.AspectRatio — width / height. Preserved in the feed, unlike album
+   *  cards which crop to a fixed box. */
+  aspectRatio: number;
+  /** Seconds. Null for photos. */
+  durationSeconds: number | null;
+  caption: string | null;
+  /** Post.AltText — authored, describes the frame. */
+  altText: string;
+  displayOrder: number;
+  publishedAt: string;
+  updatedAt: string;
+};
+
+export type RawPost = readonly [
+  albumId: number,
+  mediaType: MediaType,
+  aspectRatio: number,
+  durationSeconds: number | null,
+  altText: string,
+  caption: string | null,
+  publishedAt: string,
 ];

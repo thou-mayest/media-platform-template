@@ -1,4 +1,4 @@
-import type { RawActor, RawAlbum } from './types';
+import type { RawActor, RawAlbum, RawPost } from './types';
 
 export const rawActors: RawActor[] = [
   ['Mara Solano', 'Photographer & Filmmaker', 'Saturated, sun-drunk images of coastal life — analog portraits, night markets and long-exposure seascapes shot across the Mediterranean and West Africa.', 38200, '2026-07-28'],
@@ -52,4 +52,45 @@ export const rawAlbums: RawAlbum[] = [
   [6, 'Weather Turns', 'Static frames held until the light changes.', 'Flat moorland under a dark front advancing from the left edge', 1.778, 5, 8, true, 'Landscape,Weather,Slow Cinema', '2024-02-11', '2026-05-22'],
   [6, 'Valley Fog', 'One valley, filmed at dawn for thirty consecutive days.', 'Fog filling a valley floor with ridgelines emerging above it', 1.778, 4, 6, false, 'Landscape,Weather', '2023-10-06', '2026-03-17'],
   [6, 'Before Snow', 'The hour before the first snowfall, three winters running.', 'Bare birches against a heavy yellow-grey pre-snow sky', 1.5, 3, 4, false, 'Landscape,Winter,Slow Cinema', '2022-12-19', '2026-01-08'],
+];
+
+// Posts exist for three albums only. Authoring believable alt text for every
+// item across 32 albums is not feasible, and generated alt text is exactly the
+// filler the SEO brief rules out. The remaining albums render an empty state,
+// which is a real production case anyway — a freshly created album.
+export const rawPosts: RawPost[] = [
+  // ── album 0 · Coastal Studies (9 photos) ─────────────────────
+  [0, 'photo', 1.5, null, 'Bleached wooden groyne standing in shallow turquoise water at midday', 'Groyne no. 4, low tide', '2024-06-14'],
+  [0, 'photo', 0.667, null, 'Swimmer mid-stride entering the sea, spray caught at knee height', null, '2024-06-14'],
+  [0, 'photo', 1.5, null, 'Empty striped deckchairs facing an overexposed white horizon', null, '2024-06-15'],
+  [0, 'photo', 0.8, null, 'Salt crust drying in cracked patterns on dark harbour stone', 'Salt, four days without rain', '2024-06-15'],
+  [0, 'photo', 1.778, null, 'Long breakwater receding to a distant lighthouse under flat cloud', null, '2024-06-17'],
+  [0, 'photo', 1, null, 'Coiled blue mooring rope on a sun-bleached wooden bollard', null, '2024-06-18'],
+  [0, 'photo', 0.667, null, 'Child in a red swimsuit silhouetted against bright shallow water', null, '2024-06-19'],
+  [0, 'photo', 1.5, null, 'Fishing skiff pulled up on shingle with nets folded across the bow', 'Borrowed for the afternoon', '2024-06-21'],
+  [0, 'photo', 0.8, null, 'Sunburnt shoulder and a strap mark, shot close in hard midday light', null, '2024-06-22'],
+
+  // ── album 1 · Night Market (11 photos, 3 videos) ─────────────
+  [1, 'photo', 1.5, null, 'Spice seller arranging cones of saffron and paprika under paper lanterns', 'The stall that started the series', '2023-11-02'],
+  [1, 'photo', 0.8, null, 'Portrait of a tea vendor lit only by the burner in front of him', null, '2023-11-02'],
+  [1, 'video', 1.778, 47, 'Slow pan across a crowded food alley at dusk as the lanterns come on', 'Forty seconds, no cuts', '2023-11-03'],
+  [1, 'photo', 0.667, null, 'Hands tearing flatbread over a steel counter, motion blur on the fingers', null, '2023-11-03'],
+  [1, 'photo', 1.5, null, 'Neon reflections broken across a puddle after the evening rain', null, '2023-11-04'],
+  [1, 'photo', 1, null, 'Stacked brass lamps catching light from a single overhead bulb', null, '2023-11-04'],
+  [1, 'video', 1.778, 112, 'Handheld walk past the grilled-corn carts, ambient sound only', null, '2023-11-05'],
+  [1, 'photo', 0.8, null, 'Woman counting coins at a fabric stall, face half in shadow', null, '2023-11-06'],
+  [1, 'photo', 1.5, null, 'Overhead canopy of hanging lanterns receding down a narrow lane', 'Shot standing on a crate', '2023-11-07'],
+  [1, 'photo', 0.667, null, 'Butcher’s scale swinging slightly, lit from below by a bare filament', null, '2023-11-08'],
+  [1, 'video', 0.5625, 28, 'Vertical clip of a mint tea pour from arm’s height into a glass', null, '2023-11-09'],
+  [1, 'photo', 1.778, null, 'Wide view of the square at full dark, smoke lit from beneath by stalls', null, '2023-11-10'],
+  [1, 'photo', 1, null, 'Close crop of dried rose petals in a shallow woven basket', null, '2023-11-11'],
+  [1, 'photo', 0.8, null, 'Boy asleep against a stack of folded rugs as the market packs up', 'Last frame of the trip', '2023-11-12'],
+
+  // ── album 3 · Long-Exposure Sea (2 photos, 4 videos) ─────────
+  [3, 'photo', 1.778, null, 'Atlantic swell blurred to smooth grey fog against a black basalt shelf', 'Ten minutes at f/16', '2024-09-30'],
+  [3, 'video', 1.778, 180, 'Static three-minute frame of the tide crossing a rock shelf at dawn', null, '2024-09-30'],
+  [3, 'photo', 1.5, null, 'Half-submerged boulder softened by a long exposure at first light', null, '2024-10-01'],
+  [3, 'video', 1.778, 95, 'Cloud shadow moving across open water, camera locked off', null, '2024-10-02'],
+  [3, 'video', 1.778, 140, 'Incoming set breaking over the shelf, filmed from above the waterline', null, '2024-10-03'],
+  [3, 'video', 0.5625, 62, 'Vertical study of water draining off rock between waves', null, '2024-10-04'],
 ];
