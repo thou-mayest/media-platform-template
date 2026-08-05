@@ -6,6 +6,9 @@
 export const siteName = 'Verso';
 export const siteLocale = 'en';
 
+/** Open Graph requires language_TERRITORY, unlike <html lang>. */
+export const siteOgLocale = 'en_US';
+
 /** Appended to every page title. Titles are truncated around 60 characters
  *  in results, so the suffix stays short. */
 export function pageTitle(title: string): string {
