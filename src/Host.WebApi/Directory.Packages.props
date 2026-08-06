@@ -1,13 +1,15 @@
 <Project>
-	<Import Project="$([MSBuild]::GetPathOfFileAbove(Directory.Packages.props, $(MSBuildThisFileDirectory)..))" />
-
-	<PropertyGroup>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove(Directory.Packages.props, $(MSBuildThisFileDirectory)..))" />
+  <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <ItemGroup>
-	  <PackageReference Include="MediatR"/>
-	  <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets"/>
-	  <PackageReference Include="Swashbuckle.AspNetCore"/>
+    <PackageReference Include="MediatR" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.16.17" />
   </ItemGroup>
 </Project>

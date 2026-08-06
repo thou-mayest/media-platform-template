@@ -19,6 +19,7 @@ var postgres = builder.AddPostgres("postgres", password: password)
 var database = postgres.AddDatabase("MainDb");
 
 builder.AddProject<Projects.Host_WebApi>("host-webapi").WithReference(postgres)
+    .WithUrl("scalar")
     .WaitFor(postgres);
 
 builder.Build().Run();
