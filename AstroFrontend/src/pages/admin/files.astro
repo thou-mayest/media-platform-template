@@ -7,10 +7,10 @@ import Layout from '@/layouts/Layout.astro';
     <header class="page-head">
       <p class="eyebrow">Admin</p>
       <h1 class="h-display">Library</h1>
-      <p class="lede">admin uploaded files another test :')'.</p>
+      <p class="lede">All uploaded images, videos, and files in one place.</p>
     </header>
 
-    <div id="auth-notice" class="notice hidden" hidden>
+    <div id="auth-notice" class="notice" hidden>
       <p>You need to be logged in as an admin to view files.</p>
       <a class="btn btn-primary btn-sm" href="/login">Log in</a>
     </div>
@@ -87,201 +87,35 @@ import Layout from '@/layouts/Layout.astro';
     padding: 0 0 3rem;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 1.25rem;
+    gap: 1.5rem;
   }
 
-  .card {
-    display: grid;
-    grid-template-rows: auto 1fr;
-    background: var(--surface);
-    border: 1px solid var(--border-soft);
-    border-radius: 14px;
-    overflow: hidden;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  }
-
-  .card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 18px 40px -28px var(--shadow);
-    border-color: var(--border);
-  }
-
-  .preview {
-    position: relative;
-    aspect-ratio: 16 / 10;
-    background: var(--bg);
+  .grid > li {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-  }
-
-  .preview img,
-  .preview video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .preview__icon {
-    color: var(--faint);
-  }
-
-  .preview__overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.25);
-    color: #f5f2ec;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-  }
-
-  .card:hover .preview__overlay {
-    opacity: 1;
-  }
-
-  .info {
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-  }
-
-  .name {
-    font-family: 'Spectral', serif;
-    font-size: 1.05rem;
-    line-height: 1.25;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin: 0;
-  }
-
-  .meta {
-    font-size: 0.82rem;
-    color: var(--muted);
-    margin: 0;
-  }
-
-  .meta strong {
-    color: var(--text-2);
-    font-weight: 600;
-  }
-
-  .card__link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    margin-top: 0.65rem;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--accent);
-    text-decoration: none;
-  }
-
-  .card__link:hover {
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
-
-  .hidden {
-    display: none;
   }
 </style>
 
 <script>
   import { filesApi, ApiError } from '@/api';
   import { isLoggedIn } from '@/lib/auth';
+  import '@/components/ui/MediaCard.ts';
   import type { FileDto } from '@/api';
 
   const grid = document.getElementById('grid')!;
   const loading = document.getElementById('loading')!;
   const empty = document.getElementById('empty')!;
   const error = document.getElementById('error')!;
-  const refreshBtn = document.getElementById('refresh-btn')! as HTMLButtonElement;
-
-  const FILE_ICON =
-    '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>';
-
-  const IMAGE_ICON =
-    '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
-
-  const VIDEO_ICON =
-    '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18"/><path d="m10 8 6 4-6 4V8z"/></svg>';
-
-  const PLAY_ICON =
-    '<svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
-
-  const EXTERNAL_ICON =
-    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>';
-
-  function formatSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  }
-
-  function isImage(type: string): boolean {
-    return type.startsWith('image/');
-  }
-
-  function isVideo(type: string): boolean {
-    return type.startsWith('video/');
-  }
+  const refreshBtn = document.getElementById('refresh-btn')!;
 
   function createCard(file: FileDto): HTMLLIElement {
     const li = document.createElement('li');
-    li.className = 'card';
-
-    const preview = document.createElement('div');
-    preview.className = 'preview';
-
-    if (isImage(file.contentType)) {
-      const img = document.createElement('img');
-      img.src = file.url;
-      img.alt = file.originalFileName;
-      img.loading = 'lazy';
-      preview.appendChild(img);
-    } else if (isVideo(file.contentType)) {
-      const video = document.createElement('video');
-      video.src = file.url;
-      video.preload = 'metadata';
-      preview.appendChild(video);
-      const overlay = document.createElement('div');
-      overlay.className = 'preview__overlay';
-      overlay.innerHTML = PLAY_ICON;
-      preview.appendChild(overlay);
-    } else {
-      preview.innerHTML = `<div class="preview__icon">${FILE_ICON}</div>`;
-    }
-
-    const info = document.createElement('div');
-    info.className = 'info';
-
-    const name = document.createElement('p');
-    name.className = 'name';
-    name.title = file.originalFileName;
-    name.textContent = file.originalFileName;
-
-    const meta = document.createElement('p');
-    meta.className = 'meta';
-    const typeLabel = file.contentType || 'unknown';
-    const date = new Date(file.createdAt).toLocaleString();
-    meta.innerHTML = `<strong>${formatSize(file.fileSize)}</strong> · ${typeLabel}<br/>${date}`;
-
-    const link = document.createElement('a');
-    link.className = 'card__link';
-    link.href = file.url;
-    link.target = '_blank';
-    link.rel = 'noopener';
-    link.innerHTML = `Open file ${EXTERNAL_ICON}`;
-
-    info.append(name, meta, link);
-    li.append(preview, info);
+    const card = document.createElement('media-card');
+    card.setAttribute('data-url', file.url);
+    card.setAttribute('data-name', file.originalFileName);
+    card.setAttribute('data-type', file.contentType);
+    card.setAttribute('data-size', String(file.fileSize));
+    card.setAttribute('data-created', file.createdAt);
+    li.appendChild(card);
     return li;
   }
 
@@ -320,8 +154,8 @@ import Layout from '@/layouts/Layout.astro';
   }
 
   if (!isLoggedIn()) {
-    document.getElementById('auth-notice')!.classList.remove('hidden');
-    document.getElementById('browser')!.classList.add('hidden');
+    document.getElementById('auth-notice')!.hidden = false;
+    document.getElementById('browser')!.setAttribute('hidden', '');
   } else {
     loadFiles();
   }
