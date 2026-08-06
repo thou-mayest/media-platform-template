@@ -56,6 +56,17 @@ export const filesApi = {
     });
   },
 
+  /** List all uploaded files. Requires an authenticated admin. */
+  async list(): Promise<FileDto[]> {
+    const res = await fetch(`${BASE_URL}/api/files`, {
+      headers: authHeaders(),
+    });
+    if (!res.ok) {
+      throw new ApiError(res.status, `API error ${res.status} on /api/files`);
+    }
+    return res.json() as Promise<FileDto[]>;
+  },
+
   /** Fetch metadata (including the public url) for an uploaded file. */
   async getById(id: string): Promise<FileDto> {
     const res = await fetch(`${BASE_URL}/api/files/${id}`, {

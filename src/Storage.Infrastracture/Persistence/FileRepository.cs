@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Storage.Application.Abstractions;
 using Storage.Domain;
 
@@ -8,6 +9,13 @@ internal class FileRepository(StorageDbContext context) : IFileRepository
     public async Task<MediaAsset?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await context.MediaAssets.FindAsync([id], cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<MediaAsset>> ListAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await context.MediaAssets
+            .OrderByDescending(m => m.CreatedAt)
+            .ToListAsync(cancellationToken);
     }
 
     public async Task AddAsync(MediaAsset mediaAsset, CancellationToken cancellationToken = default)

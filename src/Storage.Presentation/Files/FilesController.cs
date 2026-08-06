@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SharedKernal.Extensions;
 using Storage.Application.Files.Commands.UploadFile;
+using Storage.Application.Files.Queries.GetAllFiles;
 using Storage.Application.Files.Queries.GetFileById;
 using Storage.Presentation.Authorization;
 
@@ -32,12 +33,24 @@ public sealed class FilesController(ISender sender) : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [Authorize(Policy = StoragePolicies.RequireAdmin)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
     {
         var result = await sender.Send(new GetFileByIdQuery(id), ct);
 
         return result.Match(
             file => Ok(file)
+        );
+    }
+
+    [HttpGet]
+    [Authorize(Policy = StoragePolicies.RequireAdmin)]
+    public async Task<IActionResult> GetAll(CancellationToken ct)
+    {
+        var result = await sender.Send(new GetAllFilesQuery(), ct);
+
+        return result.Match(
+            files => Ok(files)
         );
     }
 }
