@@ -10,7 +10,7 @@ import Layout from '@/layouts/Layout.astro';
       <p class="lede">All uploaded images, videos, and files in one place.</p>
     </header>
 
-    <div id="auth-notice" class="notice" hidden>
+    <div id="auth-notice" class="notice hidden">
       <p>You need to be logged in as an admin to view files.</p>
       <a class="btn btn-primary btn-sm" href="/login">Log in</a>
     </div>
@@ -93,6 +93,8 @@ import Layout from '@/layouts/Layout.astro';
   .grid > li {
     display: flex;
   }
+
+  .hidden { display: none; }
 </style>
 
 <script>
@@ -154,8 +156,8 @@ import Layout from '@/layouts/Layout.astro';
   }
 
   if (!isLoggedIn()) {
-    document.getElementById('auth-notice')!.hidden = false;
-    document.getElementById('browser')!.setAttribute('hidden', '');
+    document.getElementById('auth-notice')!.classList.remove('hidden');
+    document.getElementById('browser')!.classList.add('hidden');
   } else {
     loadFiles();
   }
