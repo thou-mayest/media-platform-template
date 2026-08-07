@@ -1,9 +1,9 @@
+using CleanModular.ServiceDefaults;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.ServiceDiscovery;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -25,6 +25,8 @@ public static class Extensions
         builder.AddDefaultHealthChecks();
 
         builder.Services.AddServiceDiscovery();
+
+        builder.AddOpenApiWithSecurityScheme();
 
         builder.Services.ConfigureHttpClientDefaults(http =>
         {
@@ -75,6 +77,15 @@ public static class Extensions
 
         builder.AddOpenTelemetryExporters();
 
+        return builder;
+    }
+
+    private static TBuilder AddOpenApiWithSecurityScheme<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    {
+        builder.Services.AddOpenApi(options =>
+        {
+            options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+        });
         return builder;
     }
 
