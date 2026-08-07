@@ -14,7 +14,7 @@ public static class Extension
 
             options.JsonSerializerOptions.DefaultIgnoreCondition =
                 JsonIgnoreCondition.WhenWritingNull;
-        }); ;
+        });
 
         services.AddUsersAuthorization();
 
