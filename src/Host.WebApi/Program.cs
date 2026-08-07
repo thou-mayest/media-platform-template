@@ -69,9 +69,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-
-
-await app.MigrateUsersDbAsync();
+await app.ApplyMigrations();
 
 app.UseCors(MyAllowSpecificOrigins);
 app.UseHttpsRedirection();
