@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Users.Infrastracture.Persistence;
+using Users.Infrastracture;
+using Users.Presentation;
 
 namespace Host.WebApi;
 
@@ -10,6 +12,16 @@ public static class HostExtensions
     {
         await MigrateModuleDbAsync<UsersDbContext>(app);
     }
+
+    public static TBuilder RegisterModules<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    {
+        // register users modules
+        builder.Services.AddUsersInfrastructure(builder.Configuration);
+        builder.Services.AddUsersPresentation();
+
+        return builder;
+    }
+
 
     private static async Task MigrateModuleDbAsync<TDbContext>(this WebApplication app) where TDbContext : DbContext
     {
