@@ -18,6 +18,7 @@ var postgres = builder.AddPostgres("postgres", password: password)
 var database = postgres.AddDatabase("MainDb");
 
 builder.AddProject<Projects.Host_WebApi>("host-webapi")
+    .WithUrl("scalar")
     .WithReference(postgres)
     .WithEnvironment("S3__AccessKey", s3AccessKey)
     .WithEnvironment("S3__SecretKey", s3SecretKey)

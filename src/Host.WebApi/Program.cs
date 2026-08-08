@@ -3,45 +3,22 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Storage.Infrastracture;
 using Storage.Presentation;
+using Scalar.AspNetCore;
 using System.Text;
-using Users.Infrastracture;
-using Users.Presentation;
+using System.Text.Json.Serialization;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-
 builder.AddServiceDefaults();
 
-// register modules
-builder.Services.AddUsersInfrastructure(builder.Configuration);
-builder.Services.AddUsersPresentation();
-builder.Services.AddStorageInfrastructure(builder.Configuration);
-builder.Services.AddStoragePresentation();
-
-var jwtSection = builder.Configuration.GetSection("Jwt");
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.MapInboundClaims = false;
-
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSection["Issuer"],
-            ValidAudience = jwtSection["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtSection["SecretKey"]!)),
-            ClockSkew = TimeSpan.FromMinutes(1)
-        };
-    });
+builder.RegisterModules();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Converters.Add(new JsonStringEnumConverter(null, false)));
+
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -59,16 +36,16 @@ var app = builder.Build();
 
 app.MapDefaultEndpoints();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapOpenApi();
+    app.MapScalarApiReference(options =>
+    {
+        options.OpenApiRoutePattern = "/openapi/v1.json";
+    });
 }
 
-
-await app.MigrateUsersDbAsync();
-await app.MigrateStorageDbAsync();
+await app.ApplyMigrations();
 
 app.UseCors(MyAllowSpecificOrigins);
 app.UseHttpsRedirection();
