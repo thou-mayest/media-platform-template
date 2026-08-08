@@ -1,8 +1,15 @@
 import { defineConfig } from "astro/config";
 import node from "@astrojs/node";
+import { loadEnv } from "vite";
+
+const { PUBLIC_SITE_URL } = loadEnv(
+  process.env.NODE_ENV ?? "development",
+  process.cwd(),
+  "PUBLIC_",
+);
 
 export default defineConfig({
-  site: "http://192.168.100.45:4321",
+  site: PUBLIC_SITE_URL ?? "http://localhost:4321",
   output: "hybrid",
   adapter: node({ mode: "standalone" }),
 });

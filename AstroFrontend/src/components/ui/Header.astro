@@ -102,10 +102,10 @@ const { initialQ = '' } = Astro.props;
     });
 
     document.addEventListener('DOMContentLoaded', () => {
-      const authLink = document.getElementById('auth-link');
-      const token = localStorage.getItem('authToken');
+    const authLink = document.getElementById('auth-link') as HTMLAnchorElement | null;     
+    const token = localStorage.getItem('authToken');
 
-      if (token) {
+      if (authLink && token) {
         authLink.textContent = 'Logout';
         authLink.href = '#';
         authLink.addEventListener('click', (e) => {
