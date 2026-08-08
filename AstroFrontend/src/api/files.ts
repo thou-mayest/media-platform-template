@@ -67,6 +67,26 @@ export const filesApi = {
     return res.json() as Promise<FileDto[]>;
   },
 
+ /**
+ * Sends an array of strings to your backend.
+ * Replace the URL and adjust the request format as needed.
+ */
+  async sendStringList(strings: string[]): Promise<Response> {
+    const response = await fetch('/api/strings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ strings }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+
+    return response;
+  },
+
   /** Fetch metadata (including the public url) for an uploaded file. */
   async getById(id: string): Promise<FileDto> {
     const res = await fetch(`${BASE_URL}/api/files/${id}`, {

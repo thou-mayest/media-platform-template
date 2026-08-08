@@ -1,5 +1,6 @@
 ---
 import Layout from '@/layouts/Layout.astro';
+import StringSender from '@/components/interactive/StringList.astro';
 ---
 
 <Layout title="Upload · Admin" description="Upload images and files to the media library">
@@ -33,6 +34,11 @@ import Layout from '@/layouts/Layout.astro';
         <button type="button" id="clear-btn" class="btn btn-ghost">Clear</button>
       </div>
     </section>
+        class="links-textarea"
+        spellcheck="false"
+        placeholder="Uploaded file links will appear here, one per line..."
+      ></textarea>
+    </div>
   </main>
 </Layout>
 
@@ -48,8 +54,6 @@ import Layout from '@/layouts/Layout.astro';
     font-size: 1.05rem;
     line-height: 1.6;
   }
-
-  
 
   .notice {
     display: flex;

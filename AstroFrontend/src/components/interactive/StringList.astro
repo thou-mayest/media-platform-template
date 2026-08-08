@@ -1,0 +1,252 @@
+---
+// No server-side logic needed
+---
+<div class="list-sender">
+  <div class="input-group">
+    <input type="text" id="stringInput" placeholder="Enter a string..." autocomplete="off" />
+    <button id="addBtn" class="btn btn--add">Add</button>
+  </div>
+
+  <ul id="stringList" class="string-list"></ul>
+
+  <div class="actions">
+    <button id="sendBtn" class="btn btn--send" disabled>Send list</button>
+  </div>
+  <p id="message" class="message" aria-live="polite"></p>
+</div>
+
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f3f4f6;
+    --text: #1f2937;
+    --text-secondary: #6b7280;
+    --border: #d1d5db;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --success: #10b981;
+    --error: #ef4444;
+    --radius: 12px;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111827;
+      --surface: #1f2937;
+      --text: #f9fafb;
+      --text-secondary: #9ca3af;
+      --border: #374151;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.4), 0 2px 4px -2px rgba(0,0,0,0.4);
+    }
+  }
+
+  .list-sender {
+    max-width: 32rem;
+    margin: 2rem auto;
+    padding: 1.5rem;
+    background: var(--bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    font-family: system-ui, -apple-system, sans-serif;
+    color: var(--text);
+  }
+
+  .input-group {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  #stringInput {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  #stringInput:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+  }
+
+  .btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s, opacity 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn:active {
+    transform: scale(0.97);
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn--add {
+    background-color: var(--accent);
+    color: white;
+  }
+
+  .btn--add:hover:not(:disabled) {
+    background-color: var(--accent-hover);
+  }
+
+  .btn--send {
+    background-color: var(--text);
+    color: var(--bg);
+  }
+
+  .btn--send:hover:not(:disabled) {
+    background-color: var(--text-secondary);
+  }
+
+  .string-list {
+    margin: 1rem 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .string-list li {
+    background: var(--surface);
+    padding: 0.4rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid var(--border);
+  }
+
+  .string-list li button {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 0.2rem;
+    transition: color 0.15s;
+  }
+
+  .string-list li button:hover {
+    color: var(--error);
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .message {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    text-align: center;
+    min-height: 1.5em;
+  }
+
+  .message.success {
+    color: var(--success);
+  }
+
+  .message.error {
+    color: var(--error);
+  }
+</style>
+
+<script>
+  import { filesApi } from '../../api/files.ts';
+
+  const input = document.getElementById('stringInput') as HTMLInputElement;
+  const addBtn = document.getElementById('addBtn') as HTMLButtonElement;
+  const sendBtn = document.getElementById('sendBtn') as HTMLButtonElement;
+  const listEl = document.getElementById('stringList') as HTMLUListElement;
+  const messageEl = document.getElementById('message') as HTMLParagraphElement;
+
+  let strings: string[] = [];
+
+  function updateUI() {
+    // Rebuild list
+    listEl.innerHTML = '';
+    strings.forEach((str, index) => {
+      const li = document.createElement('li');
+      li.textContent = str;
+
+      const removeBtn = document.createElement('button');
+      removeBtn.innerHTML = '&times;';
+      removeBtn.setAttribute('aria-label', `Remove ${str}`);
+      removeBtn.addEventListener('click', () => {
+        strings.splice(index, 1);
+        updateUI();
+      });
+
+      li.appendChild(removeBtn);
+      listEl.appendChild(li);
+    });
+
+    sendBtn.disabled = strings.length === 0;
+  }
+
+  function setMessage(text: string, type: 'success' | 'error') {
+    messageEl.textContent = text;
+    messageEl.className = `message ${type}`;
+    setTimeout(() => {
+      messageEl.textContent = '';
+      messageEl.className = 'message';
+    }, 3000);
+  }
+
+  addBtn.addEventListener('click', () => {
+    const value = input.value.trim();
+    if (value) {
+      strings.push(value);
+      input.value = '';
+      updateUI();
+      input.focus();
+    }
+  });
+
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      addBtn.click();
+    }
+  });
+
+  sendBtn.addEventListener('click', async () => {
+    if (strings.length === 0) return;
+
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Sending...';
+
+    try {
+      await filesApi.sendStringList([...strings]);
+      strings = [];
+      updateUI();
+      setMessage('List sent successfully!', 'success');
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Failed to send list.', 'error');
+    } finally {
+      sendBtn.textContent = 'Send list';
+      sendBtn.disabled = strings.length === 0;
+    }
+  });
+</script>
