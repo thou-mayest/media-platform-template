@@ -1,7 +1,6 @@
 import type { APIRoute } from 'astro';
 import { actors } from '@/data/media';
-import { actorPath, absoluteUrl } from '@/lib/routes';
-
+import { actorsPath, actorPath, absoluteUrl } from '@/lib/routes';
 export const prerender = false;
 
 /** Sitemaps are capped at 50,000 URLs / 50 MB uncompressed. Past that this
@@ -21,6 +20,7 @@ type Entry = { loc: string; lastmod?: string };
 export const GET: APIRoute = ({ site }) => {
   const entries: Entry[] = [
     { loc: absoluteUrl('/', site) },
+    { loc: absoluteUrl(actorsPath(), site) },
 
     // Actor profiles. Page 1 only — paginated pages are self-canonical and
     // reachable via rel=next, and listing them here would bury the entry
