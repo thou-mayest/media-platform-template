@@ -15,6 +15,7 @@
   <Folder Name="/src/Modules/Posts/" />
   <Folder Name="/src/Modules/Profiles/">
     <Project Path="src/Profiles.Contracts/Profiles.Contracts.csproj" />
+    <Project Path="src/Profiles.Domain/Profiles.Domain.csproj" Id="2e52f22c-c376-4e20-a028-0a135d262990" />
   </Folder>
   <Folder Name="/src/Modules/Storage/" />
   <Folder Name="/src/Modules/Users/">
