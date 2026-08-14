@@ -53,6 +53,7 @@ public sealed class ProfileSlug : ValueObject
         return new ProfileSlug(slug);
     }
 
+    public static bool IsValid(string? value) => Create(value).IsSuccess;
 
     public static string Slugify(string displayName)
     {
