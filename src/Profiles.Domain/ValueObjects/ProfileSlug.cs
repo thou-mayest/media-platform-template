@@ -53,8 +53,8 @@ public sealed class ProfileSlug : ValueObject
         return new ProfileSlug(slug);
     }
 
-  
-    internal static string Slugify(string displayName)
+
+    public static string Slugify(string displayName)
     {
         var normalised = displayName.Normalize(NormalizationForm.FormKD);
 
