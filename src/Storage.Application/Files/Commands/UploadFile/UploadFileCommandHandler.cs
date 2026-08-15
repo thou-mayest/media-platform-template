@@ -16,7 +16,7 @@ internal sealed class UploadFileCommandHandler(
             return Result.Failure<Guid>(Error.Validation("File.Empty", "File cannot be empty."));
 
         if (request.FileSize > 100 * 1024 * 1024)
-            return Result.Failure<Guid>(Error.Validation("File.TooLarge", "File size exceeds 100 MB limit.")); // TODO: change later
+            return Error.Validation("File.TooLarge", "File size exceeds 100 MB limit."); // TODO: change later
 
         var uploadResult = await fileStorageService.UploadAsync(
             request.FileStream,

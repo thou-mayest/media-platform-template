@@ -1,6 +1,6 @@
 ---
 import Layout from '@/layouts/Layout.astro';
-import StringSender from '@/components/interactive/StringList.astro';
+import UrlCollector from '@/components/interactive/LinkSender.astro';
 ---
 
 <Layout title="Upload · Admin" description="Upload images and files to the media library">
@@ -34,11 +34,12 @@ import StringSender from '@/components/interactive/StringList.astro';
         <button type="button" id="clear-btn" class="btn btn-ghost">Clear</button>
       </div>
     </section>
-        class="links-textarea"
-        spellcheck="false"
-        placeholder="Uploaded file links will appear here, one per line..."
-      ></textarea>
-    </div>
+        
+    <UrlCollector
+      title="External URLs"
+      placeholder="https://example.com/image.jpg"
+      maxItems={50}
+    />
   </main>
 </Layout>
 
