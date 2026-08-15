@@ -13,8 +13,13 @@ public class ActorProfile : AggregateRoot
     public const int MaxAvatarKeyLength = 1024;
     public const int MaxSocialLinks = 6;
 
+   
+    public const int MinIndexableBioLength = 80;
+    public const int MinIndexableAlbums = 1;
+
     private readonly List<SocialLink> _socialLinks = [];
 
+    
     public Guid UserId { get; private set; }
 
     public ProfileSlug Slug { get; private set; }
@@ -25,11 +30,15 @@ public class ActorProfile : AggregateRoot
 
     public IReadOnlyList<SocialLink> SocialLinks => _socialLinks.AsReadOnly();
 
+  
     public int AlbumCount { get; private set; }
     public int MediaCount { get; private set; }
     public int FollowerCount { get; private set; }
 
     public bool IsPublished { get; private set; }
+
+
+    public bool IsIndexable { get; private set; }
 
     private ActorProfile(Guid id, Guid userId, ProfileSlug slug, string displayName)
         : base(id)
@@ -49,6 +58,7 @@ public class ActorProfile : AggregateRoot
         Bio = null!;
     }
 
+    
     public static Result<ActorProfile> Create(Guid userId, string? displayName, string? slug)
     {
         if (userId == Guid.Empty)
@@ -72,6 +82,7 @@ public class ActorProfile : AggregateRoot
         return profile;
     }
 
+
     public Result UpdateDetails(string? displayName, string? profession, string? bio)
     {
         var nameResult = ValidateDisplayName(displayName);
@@ -92,6 +103,8 @@ public class ActorProfile : AggregateRoot
         Profession = profession;
         Bio = bio;
         Touch();
+        RecomputeIndexability();
+        RaiseUpdatedIfPublished();
         return Result.Success();
     }
 
@@ -104,6 +117,7 @@ public class ActorProfile : AggregateRoot
 
         Slug = slugResult.Value;
         Touch();
+        RaiseUpdatedIfPublished();
         return Result.Success();
     }
 
@@ -126,6 +140,7 @@ public class ActorProfile : AggregateRoot
         return Result.Success();
     }
 
+   
     public Result SetSocialLink(SocialPlatform platform, string? url)
     {
         if (string.IsNullOrWhiteSpace(url))
@@ -158,6 +173,7 @@ public class ActorProfile : AggregateRoot
         return Result.Success();
     }
 
+  
     public Result Publish()
     {
         if (IsPublished)
@@ -173,6 +189,7 @@ public class ActorProfile : AggregateRoot
 
         IsPublished = true;
         Touch();
+        RecomputeIndexability();
         RaiseDomainEvent(new ActorProfilePublishedDomainEvent(
             Id, UserId, Slug.Value, DisplayName));
 
@@ -186,6 +203,7 @@ public class ActorProfile : AggregateRoot
 
         IsPublished = false;
         Touch();
+        RecomputeIndexability();
         return Result.Success();
     }
 
@@ -196,8 +214,10 @@ public class ActorProfile : AggregateRoot
         AlbumCount = Math.Max(0, AlbumCount + albumDelta);
         MediaCount = Math.Max(0, MediaCount + mediaDelta);
         Touch();
+        RecomputeIndexability();
     }
 
+  
     public void AdjustFollowerCount(int delta)
     {
         FollowerCount = Math.Max(0, FollowerCount + delta);
@@ -215,9 +235,16 @@ public class ActorProfile : AggregateRoot
         return Result.Success();
     }
 
-   
+
     private void Touch() => UpdateDate = DateTime.UtcNow;
 
+
+    private void RecomputeIndexability() =>
+        IsIndexable = IsPublished
+            && AlbumCount >= MinIndexableAlbums
+            && Bio.Length >= MinIndexableBioLength;
+
+  
     private void RaiseUpdatedIfPublished()
     {
         if (IsPublished)
