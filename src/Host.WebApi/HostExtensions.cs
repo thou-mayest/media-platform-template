@@ -1,5 +1,7 @@
 ﻿using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using Profiles.Infrastructure;
+using Profiles.Infrastructure.Persistence;
 using Users.Infrastracture.Persistence;
 using Users.Infrastracture;
 using Users.Presentation;
@@ -12,32 +14,28 @@ public static class HostExtensions
     public static async Task ApplyMigrations(this WebApplication app)
     {
         await MigrateModuleDbAsync<UsersDbContext>(app);
+        await MigrateModuleDbAsync<ProfilesDbContext>(app);
     }
 
     public static TBuilder RegisterModules<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
-        // register users modules
         builder.Services.AddUsersInfrastructure(builder.Configuration);
         builder.Services.AddUsersPresentation();
+
+        builder.Services.AddProfilesInfrastructure(builder.Configuration);
 
         builder.Services.AddMessageBus();
 
         return builder;
     }
 
-    /// <summary>
-    /// Registered once for the whole host. AddMassTransit replaces its
-    /// configuration rather than merging it, so a second module calling it
-    /// would silently discard the first module's consumers and endpoints.
-    /// Modules contribute consumers here; they must not configure the bus.
-    /// </summary>
+   
     private static IServiceCollection AddMessageBus(this IServiceCollection services)
     {
         services.AddMassTransit(bus =>
         {
             bus.SetKebabCaseEndpointNameFormatter();
 
-            // Module consumers are registered here as modules gain them.
 
             bus.UsingInMemory((ctx, cfg) =>
             {

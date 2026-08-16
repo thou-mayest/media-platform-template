@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CleanModular.ServiceDefaults\CleanModular.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Profiles.Infrastructure\Profiles.Infrastructure.csproj" />
     <ProjectReference Include="..\Users.Infrastracture\Users.Infrastracture.csproj" />
     <ProjectReference Include="..\Users.Presentation\Users.Presentation.csproj" />
   </ItemGroup>
