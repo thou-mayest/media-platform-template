@@ -6,7 +6,7 @@ using Profiles.Infrastructure.Persistence;
 using Users.Infrastracture.Persistence;
 using Users.Infrastracture;
 using Users.Presentation;
-
+using Profiles.Presentation;
 namespace Host.WebApi;
 
 public static class HostExtensions
@@ -24,6 +24,7 @@ public static class HostExtensions
         builder.Services.AddUsersPresentation();
 
         builder.Services.AddProfilesInfrastructure(builder.Configuration);
+        builder.Services.AddProfilesPresentation();
 
         builder.Services.AddMessageBus();
 

@@ -18,6 +18,7 @@
     <Project Path="src/Profiles.Contracts/Profiles.Contracts.csproj" />
     <Project Path="src/Profiles.Domain/Profiles.Domain.csproj" Id="2e52f22c-c376-4e20-a028-0a135d262990" />
     <Project Path="src/Profiles.Infrastructure/Profiles.Infrastructure.csproj" />
+    <Project Path="src/Profiles.Presentation/Profiles.Presentation.csproj" Id="0be50210-34de-4deb-bb67-aa75c6641bb6" />
   </Folder>
   <Folder Name="/src/Modules/Storage/" />
   <Folder Name="/src/Modules/Users/">
