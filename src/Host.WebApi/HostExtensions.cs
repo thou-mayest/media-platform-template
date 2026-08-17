@@ -1,5 +1,6 @@
 ﻿using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using Profiles.Application;
 using Profiles.Infrastructure;
 using Profiles.Infrastructure.Persistence;
 using Users.Infrastracture.Persistence;
@@ -36,6 +37,8 @@ public static class HostExtensions
         {
             bus.SetKebabCaseEndpointNameFormatter();
 
+            // Module consumers are registered here as modules gain them.
+            bus.AddProfilesConsumers();
 
             bus.UsingInMemory((ctx, cfg) =>
             {

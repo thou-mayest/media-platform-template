@@ -28,11 +28,17 @@ internal class ActorProfileRepository(ProfilesDbContext context, IDomainEventDis
     }
 
   
+    /// <summary>
+    /// Tracked. DeleteActorProfileByUserId mutates what this returns, and
+    /// leaving it untracked would make the delete depend on Remove() attaching
+    /// the instance before SaveChanges collects its domain events — correct
+    /// today, and silently broken by any reordering. Tracking one row on a
+    /// settings-page read costs nothing next to that.
+    /// </summary>
     public async Task<ActorProfile?> GetByUserIdAsync(
         Guid userId, CancellationToken cancellationToken = default)
     {
         return await context.ActorProfiles
-            .AsNoTracking()
             .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
     }
 

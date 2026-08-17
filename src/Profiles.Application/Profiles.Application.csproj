@@ -18,6 +18,7 @@
 		<ProjectReference Include="..\SharedKernal\SharedKernal.csproj" />
 		<ProjectReference Include="..\Profiles.Contracts\Profiles.Contracts.csproj" />
 		<ProjectReference Include="..\Profiles.Domain\Profiles.Domain.csproj" />
+		<ProjectReference Include="..\Users.Contracts\Users.Contracts.csproj" />
 	</ItemGroup>
 
 </Project>
