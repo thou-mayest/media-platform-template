@@ -3,4 +3,4 @@ using SharedKernal.Results;
 
 namespace Profiles.Application.ActorProfiles.Commands.PublishActorProfile;
 
-internal sealed record PublishActorProfileCommand(Guid ProfileId) : ICommand<Result<ActorProfileDto>>;
+internal sealed record PublishActorProfileCommand(Guid UserId) : ICommand<Result<ActorProfileDto>>;

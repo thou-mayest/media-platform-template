@@ -6,7 +6,7 @@ namespace Profiles.Application.ActorProfiles.Commands.UpdateActorProfile;
 
 
 internal sealed record UpdateActorProfileCommand(
-    Guid ProfileId,
+    Guid UserId,
     string DisplayName,
     string? Profession,
     string? Bio,

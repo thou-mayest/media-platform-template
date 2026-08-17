@@ -10,7 +10,8 @@ internal sealed class UpdateActorProfileCommandHandler(IActorProfileRepository r
     public async Task<Result<ActorProfileDto>> Handle(
         UpdateActorProfileCommand request, CancellationToken cancellationToken)
     {
-        var profile = await repository.GetByIdAsync(request.ProfileId, cancellationToken);
+
+        var profile = await repository.GetByUserIdAsync(request.UserId, cancellationToken);
 
         if (profile is null)
             return Error.NotFound("ActorProfile.NotFound", "Profile not found.");
