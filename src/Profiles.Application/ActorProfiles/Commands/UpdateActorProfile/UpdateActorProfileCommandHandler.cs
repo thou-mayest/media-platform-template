@@ -56,7 +56,6 @@ internal sealed class UpdateActorProfileCommandHandler(IActorProfileRepository r
         if (errors.Count > 0)
             return Result.Failure<ActorProfileDto>(errors);
 
-        repository.Update(profile);
         await repository.SaveChangesAsync(cancellationToken);
         return profile.ToDto();
     }

@@ -19,7 +19,6 @@ internal sealed class UnpublishActorProfileCommandHandler(IActorProfileRepositor
         if (result.IsFailure)
             return Result.Failure<ActorProfileDto>(result.Errors);
 
-        repository.Update(profile);
         await repository.SaveChangesAsync(cancellationToken);
         return profile.ToDto();
     }
