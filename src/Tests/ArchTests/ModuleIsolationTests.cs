@@ -52,4 +52,50 @@ public class ModuleIsolationTests : TestBase
             .GetResult()
             .ShouldBeSuccessful();
     }
+
+
+    [Fact]
+    public void UsersModule_ShouldNot_Reference_ProfilesModule()
+    {
+        Types.InAssemblies(UsersModuleAssemblies)
+            .Should()
+            .NotHaveDependencyOn("Profiles")
+            .GetResult()
+            .ShouldBeSuccessful();
+    }
+
+    [Fact]
+    public void ProfilesModule_ShouldNot_Reference_PostsModule()
+    {
+        Types.InAssemblies(ProfilesModuleAssemblies)
+            .Should()
+            .NotHaveDependencyOn("Posts")
+            .GetResult()
+            .ShouldBeSuccessful();
+    }
+
+    [Fact]
+    public void ProfilesModule_ShouldNot_Reference_StorageModule()
+    {
+        Types.InAssemblies(ProfilesModuleAssemblies)
+            .Should()
+            .NotHaveDependencyOn("Storage")
+            .GetResult()
+            .ShouldBeSuccessful();
+    }
+
+
+    [Fact]
+    public void ProfilesModule_ShouldOnly_Reference_UsersContracts()
+    {
+        Types.InAssemblies(ProfilesModuleAssemblies)
+            .Should()
+            .NotHaveDependencyOnAny(
+                "Users.Domain",
+                "Users.Application",
+                "Users.Infrastracture",
+                "Users.Presentation")
+            .GetResult()
+            .ShouldBeSuccessful();
+    }
 }

@@ -71,4 +71,57 @@ public class NamingConventionTests : TestBase
             .GetResult()
             .ShouldBeSuccessful();
     }
+
+
+    [Fact]
+    public void ProfilesCommands_Should_EndWith_Command()
+    {
+        Types.InAssembly(ProfilesApplicationAssembly)
+            .That()
+            .ImplementInterface(typeof(ICommand))
+            .Or()
+            .ImplementInterface(typeof(ICommand<>))
+            .Should()
+            .HaveNameEndingWith("Command")
+            .GetResult()
+            .ShouldBeSuccessful();
+    }
+
+    [Fact]
+    public void ProfilesQueries_Should_EndWith_Query()
+    {
+        Types.InAssembly(ProfilesApplicationAssembly)
+            .That()
+            .ImplementInterface(typeof(IQuery<>))
+            .Should()
+            .HaveNameEndingWith("Query")
+            .GetResult()
+            .ShouldBeSuccessful();
+    }
+
+    [Fact]
+    public void ProfilesCommandHandlers_Should_EndWith_CommandHandler()
+    {
+        Types.InAssembly(ProfilesApplicationAssembly)
+            .That()
+            .ImplementInterface(typeof(ICommandHandler<>))
+            .Or()
+            .ImplementInterface(typeof(ICommandHandler<,>))
+            .Should()
+            .HaveNameEndingWith("CommandHandler")
+            .GetResult()
+            .ShouldBeSuccessful();
+    }
+
+    [Fact]
+    public void ProfilesQueryHandlers_Should_EndWith_QueryHandler()
+    {
+        Types.InAssembly(ProfilesApplicationAssembly)
+            .That()
+            .ImplementInterface(typeof(IQueryHandler<,>))
+            .Should()
+            .HaveNameEndingWith("QueryHandler")
+            .GetResult()
+            .ShouldBeSuccessful();
+    }
 }

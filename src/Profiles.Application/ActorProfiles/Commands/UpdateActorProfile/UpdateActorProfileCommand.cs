@@ -1,4 +1,4 @@
-﻿using Profiles.Domain.ValueObjects;
+﻿using Profiles.Contracts;
 using SharedKernal.Messaging;
 using SharedKernal.Results;
 

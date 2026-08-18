@@ -48,7 +48,7 @@ internal sealed class UpdateActorProfileCommandHandler(IActorProfileRepository r
 
         foreach (var link in request.SocialLinks ?? [])
         {
-            var applied = profile.SetSocialLink(link.Platform, link.Url);
+            var applied = profile.SetSocialLink(link.Platform.ToDomain(), link.Url);
             if (applied.IsFailure)
                 errors.AddRange(applied.Errors);
         }

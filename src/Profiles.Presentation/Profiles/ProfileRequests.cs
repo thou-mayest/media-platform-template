@@ -1,4 +1,4 @@
-﻿using Profiles.Domain.ValueObjects;
+﻿using Profiles.Contracts;
 
 namespace Profiles.Presentation.Profiles;
 
