@@ -16,22 +16,22 @@
     <PackageReference Include="coverlet.collector" />
   </ItemGroup>
 
-  <!-- Make [Fact] and Assert available in all test files without explicit using -->
+  <!-- Make [Fact] and Assert availale in all test files without explicit using -->
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 
-  <!--
-    One reference per module layer.
-    When you add a new module (e.g. Posts), add Posts.Domain and Posts.Application here.
-    The compiler will pull all assemblies into the bin folder automatically.
-  -->
   <ItemGroup>
     <ProjectReference Include="..\..\SharedKernal\SharedKernal.csproj" />
     <ProjectReference Include="..\..\Users.Domain\Users.Domain.csproj" />
     <ProjectReference Include="..\..\Users.Application\Users.Application.csproj" />
     <ProjectReference Include="..\..\Users.Infrastracture\Users.Infrastracture.csproj" />
     <ProjectReference Include="..\..\Users.Presentation\Users.Presentation.csproj" />
+	<ProjectReference Include="..\..\Profiles.Domain\Profiles.Domain.csproj" />
+	<ProjectReference Include="..\..\Profiles.Contracts\Profiles.Contracts.csproj" />
+	<ProjectReference Include="..\..\Profiles.Application\Profiles.Application.csproj" />
+	<ProjectReference Include="..\..\Profiles.Infrastructure\Profiles.Infrastructure.csproj" />
+	<ProjectReference Include="..\..\Profiles.Presentation\Profiles.Presentation.csproj" />
   </ItemGroup>
 
 </Project>

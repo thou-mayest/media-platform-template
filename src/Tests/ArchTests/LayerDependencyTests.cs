@@ -100,4 +100,89 @@ public class LayerDependencyTests : TestBase
             .GetResult()
             .ShouldBeSuccessful();
     }
+
+
+    // ── PROFILES MODULE ──────────────────────────────────────────
+
+    [Fact]
+    public void ProfilesDomain_ShouldNot_Reference_Application()
+    {
+        Types.InAssembly(ProfilesDomainAssembly)
+            .Should()
+            .NotHaveDependencyOn(ProfilesApplicationAssembly.GetName().Name)
+            .GetResult()
+            .ShouldBeSuccessful();
+    }
+
+    [Fact]
+    public void ProfilesDomain_ShouldNot_Reference_Infrastructure()
+    {
+        Types.InAssembly(ProfilesDomainAssembly)
+            .Should()
+            .NotHaveDependencyOn(ProfilesInfraAssembly.GetName().Name)
+            .GetResult()
+            .ShouldBeSuccessful();
+    }
+
+    [Fact]
+    public void ProfilesDomain_ShouldNot_Reference_Presentation()
+    {
+        Types.InAssembly(ProfilesDomainAssembly)
+            .Should()
+            .NotHaveDependencyOn(ProfilesPresentationAssembly.GetName().Name)
+            .GetResult()
+            .ShouldBeSuccessful();
+    }
+
+  
+    [Fact]
+    public void ProfilesDomain_ShouldNot_Reference_Contracts()
+    {
+        Types.InAssembly(ProfilesDomainAssembly)
+            .Should()
+            .NotHaveDependencyOn(ProfilesContractsAssembly.GetName().Name)
+            .GetResult()
+            .ShouldBeSuccessful();
+    }
+
+    [Fact]
+    public void ProfilesApplication_ShouldNot_Reference_Infrastructure()
+    {
+        Types.InAssembly(ProfilesApplicationAssembly)
+            .Should()
+            .NotHaveDependencyOn(ProfilesInfraAssembly.GetName().Name)
+            .GetResult()
+            .ShouldBeSuccessful();
+    }
+
+    [Fact]
+    public void ProfilesApplication_ShouldNot_Reference_Presentation()
+    {
+        Types.InAssembly(ProfilesApplicationAssembly)
+            .Should()
+            .NotHaveDependencyOn(ProfilesPresentationAssembly.GetName().Name)
+            .GetResult()
+            .ShouldBeSuccessful();
+    }
+
+    [Fact]
+    public void ProfilesPresentation_ShouldNot_Reference_Infrastructure()
+    {
+        Types.InAssembly(ProfilesPresentationAssembly)
+            .Should()
+            .NotHaveDependencyOn(ProfilesInfraAssembly.GetName().Name)
+            .GetResult()
+            .ShouldBeSuccessful();
+    }
+
+    [Fact]
+    public void ProfilesPresentation_ShouldNot_Reference_Domain()
+    {
+        Types.InAssembly(ProfilesPresentationAssembly)
+            .Should()
+            .NotHaveDependencyOn(ProfilesDomainAssembly.GetName().Name)
+            .GetResult()
+            .ShouldBeSuccessful();
+    }
+
 }

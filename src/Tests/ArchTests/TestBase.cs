@@ -1,5 +1,7 @@
-using System.Reflection;
+using Profiles.Application.Abstractions;
+using Profiles.Domain;
 using SharedKernal.Entities;
+using System.Reflection;
 using Users.Application.Abstractions;
 using Users.Domain;
 using Users.Presentation;
@@ -39,5 +41,22 @@ public abstract class TestBase
         UsersApplicationAssembly,
         UsersInfraAssembly,
         UsersPresentationAssembly
+    ];
+
+
+    // ── Profiles Module ──────────────────────────────────────────
+    protected static readonly Assembly ProfilesDomainAssembly = typeof(ActorProfile).Assembly;
+    protected static readonly Assembly ProfilesContractsAssembly = typeof(Profiles.Contracts.IntegrationEvents.ActorProfilePublishedIntegrationEvent).Assembly;
+    protected static readonly Assembly ProfilesApplicationAssembly = typeof(IActorProfileRepository).Assembly;
+    protected static readonly Assembly ProfilesInfraAssembly = typeof(Profiles.Infrastructure.DependencyInjection).Assembly;
+    protected static readonly Assembly ProfilesPresentationAssembly = typeof(Profiles.Presentation.Extension).Assembly;
+
+    protected static readonly IEnumerable<Assembly> ProfilesModuleAssemblies =
+    [
+        ProfilesDomainAssembly,
+        ProfilesContractsAssembly,
+        ProfilesApplicationAssembly,
+        ProfilesInfraAssembly,
+        ProfilesPresentationAssembly
     ];
 }
