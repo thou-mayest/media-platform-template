@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using MassTransit;
+using Microsoft.EntityFrameworkCore;
 using Users.Infrastracture.Persistence;
 using Users.Infrastracture;
 using Users.Presentation;
@@ -19,7 +20,32 @@ public static class HostExtensions
         builder.Services.AddUsersInfrastructure(builder.Configuration);
         builder.Services.AddUsersPresentation();
 
+        builder.Services.AddMessageBus();
+
         return builder;
+    }
+
+    /// <summary>
+    /// Registered once for the whole host. AddMassTransit replaces its
+    /// configuration rather than merging it, so a second module calling it
+    /// would silently discard the first module's consumers and endpoints.
+    /// Modules contribute consumers here; they must not configure the bus.
+    /// </summary>
+    private static IServiceCollection AddMessageBus(this IServiceCollection services)
+    {
+        services.AddMassTransit(bus =>
+        {
+            bus.SetKebabCaseEndpointNameFormatter();
+
+            // Module consumers are registered here as modules gain them.
+
+            bus.UsingInMemory((ctx, cfg) =>
+            {
+                cfg.ConfigureEndpoints(ctx);
+            });
+        });
+
+        return services;
     }
 
 
