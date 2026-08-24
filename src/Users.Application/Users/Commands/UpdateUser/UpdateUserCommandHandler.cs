@@ -28,7 +28,15 @@ internal sealed class UpdateUserCommandHandler(IUserRepository userRepository, I
         user.ChangeRole(request.Role);
 
         userRepository.Update(user);
-        await userRepository.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await userRepository.SaveChangesAsync(cancellationToken);
+        }
+        catch (DuplicateUserEmailException)
+        {
+            return Error.Conflict("User.EmailExists", "A user with that email already exists.");
+        }
+
         return user.ToDto();
     }
 }

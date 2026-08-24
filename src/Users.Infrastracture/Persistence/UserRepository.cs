@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using SharedKernal.Messaging;
 using Users.Domain;
+using Npgsql;
 
 namespace Users.Infrastracture.Persistence;
 
@@ -50,7 +51,21 @@ internal class UserRepository(UsersDbContext context, IDomainEventDispatcher dis
 
         aggregates.ForEach(a => a.ClearDomainEvents());
 
-        var result = await context.SaveChangesAsync(cancellationToken);
+        int result;
+        try
+        {
+            result = await context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException exception)
+            when (exception.InnerException is PostgresException
+            {
+                SqlState: PostgresErrorCodes.UniqueViolation,
+                ConstraintName: "UX_Users_Email"
+            })
+        {
+            context.ChangeTracker.Clear();
+            throw new DuplicateUserEmailException(exception);
+        }
 
         await dispatcher.DispatchAsync(domainEvents, cancellationToken);
 
