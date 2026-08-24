@@ -1,0 +1,266 @@
+---
+// Presentation component of the Reactions module.
+//
+// Renders the SSR summary and lets the viewer toggle a reaction. The viewer's
+// choice persists in localStorage (key `verso:reactions`, same anonymous
+// mechanism as follow/save) and the counts update optimistically. The script
+// is self-contained so the module stays isolated — Layout.astro does not need
+// to know this module exists.
+
+import type { ReactionSummary, ReactionType } from '@/data/reactions';
+import FavoriteButton from '@/components/favorites/FavoriteButton.astro';
+import ShareButton from '@/components/share/ShareButton.astro';
+
+interface Props {
+  postId: number;
+  summary: ReactionSummary;
+  url: string;
+}
+
+const { postId, summary, url } = Astro.props;
+
+const REACTIONS: { type: ReactionType; label: string; icon: string }[] = [
+  {
+    type: 'like',
+    label: 'Like',
+    icon: 'M1 21h4V9H1v12zM23 10c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z',
+  },
+  {
+    type: 'dislike',
+    label: 'Dislike',
+    icon: 'M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z',
+  },
+];
+
+const viewer = summary.viewerReaction;
+---
+
+<div class="reactions" data-reaction-bar data-post-id={postId}>
+  <div class="reactions__row" role="group" aria-label="React to this post">
+    {REACTIONS.map((r) => {
+      const count = summary.counts[r.type];
+      const active = viewer === r.type;
+      return (
+        <button
+          class:list={['rb-btn', { 'is-active': active }]}
+          type="button"
+          data-reaction-type={r.type}
+          data-reaction-count={count}
+          aria-pressed={active}
+          aria-label={`${r.label} this post`}
+          title={`${r.label} (${count})`}
+        >
+          <svg class="rb-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+            <path d={r.icon} />
+          </svg>
+          <span class="rb-count" data-reaction-count-label>{count}</span>
+        </button>
+      );
+    })}
+
+    <FavoriteButton postId={postId} />
+    <ShareButton url={url} title={`Post ${postId}`} />
+
+    <button
+      class="rb-btn rb-btn--comments"
+      type="button"
+      data-comment-scroll
+      aria-label={`${summary.commentCount} comments — view them`}
+      title={`${summary.commentCount} comments`}
+    >
+      <svg class="rb-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+        <path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z" />
+      </svg>
+      <span class="rb-count" data-comment-count>{summary.commentCount}</span>
+    </button>
+  </div>
+  <span class="reactions__total" data-reaction-total aria-live="polite">
+    {summary.total} reaction{summary.total === 1 ? '' : 's'}
+  </span>
+</div>
+
+<script>
+  const STORAGE_KEY = 'verso:reactions';
+
+  function readStore(): Record<string, string> {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw) as unknown;
+      return parsed !== null && typeof parsed === 'object'
+        ? (parsed as Record<string, string>)
+        : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function writeStore(store: Record<string, string>): void {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    } catch {
+      /* storage unavailable — the session just doesn't persist */
+    }
+  }
+
+  function totalFrom(buttons: HTMLButtonElement[]): number {
+    return buttons.reduce(
+      (sum, b) => sum + Math.max(0, Number(b.dataset.reactionCount ?? 0)),
+      0,
+    );
+  }
+
+  function paint(
+    bar: HTMLElement,
+    buttons: HTMLButtonElement[],
+    active: string | null,
+  ): void {
+    buttons.forEach((btn) => {
+      const isActive = btn.dataset.reactionType === active;
+      btn.classList.toggle('is-active', isActive);
+      btn.setAttribute('aria-pressed', String(isActive));
+      const labelEl = btn.querySelector('[data-reaction-count-label]');
+      if (labelEl) labelEl.textContent = btn.dataset.reactionCount ?? '0';
+    });
+    const totalEl = bar.querySelector<HTMLElement>('[data-reaction-total]');
+    if (totalEl) {
+      const n = totalFrom(buttons);
+      totalEl.textContent = `${n} reaction${n === 1 ? '' : 's'}`;
+    }
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-reaction-bar]').forEach((bar) => {
+    const postId = bar.dataset.postId;
+    if (!postId) return;
+    const buttons = Array.from(
+      bar.querySelectorAll<HTMLButtonElement>('[data-reaction-type]'),
+    );
+    if (buttons.length === 0) return;
+
+    const store = readStore();
+    const mine = store[postId] ?? null;
+
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const type = btn.dataset.reactionType ?? '';
+        const current = readStore();
+        const before = current[postId] ?? null;
+
+        if (before && before !== type) {
+          const old = buttons.find((b) => b.dataset.reactionType === before);
+          if (old) {
+            old.dataset.reactionCount = String(
+              Math.max(0, Number(old.dataset.reactionCount ?? 0) - 1),
+            );
+          }
+        }
+
+        if (before === type) {
+          btn.dataset.reactionCount = String(
+            Math.max(0, Number(btn.dataset.reactionCount ?? 0) - 1),
+          );
+          delete current[postId];
+        } else {
+          btn.dataset.reactionCount = String(
+            Number(btn.dataset.reactionCount ?? 0) + 1,
+          );
+          current[postId] = type;
+        }
+
+        writeStore(current);
+        paint(bar, buttons, current[postId] ?? null);
+      });
+    });
+
+    paint(bar, buttons, mine);
+  });
+
+  // The comments pill scrolls to the Comments section (a separate module —
+  // discovered through the data hook so neither component knows about the
+  // other's internals) and focuses its compose input.
+  document.querySelectorAll<HTMLButtonElement>('[data-comment-scroll]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const section = document.querySelector<HTMLElement>('[data-comments-section]');
+      if (!section) return;
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const input = section.querySelector<HTMLTextAreaElement>('[data-comment-input]');
+      if (input) input.focus({ preventScroll: true });
+    });
+  });
+</script>
+
+<style>
+  .reactions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin: 22px 2px 0;
+    padding: 14px 0 0;
+    border-top: 1px solid var(--hairline);
+  }
+
+  .reactions__row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .rb-btn {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font: 600 12.5px var(--font-sans);
+    color: var(--text-2);
+    background: var(--chip-bg);
+    border: 1px solid var(--border-soft);
+    border-radius: 999px;
+    padding: 8px 14px;
+    transition: background 0.18s, color 0.18s, border-color 0.18s, transform 0.12s;
+    line-height: 1;
+  }
+  .rb-btn:hover {
+    border-color: var(--border);
+    color: var(--text);
+  }
+  .rb-btn.is-active {
+    background: var(--ink);
+    color: var(--on-ink);
+    border-color: var(--ink);
+  }
+  .rb-btn.is-active .rb-icon {
+    color: var(--accent);
+  }
+  .rb-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .rb-btn--comments {
+    color: var(--faint);
+  }
+  .rb-btn--comments:hover {
+    border-color: var(--border);
+    color: var(--accent);
+  }
+  .rb-btn:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+
+  .rb-icon {
+    flex: none;
+  }
+
+  .rb-count {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .reactions__total {
+    font: 600 11px var(--font-sans);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+</style>

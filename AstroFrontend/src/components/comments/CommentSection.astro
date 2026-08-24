@@ -1,0 +1,657 @@
+---
+// Presentation component of the Comments module.
+//
+// Renders the thread and a compose form. The viewer's own comments persist in
+// localStorage (key `verso:comments`, same anonymous mechanism as
+// reactions/follow/save): SSR renders only the seeded thread, and the script
+// hydrates the viewer's stored comments on mount then appends new ones
+// optimistically. Self-contained — the page only has to render
+// <CommentSection postId={...} />.
+
+import { VIEWER_NAME, commentsFor } from '@/data/comments';
+
+interface Props {
+  postId: number;
+}
+
+const { postId } = Astro.props;
+
+const thread = commentsFor(postId);
+const topLevel = thread.filter((c) => c.parentId === null);
+const total = thread.length;
+
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w.charAt(0).toUpperCase())
+    .join('');
+
+const hueFor = (name: string) => {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+  return h;
+};
+
+function timeAgo(createdAt: string): string {
+  const days = Math.floor((Date.now() - Date.parse(createdAt)) / 86_400_000);
+  if (days <= 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 30) return `${days} days ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} month${months === 1 ? '' : 's'} ago`;
+  const years = Math.floor(days / 365);
+  return `${years} year${years === 1 ? '' : 's'} ago`;
+}
+---
+
+<section class="comments" data-comments-section data-post-id={postId} aria-label="Comments">
+  <header class="comments__head">
+    <h2 class="comments__title">Comments</h2>
+    <span class="comments__count" data-comment-count>{total}</span>
+  </header>
+
+  <form class="comment-form" data-comment-form>
+    <span class="c-avatar c-avatar--viewer" aria-hidden="true">{initials(VIEWER_NAME)}</span>
+    <div class="comment-form__main">
+      <label class="visually-hidden" for={`comment-input-${postId}`}>Add a comment</label>
+      <textarea
+        id={`comment-input-${postId}`}
+        class="comment-form__input"
+        rows="2"
+        maxlength="600"
+        placeholder="Add a comment"
+        data-comment-input
+      ></textarea>
+      <div class="comment-form__foot">
+        <button class="c-submit" type="submit" data-comment-submit disabled>Comment</button>
+      </div>
+    </div>
+  </form>
+
+  {topLevel.length > 0 ? (
+    <ul class="comment-list" data-comment-list>
+      {topLevel.map((c) => {
+        const replies = thread.filter((r) => r.parentId === c.id);
+        return (
+          <li class="comment" data-comment-id={c.id}>
+            <span class="c-avatar" style={`--hue:${hueFor(c.authorName)};`} aria-hidden="true">
+              {initials(c.authorName)}
+            </span>
+            <div class="comment__main">
+              <div class="comment__meta">
+                <span class="comment__author">{c.authorName}</span>
+                <time class="comment__time" datetime={c.createdAt}>{timeAgo(c.createdAt)}</time>
+              </div>
+              <p class="comment__text">{c.content}</p>
+              <div class="comment__actions">
+                <button class="c-reply" type="button" data-reply-toggle aria-expanded="false">
+                  Reply
+                </button>
+              </div>
+              <form class="c-replyform" data-reply-form={c.id} hidden>
+                <label class="visually-hidden" for={`reply-input-${postId}-${c.id}`}>
+                  Reply to {c.authorName}
+                </label>
+                <textarea
+                  id={`reply-input-${postId}-${c.id}`}
+                  class="comment-form__input"
+                  rows="2"
+                  maxlength="600"
+                  placeholder={`Reply to ${c.authorName}`}
+                  data-comment-input
+                ></textarea>
+                <div class="comment-form__foot">
+                  <button class="c-submit c-submit--sm" type="submit" data-comment-submit disabled>
+                    Reply
+                  </button>
+                  <button class="c-cancel" type="button" data-reply-cancel>Cancel</button>
+                </div>
+              </form>
+              {replies.length > 0 && (
+                <ul class="comment-list comment-list--nested">
+                  {replies.map((r) => (
+                    <li class="comment" data-comment-id={r.id}>
+                      <span class="c-avatar" style={`--hue:${hueFor(r.authorName)};`} aria-hidden="true">
+                        {initials(r.authorName)}
+                      </span>
+                      <div class="comment__main">
+                        <div class="comment__meta">
+                          <span class="comment__author">{r.authorName}</span>
+                          <time class="comment__time" datetime={r.createdAt}>{timeAgo(r.createdAt)}</time>
+                        </div>
+                        <p class="comment__text">{r.content}</p>
+                        <div class="comment__actions">
+                          <button class="c-reply" type="button" data-reply-toggle aria-expanded="false">
+                            Reply
+                          </button>
+                        </div>
+                        <form class="c-replyform" data-reply-form={r.id} hidden>
+                          <label class="visually-hidden" for={`reply-input-${postId}-${r.id}`}>
+                            Reply to {r.authorName}
+                          </label>
+                          <textarea
+                            id={`reply-input-${postId}-${r.id}`}
+                            class="comment-form__input"
+                            rows="2"
+                            maxlength="600"
+                            placeholder={`Reply to ${r.authorName}`}
+                            data-comment-input
+                          ></textarea>
+                          <div class="comment-form__foot">
+                            <button class="c-submit c-submit--sm" type="submit" data-comment-submit disabled>
+                              Reply
+                            </button>
+                            <button class="c-cancel" type="button" data-reply-cancel>Cancel</button>
+                          </div>
+                        </form>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  ) : (
+    <p class="comments__empty" data-comments-empty>No comments yet — start the conversation.</p>
+  )}
+</section>
+
+<script>
+  import { addComment, deleteComment, viewerCommentsFor } from '@/data/comments';
+  import type { Comment } from '@/data/comments';
+
+  const initials = (name: string) =>
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w.charAt(0).toUpperCase())
+      .join('');
+
+  const hueFor = (name: string) => {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+    return h;
+  };
+
+  function timeAgo(createdAt: string): string {
+    const days = Math.floor((Date.now() - Date.parse(createdAt)) / 86_400_000);
+    if (days <= 0) return 'today';
+    if (days === 1) return 'yesterday';
+    if (days < 30) return `${days} days ago`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months} month${months === 1 ? '' : 's'} ago`;
+    const years = Math.floor(days / 365);
+    return `${years} year${years === 1 ? '' : 's'} ago`;
+  }
+
+  const scopeAttr = (el: HTMLElement): string | null =>
+    el.getAttributeNames().find((n) => n.startsWith('data-astro-cid-')) ?? null;
+
+  function stampScope(scope: string | null, ...els: HTMLElement[]): void {
+    if (!scope) return;
+    for (const el of els) {
+      el.setAttribute(scope, '');
+      el.querySelectorAll<HTMLElement>('*').forEach((d) => d.setAttribute(scope, ''));
+    }
+  }
+
+  /** Build the same `.comment` node the template renders, for optimistic appends.
+   *  Viewer comments (negative ids) get Edit + Delete buttons. */
+  function nodeFor(comment: Comment, scope: string | null): HTMLLIElement {
+    const li = document.createElement('li');
+    li.className = 'comment';
+    li.dataset.commentId = String(comment.id);
+
+    const avatar = document.createElement('span');
+    avatar.className = 'c-avatar';
+    avatar.setAttribute('aria-hidden', 'true');
+    avatar.style.setProperty('--hue', String(hueFor(comment.authorName)));
+    avatar.textContent = initials(comment.authorName);
+
+    const main = document.createElement('div');
+    main.className = 'comment__main';
+
+    const meta = document.createElement('div');
+    meta.className = 'comment__meta';
+    const author = document.createElement('span');
+    author.className = 'comment__author';
+    author.textContent = comment.authorName;
+    const time = document.createElement('time');
+    time.className = 'comment__time';
+    time.dateTime = comment.createdAt;
+    time.textContent = timeAgo(comment.createdAt);
+    meta.append(author, time);
+
+    const text = document.createElement('p');
+    text.className = 'comment__text';
+    text.textContent = comment.content;
+
+    const actions = document.createElement('div');
+    actions.className = 'comment__actions';
+
+    const replyBtn = document.createElement('button');
+    replyBtn.className = 'c-reply';
+    replyBtn.type = 'button';
+    replyBtn.dataset.replyToggle = '';
+    replyBtn.setAttribute('aria-expanded', 'false');
+    replyBtn.textContent = 'Reply';
+    actions.appendChild(replyBtn);
+
+    if (comment.id < 0) {
+      const delBtn = document.createElement('button');
+      delBtn.className = 'c-action c-action--danger';
+      delBtn.type = 'button';
+      delBtn.dataset.deleteToggle = '';
+      delBtn.textContent = 'Delete';
+      actions.appendChild(delBtn);
+    }
+
+    main.append(meta, text, actions);
+
+    if (comment.parentId === null) {
+      const form = document.createElement('form');
+      form.className = 'c-replyform';
+      form.dataset.replyForm = String(comment.id);
+      form.hidden = true;
+
+      const label = document.createElement('label');
+      label.className = 'visually-hidden';
+      label.htmlFor = `reply-input-${comment.postId}-${comment.id}`;
+      label.textContent = `Reply to ${comment.authorName}`;
+      form.appendChild(label);
+
+      const input = document.createElement('textarea');
+      input.id = label.htmlFor;
+      input.className = 'comment-form__input';
+      input.rows = 2;
+      input.maxLength = 600;
+      input.dataset.commentInput = '';
+      input.placeholder = `Reply to ${comment.authorName}`;
+      form.appendChild(input);
+
+      const foot = document.createElement('div');
+      foot.className = 'comment-form__foot';
+      const submit = document.createElement('button');
+      submit.className = 'c-submit c-submit--sm';
+      submit.type = 'submit';
+      submit.dataset.commentSubmit = '';
+      submit.textContent = 'Reply';
+      submit.disabled = true;
+      const cancel = document.createElement('button');
+      cancel.className = 'c-cancel';
+      cancel.type = 'button';
+      cancel.dataset.replyCancel = '';
+      cancel.textContent = 'Cancel';
+      foot.append(submit, cancel);
+      form.appendChild(foot);
+      main.appendChild(form);
+    }
+
+    li.append(avatar, main);
+    stampScope(scope, li);
+    return li;
+  }
+
+  /** Wire reply form: toggle, submit, cancel. */
+  function wireReplyForm(section: HTMLElement, btn: HTMLButtonElement, form: HTMLFormElement): void {
+    const input = form.querySelector<HTMLTextAreaElement>('[data-comment-input]');
+    const submit = form.querySelector<HTMLButtonElement>('[data-comment-submit]');
+    if (input && submit) attachReset(input, submit);
+
+    btn.addEventListener('click', () => {
+      const open = !form.hidden;
+      form.hidden = open;
+      btn.setAttribute('aria-expanded', String(!open));
+      if (!open) input?.focus();
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const content = input?.value.trim();
+      if (!content) return;
+      appendComment(section, addComment({ postId: Number(section.dataset.postId), parentId: Number(form.dataset.replyForm), content }));
+      form.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+      form.reset();
+      if (submit) submit.disabled = true;
+      paintCounts();
+    });
+
+    const cancel = form.querySelector<HTMLButtonElement>('[data-reply-cancel]');
+    cancel?.addEventListener('click', () => {
+      form.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+      form.reset();
+      if (submit) submit.disabled = true;
+    });
+  }
+
+  /** Wire delete: confirm → remove from store + DOM. */
+  function wireDelete(li: HTMLElement, btn: HTMLButtonElement): void {
+    btn.addEventListener('click', () => {
+      if (!confirm('Delete this comment?')) return;
+      const id = Number(li.dataset.commentId);
+      deleteComment(id);
+      li.remove();
+      paintCounts();
+    });
+  }
+
+  /** Wire Reply + Edit + Delete for a comment. */
+  function wireActions(section: HTMLElement, li: HTMLElement): void {
+    li.querySelectorAll<HTMLButtonElement>('[data-reply-toggle]').forEach((btn) => {
+      const form = section.querySelector<HTMLFormElement>(
+        `[data-reply-form="${li.getAttribute('data-comment-id')}"]`,
+      );
+      if (form) wireReplyForm(section, btn, form);
+    });
+    li.querySelectorAll<HTMLButtonElement>('[data-delete-toggle]').forEach((btn) => wireDelete(li, btn));
+  }
+
+  function appendComment(section: HTMLElement, comment: Comment): void {
+    const scope = scopeAttr(section);
+    const emptyState = section.querySelector('[data-comments-empty]');
+    emptyState?.remove();
+
+    const node = nodeFor(comment, scope);
+    const wire = () => wireActions(section, node);
+
+    if (comment.parentId === null) {
+      const list = section.querySelector('[data-comment-list]');
+      if (!list) return;
+      list.appendChild(node);
+      wire();
+      paintCounts();
+      return;
+    }
+
+    const parent = section.querySelector(`[data-comment-id="${comment.parentId}"]`);
+    if (!parent) return;
+    const parentMain = parent.querySelector(':scope > .comment__main');
+    if (!parentMain) return;
+    let nested = parentMain.querySelector('.comment-list--nested');
+    if (!nested) {
+      const created = document.createElement('ul');
+      created.className = 'comment-list comment-list--nested';
+      stampScope(scope, created);
+      parentMain.appendChild(created);
+      nested = created;
+    }
+    nested.appendChild(node);
+    wire();
+    paintCounts();
+  }
+
+  function paintCounts(): void {
+    document.querySelectorAll<HTMLElement>('[data-comments-section]').forEach((section) => {
+      const n = section.querySelectorAll('[data-comment-id]').length;
+      document.querySelectorAll<HTMLElement>('[data-comment-count]').forEach((el) => {
+        el.textContent = String(n);
+      });
+    });
+  }
+
+  function attachReset(input: HTMLTextAreaElement, submit: HTMLButtonElement): void {
+    const sync = () => { submit.disabled = input.value.trim().length === 0; };
+    input.addEventListener('input', sync);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (!submit.disabled) submit.click();
+      }
+    });
+    sync();
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-comments-section]').forEach((section) => {
+    const postId = Number(section.dataset.postId);
+    if (!Number.isInteger(postId)) return;
+
+    // Hydrate viewer comments from previous sessions.
+    viewerCommentsFor(postId).forEach((c) => appendComment(section, c));
+    paintCounts();
+
+    // Wire SSR comment actions (reply only for seed; reply+edit+delete for viewer).
+    section.querySelectorAll<HTMLElement>('[data-comment-id]').forEach((li) => wireActions(section, li));
+
+    // Wire top-level compose form.
+    const topForm = section.querySelector<HTMLFormElement>('[data-comment-form]');
+    const topInput = topForm?.querySelector<HTMLTextAreaElement>('[data-comment-input]');
+    const topSubmit = topForm?.querySelector<HTMLButtonElement>('[data-comment-submit]');
+    if (topForm && topInput && topSubmit) {
+      attachReset(topInput, topSubmit);
+      topForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const content = topInput.value.trim();
+        if (!content) return;
+        appendComment(section, addComment({ postId, parentId: null, content }));
+        topForm.reset();
+        topSubmit.disabled = true;
+        topInput.focus();
+      });
+    }
+  });
+</script>
+
+<style>
+  .comments {
+    margin: 40px 0 0;
+    padding-top: 26px;
+    border-top: 1px solid var(--hairline);
+    scroll-margin-top: 100px;
+  }
+
+  .comments__head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 0 0 18px;
+  }
+  .comments__title {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text);
+  }
+  .comments__count {
+    font: 600 11px var(--font-sans);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .comments__empty {
+    margin: 18px 0 0;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .comment-form {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 0 0 8px;
+  }
+  .comment-form__main {
+    flex: 1;
+    min-width: 0;
+  }
+  .comment-form__input {
+    width: 100%;
+    resize: vertical;
+    font: 500 14px var(--font-sans);
+    line-height: 1.5;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    transition: border-color 0.18s;
+  }
+  .comment-form__input::placeholder {
+    color: var(--faint);
+  }
+  .comment-form__input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .comment-form__foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .c-submit {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: 600 11px var(--font-sans);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--on-ink);
+    background: var(--ink);
+    border: 1px solid var(--ink);
+    border-radius: 999px;
+    padding: 8px 16px;
+    transition: background 0.18s, color 0.18s, opacity 0.18s, transform 0.12s;
+  }
+  .c-submit:not(:disabled):hover {
+    opacity: 0.9;
+  }
+  .c-submit:not(:disabled):active {
+    transform: scale(0.97);
+  }
+  .c-submit:disabled {
+    cursor: default;
+    opacity: 0.4;
+  }
+  .c-submit:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .c-submit--sm {
+    padding: 6px 12px;
+  }
+
+  .c-cancel {
+    cursor: pointer;
+    border: none;
+    background: none;
+    padding: 6px 10px;
+    font: 600 11px var(--font-sans);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    transition: color 0.15s;
+  }
+  .c-cancel:hover {
+    color: var(--text);
+  }
+
+  .c-avatar {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font: 700 12px var(--font-sans);
+    letter-spacing: 0.02em;
+    color: #fff;
+    background: hsl(var(--hue, 25) 48% 45%);
+    user-select: none;
+  }
+  .c-avatar--viewer {
+    background: var(--surface);
+    color: var(--muted);
+    border: 1px dashed var(--border);
+  }
+
+  .comment-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .comment {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 0;
+  }
+  .comment + .comment {
+    border-top: 1px solid var(--hairline);
+  }
+  .comment__main {
+    flex: 1;
+    min-width: 0;
+  }
+  .comment__meta {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .comment__author {
+    font: 600 13px var(--font-sans);
+    color: var(--text);
+  }
+  .comment__time {
+    font: 500 11px var(--font-sans);
+    color: var(--faint);
+  }
+  .comment__text {
+    margin: 4px 0 0;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--text-2);
+    overflow-wrap: anywhere;
+  }
+  .comment__actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 6px;
+  }
+
+  .c-reply,
+  .c-action {
+    cursor: pointer;
+    padding: 0;
+    border: none;
+    background: none;
+    font: 600 11px var(--font-sans);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    transition: color 0.15s;
+  }
+  .c-reply:hover,
+  .c-action:hover {
+    color: var(--accent);
+  }
+  .c-action--danger:hover {
+    color: #c0392b;
+  }
+
+  .comment-list--nested {
+    margin-top: 12px;
+    padding: 0 0 0 14px;
+    border-left: 1px solid var(--hairline);
+  }
+
+  .c-replyform,
+  .c-editform {
+    margin-top: 10px;
+  }
+  .c-replyform .comment-form__foot {
+    margin-top: 6px;
+  }
+</style>

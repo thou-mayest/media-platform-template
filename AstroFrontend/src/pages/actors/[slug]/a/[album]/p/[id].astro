@@ -3,9 +3,12 @@ export const prerender = false;
 
 import MediaLayout from '@/layouts/MediaLayout.astro';
 import Breadcrumbs from '@/components/media/Breadcrumbs.astro';
+import ReactionBar from '@/components/reactions/ReactionBar.astro';
+import CommentSection from '@/components/comments/CommentSection.astro';
 import {
   getActorBySlug, getAlbumBySlug, getPostById, adjacentPosts, type Post,
 } from '@/data/media';
+import { reactionSummary } from '@/data/reactions';
 import { actorPath, albumPath, postPath, absoluteUrl } from '@/lib/routes';
 import { imageUrl, imageSrcSet } from '@/lib/images';
 import { videoUrl, posterUrl } from '@/lib/video';
@@ -61,6 +64,8 @@ const iso8601 = (s: number) => `PT${Math.floor(s / 60)}M${s % 60}S`;
 
 const { prev, next } = adjacentPosts(album.id, post.id);
 const path = postPath(actor.slug, album.slug, post.id);
+
+const summary = reactionSummary(post.id);
 
 const description = clamp(
   `${post.altText}. From ${album.title} by ${actor.displayName}, ${actor.profession}.`,
@@ -183,6 +188,10 @@ const jsonLd = [
         <span class="sep" aria-hidden="true">·</span>
         <time datetime={post.publishedAt}>{post.publishedAt}</time>
       </p>
+
+      <ReactionBar postId={post.id} summary={summary} url={absoluteUrl(path, Astro.site)} />
+
+      <CommentSection postId={post.id} />
 
       <nav class="post-nav" aria-label="Album media">
         {prev ? (
