@@ -23,14 +23,9 @@ internal sealed class CreateUserCommandHandler(IUserRepository userRepository, I
         var user = result.Value;
         await userRepository.AddAsync(user, cancellationToken);
 
-        try
-        {
-            await userRepository.SaveChangesAsync(cancellationToken);
-        }
-        catch (DuplicateUserEmailException)
-        {
-            return Error.Conflict("User.EmailExists", "A user with that email already exists.");
-        }
+        var saveResult = await userRepository.SaveChangesAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
 
         return user.Id;
     }

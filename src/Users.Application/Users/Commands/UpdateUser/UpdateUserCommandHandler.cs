@@ -14,6 +14,14 @@ internal sealed class UpdateUserCommandHandler(IUserRepository userRepository, I
         if (user is null)
             return Error.NotFound(ErrorCodes.NotFound, $"user with Id {request.Id} not found");
 
+        var normalizedEmail = request.Email?.Trim().ToLowerInvariant();
+        if (!string.IsNullOrWhiteSpace(normalizedEmail))
+        {
+            var userWithEmail = await userRepository.GetByEmailAsync(normalizedEmail, cancellationToken);
+            if (userWithEmail is not null && userWithEmail.Id != user.Id)
+                return Error.Conflict("User.EmailExists", "A user with that email already exists.");
+        }
+
         var profileResult = user.UpdateProfile(request.Name, request.Email);
         if (profileResult.IsFailure)
             return profileResult.Error;
@@ -28,14 +36,9 @@ internal sealed class UpdateUserCommandHandler(IUserRepository userRepository, I
         user.ChangeRole(request.Role);
 
         userRepository.Update(user);
-        try
-        {
-            await userRepository.SaveChangesAsync(cancellationToken);
-        }
-        catch (DuplicateUserEmailException)
-        {
-            return Error.Conflict("User.EmailExists", "A user with that email already exists.");
-        }
+        var saveResult = await userRepository.SaveChangesAsync(cancellationToken);
+        if (saveResult.IsFailure)
+            return saveResult.Error;
 
         return user.ToDto();
     }

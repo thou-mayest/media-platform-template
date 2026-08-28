@@ -10,23 +10,6 @@ namespace Users.Infrastracture.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql("""
-                UPDATE "Users"."Users"
-                SET "Email" = LOWER(BTRIM("Email"))
-                WHERE "Email" <> LOWER(BTRIM("Email"));
-                """);
-            migrationBuilder.Sql("""
-                DO $$
-                BEGIN
-                    IF EXISTS (
-                        SELECT 1 FROM "Users"."Users"
-                        GROUP BY "Email" HAVING COUNT(*) > 1
-                    ) THEN
-                        RAISE EXCEPTION 'Duplicate normalized user emails must be resolved before migration.';
-                    END IF;
-                END $$;
-                """);
-
             migrationBuilder.CreateIndex(
                 name: "UX_Users_Email",
                 schema: "Users",

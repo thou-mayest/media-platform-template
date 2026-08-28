@@ -12,7 +12,7 @@ using Users.Infrastracture.Persistence;
 namespace Users.Infrastracture.Migrations
 {
     [DbContext(typeof(UsersDbContext))]
-    [Migration("20260824221305_AddUniqueUserEmail")]
+    [Migration("20260828131745_AddUniqueUserEmail")]
     partial class AddUniqueUserEmail
     {
         /// <inheritdoc />
