@@ -1,0 +1,61 @@
+/*
+ * Reset and element defaults. Consumes tokens; defines none.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Header and Footer depend on these three. Without the anchor reset their
+   links render as default blue underlined text, and the search placeholder
+   loses its contrast treatment. */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+}
+
+input::placeholder {
+  color: var(--faint);
+}
+
+::selection {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

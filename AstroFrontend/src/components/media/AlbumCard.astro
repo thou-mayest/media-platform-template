@@ -1,0 +1,217 @@
+---
+import type { Album } from '@/data/media';
+import { albumPath } from '@/lib/routes';
+import { imageUrl, imageSrcSet } from '@/lib/images';
+import { NEW_BADGE_DAYS } from '@/config/site';
+
+interface Props {
+  album: Album;
+  /** True for the first row. Drives eager loading and fetchpriority for LCP. */
+  eager?: boolean;
+  /** Must match the grid's actual column behaviour or the browser picks wrong. */
+  sizes?: string;
+}
+
+const {
+  album,
+  eager = false,
+  sizes = '(min-width: 1100px) 25vw, (min-width: 800px) 33vw, (min-width: 520px) 50vw, 100vw',
+} = Astro.props;
+
+// Cards crop to a fixed 3:4 portrait box regardless of the source ratio, so
+// the grid keeps its rhythm. album.coverAspectRatio is used on the album feed,
+// where the real ratio is preserved.
+const CARD_W = 600;
+const CARD_H = 800;
+const WIDTHS = [300, 420, 600, 840];
+
+const ref = { key: album.coverKey, id: album.id };
+const src = imageUrl(ref, { width: CARD_W, height: CARD_H, fit: 'cover' });
+const srcset = imageSrcSet(ref, WIDTHS, { aspectRatio: CARD_W / CARD_H, fit: 'cover' });
+
+const href = albumPath(album.actorSlug, album.slug);
+
+const ageDays = Math.floor((Date.now() - Date.parse(album.publishedAt)) / 86_400_000);
+const isNew = ageDays <= NEW_BADGE_DAYS;
+const hasVideo = album.videoCount > 0;
+const newLabel = album.isSeries ? 'New episodes' : 'New';
+---
+
+<a class="albcard" href={href}>
+  <img
+    class="albcover"
+    src={src}
+    srcset={srcset || undefined}
+    sizes={srcset ? sizes : undefined}
+    width={CARD_W}
+    height={CARD_H}
+    alt={album.coverAlt}
+    loading={eager ? 'eager' : 'lazy'}
+    decoding={eager ? 'sync' : 'async'}
+    fetchpriority={eager ? 'high' : 'auto'}
+  />
+
+  <span class="albscrim" aria-hidden="true"></span>
+
+  {(album.isSeries || isNew) && (
+    <span class="albbadges">
+      {album.isSeries && <span class="badge badge--series">Series</span>}
+      {isNew && <span class="badge badge--new">{newLabel}</span>}
+    </span>
+  )}
+
+  {hasVideo && (
+    <span class="albplay" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+        <path d="M8 5v14l11-7z" />
+      </svg>
+    </span>
+  )}
+
+  <span class="albcap">
+    <span class="albmeta2">
+      <span class="cnt">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <circle cx="9" cy="11" r="2" />
+          <path d="m21 17-5-5-4 4-2-2-4 4" />
+        </svg>
+        {album.photoCount}
+      </span>
+      {hasVideo && (
+        <span class="cnt">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="2" y="6" width="13" height="12" rx="2" />
+            <path d="m22 8-7 4 7 4z" />
+          </svg>
+          {album.videoCount}
+        </span>
+      )}
+      <span class="cnt cnt--year">{album.publishedAt.slice(0, 4)}</span>
+    </span>
+
+    <span class="albtitle">{album.title}</span>
+    <span class="albdesc">{album.description}</span>
+  </span>
+</a>
+
+<style>
+  .albcard {
+    position: relative;
+    display: block;
+    aspect-ratio: 3 / 4;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--elev-2);
+    transition: transform 0.18s ease;
+    background: var(--surface);
+  }
+  .albcard:hover { transform: translateY(-4px); }
+  .albcard:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  .albcover {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .albscrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.82) 4%,
+      rgba(0, 0, 0, 0.34) 34%,
+      rgba(0, 0, 0, 0) 60%
+    );
+  }
+
+  .albbadges {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: 84%;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    font: 700 11px var(--font-sans);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 999px;
+    line-height: 1;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
+  .badge--series { background: #e0507a; }
+  .badge--new { background: #d33a3a; }
+
+  .albplay {
+    position: absolute;
+    top: 44%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.42);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    padding-left: 3px;
+  }
+
+  .albcap {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 15px;
+    color: #fff;
+    display: block;
+  }
+
+  .albmeta2 {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    font: 600 12.5px var(--font-sans);
+    color: rgba(255, 255, 255, 0.86);
+    margin-bottom: 7px;
+  }
+  .cnt { display: inline-flex; align-items: center; gap: 5px; }
+  .cnt--year { color: rgba(255, 255, 255, 0.66); }
+  .albmeta2 svg { width: 15px; height: 15px; opacity: 0.92; }
+
+  .albtitle {
+    display: block;
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: 21px;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: #fff;
+    margin-bottom: 5px;
+  }
+
+  .albdesc {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 12.5px;
+    line-height: 1.35;
+    color: rgba(255, 255, 255, 0.82);
+  }
+</style>
