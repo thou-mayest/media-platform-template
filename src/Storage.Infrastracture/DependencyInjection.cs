@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Storage.Application;
 using Storage.Application.Abstractions;
+using Storage.Infrastracture.BackgroundServices;
 using Storage.Infrastracture.Persistence;
 using Storage.Infrastracture.Storage;
 
@@ -41,8 +42,11 @@ internal static class DependencyInjection
         services.InitializeApplication();
 
         services.Configure<S3Options>(configuration.GetSection(S3Options.SectionName));
-        services.AddScoped<IFileStorageService, S3FileStorageService>();
+        services.AddTransient<IFileStorageService, S3FileStorageService>();
         services.AddScoped<IFileRepository, FileRepository>();
+
+        services.AddSingleton<IFileImportQueue, FileImportQueue>();
+        services.AddHostedService<FileImportBackgroundService>();
 
         return services;
     }

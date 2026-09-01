@@ -23,6 +23,11 @@ internal class FileRepository(StorageDbContext context) : IFileRepository
         await context.MediaAssets.AddAsync(mediaAsset, cancellationToken);
     }
 
+    public void Remove(MediaAsset mediaAsset)
+    {
+        context.MediaAssets.Remove(mediaAsset);
+    }
+
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         return await context.SaveChangesAsync(cancellationToken);

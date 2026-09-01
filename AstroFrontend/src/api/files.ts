@@ -71,15 +71,17 @@ export const filesApi = {
  * Sends an array of strings to your backend.
  * Replace the URL and adjust the request format as needed.
  */
-  async sendStringList(strings: string[]): Promise<Response> {
-    const response = await fetch('/api/strings', {
+  async sendStringList(urls: string[]): Promise<Response> {
+    const response = await fetch(`${BASE_URL}/api/files/import`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...authHeaders()
+        // 'Authorization': authHeaders().Authorization ?? ''
       },
-      body: JSON.stringify({ strings }),
+      body: JSON.stringify({ urls }),
     });
-
+    
     if (!response.ok) {
       throw new Error(`Request failed with status ${response.status}`);
     }
