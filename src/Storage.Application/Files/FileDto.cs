@@ -10,4 +10,4 @@ internal sealed record FileDto(
     string BucketName,
     string StorageKey,
     string Url,
-    DateTime CreatedAt);
+    DateTime CreatedDate);

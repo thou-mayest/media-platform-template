@@ -14,7 +14,7 @@ internal class FileRepository(StorageDbContext context) : IFileRepository
     public async Task<IReadOnlyList<MediaAsset>> ListAllAsync(CancellationToken cancellationToken = default)
     {
         return await context.MediaAssets
-            .OrderByDescending(m => m.CreatedAt)
+            .OrderByDescending(m => m.CreatedDate)
             .ToListAsync(cancellationToken);
     }
 

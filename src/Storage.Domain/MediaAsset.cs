@@ -12,8 +12,6 @@ public class MediaAsset : AggregateRoot
     public string BucketName { get; private set; }
     public string StorageKey { get; private set; }
     public string Url { get; private set; }
-    public DateTime CreatedAt { get; private set; }
-
     private MediaAsset(
         Guid id,
         string fileName,
@@ -23,8 +21,7 @@ public class MediaAsset : AggregateRoot
         string storageProvider,
         string bucketName,
         string storageKey,
-        string url,
-        DateTime createdAt)
+        string url)
         : base(id)
     {
         FileName = fileName;
@@ -35,7 +32,6 @@ public class MediaAsset : AggregateRoot
         BucketName = bucketName;
         StorageKey = storageKey;
         Url = url;
-        CreatedAt = createdAt;
     }
 
     private MediaAsset()
@@ -59,7 +55,6 @@ public class MediaAsset : AggregateRoot
         string url)
     {
         var fileName = Guid.NewGuid().ToString("N") + Path.GetExtension(originalFileName);
-        var createdAt = DateTime.UtcNow;
 
         return new MediaAsset(
             Guid.NewGuid(),
@@ -70,7 +65,6 @@ public class MediaAsset : AggregateRoot
             storageProvider,
             bucketName,
             storageKey,
-            url,
-            createdAt);
+            url);
     }
 }

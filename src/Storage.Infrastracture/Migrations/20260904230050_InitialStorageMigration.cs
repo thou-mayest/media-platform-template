@@ -28,7 +28,6 @@ namespace Storage.Infrastracture.Migrations
                     BucketName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     StorageKey = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
                     Url = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdateDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Version = table.Column<Guid>(type: "uuid", nullable: false)
@@ -39,10 +38,10 @@ namespace Storage.Infrastracture.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_MediaAssets_CreatedAt",
+                name: "IX_MediaAssets_CreatedDate",
                 schema: "Storage",
                 table: "MediaAssets",
-                column: "CreatedAt");
+                column: "CreatedDate");
 
             migrationBuilder.CreateIndex(
                 name: "IX_MediaAssets_StorageKey",

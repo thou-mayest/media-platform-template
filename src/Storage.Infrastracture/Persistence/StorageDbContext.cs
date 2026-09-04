@@ -50,11 +50,8 @@ internal class StorageDbContext : DbContext
                 .IsRequired()
                 .HasMaxLength(2048);
 
-            entity.Property(m => m.CreatedAt)
-                .IsRequired();
-
             entity.HasIndex(m => m.StorageKey);
-            entity.HasIndex(m => m.CreatedAt);
+            entity.HasIndex(m => m.CreatedDate);
         });
 
         base.OnModelCreating(modelBuilder);

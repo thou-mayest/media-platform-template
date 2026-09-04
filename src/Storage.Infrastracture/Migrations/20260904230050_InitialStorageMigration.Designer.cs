@@ -12,7 +12,7 @@ using Storage.Infrastracture.Persistence;
 namespace Storage.Infrastracture.Migrations
 {
     [DbContext(typeof(StorageDbContext))]
-    [Migration("20260804220718_InitialStorageMigration")]
+    [Migration("20260904230050_InitialStorageMigration")]
     partial class InitialStorageMigration
     {
         /// <inheritdoc />
@@ -41,9 +41,6 @@ namespace Storage.Infrastracture.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
@@ -84,7 +81,7 @@ namespace Storage.Infrastracture.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedAt");
+                    b.HasIndex("CreatedDate");
 
                     b.HasIndex("StorageKey");
 
