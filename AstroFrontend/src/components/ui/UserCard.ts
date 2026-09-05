@@ -1,3 +1,5 @@
+import { staticIcon } from '@/lib/dom';
+
 function initials(name: string): string {
   return name
     .split(/\s+/)
@@ -7,8 +9,9 @@ function initials(name: string): string {
     .join('');
 }
 
-const DELETE_ICON =
-  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0h10"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
+const deleteIcon = staticIcon(
+  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0h10"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>',
+);
 
 const STYLE = `
   :host {
@@ -154,22 +157,46 @@ export class UserCard extends HTMLElement {
 
     const dateText = created ? new Date(created).toLocaleDateString() : '';
 
-    this.shadowRoot!.innerHTML = `
-      <style>${STYLE}</style>
-      <article class="user">
-        <div class="avatar" aria-hidden="true">${initials(name)}</div>
-        <div class="details">
-          <p class="name" title="${name}">${name}</p>
-          <p class="email">${email}${dateText ? ` · joined ${dateText}` : ''}</p>
-        </div>
-        <span class="role role--${role}" title="Role: ${role}">${role}</span>
-        <button type="button" class="delete" title="Delete user" aria-label="Delete ${name}">
-          ${DELETE_ICON}
-        </button>
-      </article>
-    `;
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.setAttribute('aria-hidden', 'true');
+    avatar.textContent = initials(name);
 
-    this.shadowRoot!.querySelector('.delete')!.addEventListener('click', () => {
+    const nameEl = document.createElement('p');
+    nameEl.className = 'name';
+    nameEl.title = name;
+    nameEl.textContent = name;
+
+    const emailEl = document.createElement('p');
+    emailEl.className = 'email';
+    emailEl.textContent = email + (dateText ? ` · joined ${dateText}` : '');
+
+    const details = document.createElement('div');
+    details.className = 'details';
+    details.append(nameEl, emailEl);
+
+    const roleEl = document.createElement('span');
+    roleEl.className = `role role--${role}`;
+    roleEl.title = `Role: ${role}`;
+    roleEl.textContent = role;
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'delete';
+    deleteBtn.title = 'Delete user';
+    deleteBtn.setAttribute('aria-label', `Delete ${name}`);
+    deleteBtn.appendChild(deleteIcon());
+
+    const article = document.createElement('article');
+    article.className = 'user';
+    article.append(avatar, details, roleEl, deleteBtn);
+
+    const style = document.createElement('style');
+    style.textContent = STYLE;
+
+    this.shadowRoot!.replaceChildren(style, article);
+
+    deleteBtn.addEventListener('click', () => {
       this.dispatchEvent(
         new CustomEvent('user-delete', {
           bubbles: true,

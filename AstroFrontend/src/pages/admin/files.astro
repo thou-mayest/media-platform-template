@@ -125,7 +125,7 @@ import Layout from '@/layouts/Layout.astro';
     loading.hidden = false;
     empty.hidden = true;
     error.hidden = true;
-    grid.innerHTML = '';
+    grid.replaceChildren();
     refreshBtn.disabled = true;
 
     try {

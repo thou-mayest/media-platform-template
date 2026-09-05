@@ -29,7 +29,7 @@ export function initLinkSender(container: HTMLElement, endpoint: string): void {
   }
 
   function updateUI(): void {
-    listEl.innerHTML = '';
+    listEl.replaceChildren();
     links.forEach((link, index) => {
       const li = document.createElement('li');
 
@@ -50,7 +50,7 @@ export function initLinkSender(container: HTMLElement, endpoint: string): void {
 
       const removeBtn = document.createElement('button');
       removeBtn.className = 'remove-btn';
-      removeBtn.innerHTML = '&times;';
+      removeBtn.textContent = '×';
       removeBtn.setAttribute('aria-label', `Remove ${link}`);
       removeBtn.addEventListener('click', () => {
         links.splice(index, 1);

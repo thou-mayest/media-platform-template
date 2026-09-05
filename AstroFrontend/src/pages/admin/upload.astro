@@ -255,6 +255,7 @@ import UrlCollector from '@/components/interactive/LinkSender.astro';
 <script>
   import { filesApi, ApiError } from '@/api';
   import { isLoggedIn } from '@/lib/auth';
+  import { staticIcon } from '@/lib/dom';
 
   interface QueueEntry {
     file: File;
@@ -283,11 +284,13 @@ const uploader = document.getElementById('uploader')!;
     uploader.classList.add('hidden');
   }
 
-  const FILE_ICON =
-    '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>';
+  const fileIcon = staticIcon(
+    '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>',
+  );
 
-  const X_ICON =
-    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+  const xIcon = staticIcon(
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+  );
 
   function formatSize(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`;
@@ -315,7 +318,7 @@ const uploader = document.getElementById('uploader')!;
         img.alt = '';
         thumb.appendChild(img);
       } else {
-        thumb.innerHTML = FILE_ICON;
+        thumb.appendChild(fileIcon());
       }
 
       const meta = document.createElement('div');
@@ -339,7 +342,7 @@ const uploader = document.getElementById('uploader')!;
       const remove = document.createElement('button');
       remove.type = 'button';
       remove.className = 'remove';
-      remove.innerHTML = X_ICON;
+      remove.appendChild(xIcon());
       remove.title = 'Remove';
       side.append(status, remove);
 
@@ -371,7 +374,7 @@ const uploader = document.getElementById('uploader')!;
       entry.statusEl.classList.add('ok');
       try {
         const dto = await filesApi.getById(id);
-        entry.detailEl.innerHTML = '';
+        entry.detailEl.replaceChildren();
         const link = document.createElement('a');
         link.href = dto.url;
         link.textContent = 'View uploaded file';
@@ -436,7 +439,7 @@ const uploader = document.getElementById('uploader')!;
 
   clearBtn.addEventListener('click', () => {
     queue.length = 0;
-    queueEl.innerHTML = '';
+    queueEl.replaceChildren();
     refreshActions();
   });
 </script>

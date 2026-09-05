@@ -1,3 +1,5 @@
+import { safeUrl, staticIcon } from '@/lib/dom';
+
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -9,20 +11,17 @@ function fileExtension(name: string): string {
   return i > 0 ? name.slice(i + 1).toLowerCase() : '';
 }
 
-const IMAGE_ICON =
-  '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+const fileIcon = staticIcon(
+  '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>',
+);
 
-const VIDEO_ICON =
-  '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18"/><path d="m10 8 6 4-6 4V8z"/></svg>';
+const playIcon = staticIcon(
+  '<svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+);
 
-const FILE_ICON =
-  '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>';
-
-const PLAY_ICON =
-  '<svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
-
-const EXTERNAL_ICON =
-  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>';
+const externalIcon = staticIcon(
+  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>',
+);
 
 const STYLE = `
   :host {
@@ -182,7 +181,7 @@ export class MediaCard extends HTMLElement {
   }
 
   private render(): void {
-    const url = this.getAttribute('data-url') || '';
+    const url = safeUrl(this.getAttribute('data-url') || '');
     const name = this.getAttribute('data-name') || '';
     const type = this.getAttribute('data-type') || '';
     const size = Number(this.getAttribute('data-size') || '0');
@@ -192,48 +191,80 @@ export class MediaCard extends HTMLElement {
     const isVideo = type.startsWith('video/');
     const ext = fileExtension(name);
 
-    let preview = '';
+    const preview = document.createElement('div');
+    preview.className = 'preview';
     if (isImage) {
-      preview = `
-        <div class="preview">
-          <img src="${url}" alt="${name}" loading="lazy" />
-        </div>
-      `;
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = name;
+      img.loading = 'lazy';
+      preview.appendChild(img);
     } else if (isVideo) {
-      preview = `
-        <div class="preview">
-          <video src="${url}" preload="metadata"></video>
-          <div class="overlay">${PLAY_ICON}</div>
-        </div>
-      `;
+      const video = document.createElement('video');
+      video.src = url;
+      video.preload = 'metadata';
+      const overlay = document.createElement('div');
+      overlay.className = 'overlay';
+      overlay.appendChild(playIcon());
+      preview.append(video, overlay);
     } else {
-      preview = `
-        <div class="preview">
-          <div class="icon">${FILE_ICON}</div>
-          ${ext ? `<span class="ext">${ext}</span>` : ''}
-        </div>
-      `;
+      const icon = document.createElement('div');
+      icon.className = 'icon';
+      icon.appendChild(fileIcon());
+      preview.appendChild(icon);
+      if (ext) {
+        const extBadge = document.createElement('span');
+        extBadge.className = 'ext';
+        extBadge.textContent = ext;
+        preview.appendChild(extBadge);
+      }
     }
 
-    const dateText = created ? new Date(created).toLocaleString() : '';
+    const nameEl = document.createElement('p');
+    nameEl.className = 'name';
+    nameEl.title = name;
+    nameEl.textContent = name;
 
-    this.shadowRoot!.innerHTML = `
-      <style>${STYLE}</style>
-      <article class="card">
-        ${preview}
-        <div class="body">
-          <p class="name" title="${name}">${name}</p>
-          <div class="row">
-            <span class="type-pill">${type || 'unknown'}</span>
-            <span class="size">${formatSize(size)}</span>
-          </div>
-          ${dateText ? `<p class="date">${dateText}</p>` : ''}
-          <a class="link" href="${url}" target="_blank" rel="noopener">
-            Open file ${EXTERNAL_ICON}
-          </a>
-        </div>
-      </article>
-    `;
+    const typePill = document.createElement('span');
+    typePill.className = 'type-pill';
+    typePill.textContent = type || 'unknown';
+
+    const sizeEl = document.createElement('span');
+    sizeEl.className = 'size';
+    sizeEl.textContent = formatSize(size);
+
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.append(typePill, sizeEl);
+
+    const link = document.createElement('a');
+    link.className = 'link';
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.append('Open file ', externalIcon());
+
+    const body = document.createElement('div');
+    body.className = 'body';
+    body.append(nameEl, row);
+
+    const dateText = created ? new Date(created).toLocaleString() : '';
+    if (dateText) {
+      const dateEl = document.createElement('p');
+      dateEl.className = 'date';
+      dateEl.textContent = dateText;
+      body.appendChild(dateEl);
+    }
+    body.appendChild(link);
+
+    const article = document.createElement('article');
+    article.className = 'card';
+    article.append(preview, body);
+
+    const style = document.createElement('style');
+    style.textContent = STYLE;
+
+    this.shadowRoot!.replaceChildren(style, article);
   }
 }
 
