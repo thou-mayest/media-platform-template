@@ -28,3 +28,6 @@ export const NEW_BADGE_DAYS = 90;
 
 /** Media items per page in the album feed. */
 export const POSTS_PER_PAGE = 8;
+
+/** Creator cards per page on the directory. */
+export const ACTORS_PER_PAGE = 24;

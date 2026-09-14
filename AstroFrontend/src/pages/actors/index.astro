@@ -1,0 +1,141 @@
+---
+export const prerender = false;
+
+import MediaLayout from '@/layouts/MediaLayout.astro';
+import ActorCard from '@/components/media/ActorCard.astro';
+import Pagination from '@/components/media/Pagination.astro';
+import { actors, paginate, lastModified } from '@/data/media';
+import { actorsPath, actorPath, absoluteUrl } from '@/lib/routes';
+import { clamp } from '@/lib/text';
+import { ACTORS_PER_PAGE, siteName } from '@/config/site';
+
+// Alphabetical, not by follower count. A directory has to paginate stably —
+// if ordering shifts with engagement, a creator can move between pages
+// between crawls and drop out of the index entirely.
+const sorted = [...actors].sort((a, b) => a.displayName.localeCompare(b.displayName));
+
+const requested = Number(Astro.url.searchParams.get('page') ?? '1');
+const result = paginate(sorted, requested, ACTORS_PER_PAGE);
+
+// ── HTTP caching ───────────────────────────────────────────────
+// The directory changes far less often than a profile — new creators, not new
+// albums — so it holds longer.
+const lm = lastModified(actors);
+const headers: Record<string, string> = {
+  'Cache-Control': 'public, max-age=0, s-maxage=600, stale-while-revalidate=1800',
+};
+if (lm) headers['Last-Modified'] = new Date(lm).toUTCString();
+
+const ims = Astro.request.headers.get('if-modified-since');
+if (ims && lm && Date.parse(ims) >= Date.parse(lm)) {
+  return new Response(null, { status: 304, headers });
+}
+for (const [k, v] of Object.entries(headers)) Astro.response.headers.set(k, v);
+
+// ── Presentation ───────────────────────────────────────────────
+const onFirst = result.page === 1;
+const title = onFirst ? 'Creators' : `Creators — page ${result.page}`;
+
+const description = clamp(
+  onFirst
+    ? `Browse all ${result.totalItems} photographers, filmmakers and visual artists publishing on ${siteName}. Portraits, documentary, landscape and experimental work.`
+    : `Page ${result.page} of ${result.totalPages}. Photographers, filmmakers and visual artists publishing on ${siteName}.`,
+);
+
+const path = actorsPath(result.page);
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: `Creators — ${siteName}`,
+    description,
+    url: absoluteUrl(path, Astro.site),
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: result.totalItems,
+      itemListElement: result.items.map((a, i) => ({
+        '@type': 'ListItem',
+        position: (result.page - 1) * result.pageSize + i + 1,
+        url: absoluteUrl(actorPath(a.slug), Astro.site),
+        name: a.displayName,
+      })),
+    },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: siteName, item: absoluteUrl('/', Astro.site) },
+      { '@type': 'ListItem', position: 2, name: 'Creators', item: absoluteUrl(actorsPath(), Astro.site) },
+    ],
+  },
+];
+---
+
+<MediaLayout
+  title={title}
+  description={description}
+  path={path}
+  prevPath={result.hasPrev ? actorsPath(result.page - 1) : null}
+  nextPath={result.hasNext ? actorsPath(result.page + 1) : null}
+  jsonLd={jsonLd}
+>
+  <main>
+    <div class="container">
+      <header class="dir-head">
+        <p class="dir-eyebrow">Directory</p>
+        <h1 class="dir-h1">Creators</h1>
+        <p class="dir-lede">
+          Photographers, filmmakers and visual artists publishing on {siteName}.
+        </p>
+      </header>
+
+      <div class="dirgrid">
+        {result.items.map((a) => <ActorCard actor={a} />)}
+      </div>
+
+      <Pagination
+        page={result.page}
+        totalPages={result.totalPages}
+        hasPrev={result.hasPrev}
+        hasNext={result.hasNext}
+        hrefFor={(p) => actorsPath(p)}
+        label="Creators"
+      />
+    </div>
+  </main>
+</MediaLayout>
+
+<style>
+  .dir-head { padding: 40px 8px 26px; }
+  .dir-eyebrow {
+    margin: 0 0 6px;
+    font: 600 11px var(--font-sans);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .dir-h1 {
+    margin: 0 0 10px;
+    font-family: var(--font-serif);
+    font-size: 34px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--text);
+  }
+  .dir-lede {
+    margin: 0;
+    max-width: 46ch;
+    color: var(--text-2);
+    font-size: 15px;
+    text-wrap: pretty;
+  }
+
+  .dirgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 28px 16px;
+    padding: 0 8px;
+  }
+</style>
