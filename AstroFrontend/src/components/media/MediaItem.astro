@@ -1,0 +1,126 @@
+---
+import type { Post } from '@/data/media';
+import { postPath } from '@/lib/routes';
+import { imageUrl, imageSrcSet } from '@/lib/images';
+import { videoUrl, posterUrl } from '@/lib/video';
+
+interface Props {
+  post: Post;
+  actorSlug: string;
+  albumSlug: string;
+  /** True for the first item only — the LCP candidate. */
+  eager?: boolean;
+  sizes?: string;
+}
+
+const {
+  post,
+  actorSlug,
+  albumSlug,
+  eager = false,
+  sizes = '(min-width: 940px) 880px, 94vw',
+} = Astro.props;
+
+// The feed preserves the source ratio rather than cropping, so height is
+// derived per item. Both attributes are declared, so the box is reserved.
+const RENDER_W = 1200;
+const height = Math.round(RENDER_W / post.aspectRatio);
+const WIDTHS = [480, 720, 960, 1200, 1600];
+
+const ref = { key: post.storageKey, id: post.id };
+const href = postPath(actorSlug, albumSlug, post.id);
+const isVideo = post.mediaType === 'video';
+
+const poster = isVideo ? posterUrl(ref, { width: RENDER_W, height }) : null;
+const src = poster ?? imageUrl(ref, { width: RENDER_W, height, fit: 'contain' });
+const srcset = isVideo ? '' : imageSrcSet(ref, WIDTHS, { aspectRatio: post.aspectRatio, fit: 'contain' });
+const playable = isVideo ? videoUrl(ref) : null;
+
+const duration =
+  post.durationSeconds != null
+    ? `${Math.floor(post.durationSeconds / 60)}:${String(post.durationSeconds % 60).padStart(2, '0')}`
+    : null;
+---
+
+<figure class="feeditem" style={`--ar:${post.aspectRatio};`}>
+  {playable ? (
+    <video
+      class="feeditem__media"
+      controls
+      preload="none"
+      playsinline
+      poster={poster}
+      width={RENDER_W}
+      height={height}
+      aria-label={post.altText}
+    >
+      <source src={playable} type="application/x-mpegURL" />
+    </video>
+  ) : (
+    <a class="feeditem__link" href={href}>
+      <img
+        class="feeditem__media"
+        src={src}
+        srcset={srcset || undefined}
+        sizes={srcset ? sizes : undefined}
+        width={RENDER_W}
+        height={height}
+        alt={post.altText}
+        loading={eager ? 'eager' : 'lazy'}
+        decoding={eager ? 'sync' : 'async'}
+        fetchpriority={eager ? 'high' : 'auto'}
+      />
+      {isVideo && (
+        <span class="feeditem__play" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+        </span>
+      )}
+    </a>
+  )}
+
+  <figcaption class="feeditem__cap">
+    {post.caption && <span class="feeditem__text">{post.caption}</span>}
+    <span class="feeditem__meta">
+      {duration && <span class="feeditem__dur">{duration}</span>}
+      <a class="feeditem__perma" href={href}>Open</a>
+    </span>
+  </figcaption>
+</figure>
+
+<style>
+  .feeditem { margin: 0; }
+
+  .feeditem__link { display: block; position: relative; }
+
+  .feeditem__media {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: var(--ar);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    object-fit: cover;
+  }
+
+  .feeditem__link:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: var(--radius-md); }
+
+  .feeditem__play {
+    position: absolute; inset: 0; margin: auto;
+    width: 62px; height: 62px; border-radius: 50%;
+    background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(3px);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; padding-left: 3px;
+  }
+
+  .feeditem__cap {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 14px; margin-top: 9px; font-size: 13.5px; color: var(--text-2);
+  }
+  .feeditem__text { text-wrap: pretty; }
+  .feeditem__meta {
+    display: inline-flex; align-items: center; gap: 12px;
+    margin-left: auto; flex: none; color: var(--muted); font-size: 12.5px;
+  }
+  .feeditem__dur { font-variant-numeric: tabular-nums; }
+  .feeditem__perma { font-weight: 600; color: var(--accent); }
+</style>

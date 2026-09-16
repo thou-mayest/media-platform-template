@@ -1,13 +1,24 @@
-﻿using Microsoft.AspNetCore.Routing;
-using Users.Presentation.Users;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Users.Presentation.Authorization;
+using System.Text.Json.Serialization;
 
 namespace Users.Presentation;
 
 public static class Extension
 {
-    public static IEndpointRouteBuilder MapUsersEndpoints(this IEndpointRouteBuilder app)
+    public static IServiceCollection AddUsersPresentation(this IServiceCollection services)
     {
-        app.MapUserEndpoints();
-        return app;
+        services.AddControllers().AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+
+            options.JsonSerializerOptions.DefaultIgnoreCondition =
+                JsonIgnoreCondition.WhenWritingNull;
+        });
+
+        services.AddUsersAuthorization();
+
+        return services;
     }
 }
+

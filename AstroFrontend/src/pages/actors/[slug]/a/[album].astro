@@ -1,0 +1,245 @@
+---
+export const prerender = false;
+
+import MediaLayout from '@/layouts/MediaLayout.astro';
+import Breadcrumbs from '@/components/media/Breadcrumbs.astro';
+import MediaItem from '@/components/media/MediaItem.astro';
+import AlbumCard from '@/components/media/AlbumCard.astro';
+import AdSlot from '@/components/media/AdSlot.astro';
+import Pagination from '@/components/media/Pagination.astro';
+import {
+  getActorBySlug, getAlbumBySlug, albumsByActor, postsByAlbum,
+  paginate, lastModified, type Post,
+} from '@/data/media';
+import { actorPath, albumPath, absoluteUrl } from '@/lib/routes';
+import { imageUrl } from '@/lib/images';
+import { clamp } from '@/lib/text';
+import { POSTS_PER_PAGE, siteName } from '@/config/site';
+
+const { slug, album: albumSlug } = Astro.params;
+const actor = slug ? getActorBySlug(slug) : undefined;
+const album = actor && albumSlug ? getAlbumBySlug(actor.slug, albumSlug) : undefined;
+if (!actor || !album) return new Response(null, { status: 404 });
+
+const allPosts = postsByAlbum(album.id);
+const requested = Number(Astro.url.searchParams.get('page') ?? '1');
+const result = paginate(allPosts, requested, POSTS_PER_PAGE);
+
+// ── HTTP caching ───────────────────────────────────────────────
+const lm = lastModified([album, ...allPosts]);
+const headers: Record<string, string> = {
+  'Cache-Control': 'public, max-age=0, s-maxage=300, stale-while-revalidate=600',
+};
+if (lm) headers['Last-Modified'] = new Date(lm).toUTCString();
+
+const ims = Astro.request.headers.get('if-modified-since');
+if (ims && lm && Date.parse(ims) >= Date.parse(lm)) {
+  return new Response(null, { status: 304, headers });
+}
+for (const [k, v] of Object.entries(headers)) Astro.response.headers.set(k, v);
+
+// ── Presentation ───────────────────────────────────────────────
+const onFirst = result.page === 1;
+const title = onFirst
+  ? `${album.title} — ${actor.displayName}`
+  : `${album.title} — ${actor.displayName}, page ${result.page}`;
+
+const counts = [
+  album.photoCount > 0 ? `${album.photoCount} photos` : null,
+  album.videoCount > 0 ? `${album.videoCount} videos` : null,
+].filter(Boolean).join(' and ');
+
+const description = clamp(
+  `${album.description} ${counts} by ${actor.displayName}, ${actor.profession}.`,
+);
+
+const path = albumPath(actor.slug, album.slug, result.page);
+
+const coverSrc = imageUrl({ key: album.coverKey, id: album.id }, { width: 1200, height: 900, fit: 'cover' });
+const realCover = !coverSrc.startsWith('data:') ? absoluteUrl(coverSrc, Astro.site) : null;
+
+const avatarSrc = imageUrl({ key: actor.avatarKey, id: actor.id }, { width: 72, height: 72, fit: 'cover' });
+
+// Ad after every fourth item, never trailing.
+type Cell = { kind: 'post'; post: Post } | { kind: 'ad' };
+const cells: Cell[] = [];
+result.items.forEach((post, i) => {
+  cells.push({ kind: 'post', post });
+  if ((i + 1) % 4 === 0 && i < result.items.length - 1) cells.push({ kind: 'ad' });
+});
+
+const related = albumsByActor(actor.id).filter((a) => a.id !== album.id).slice(0, 4);
+
+const crumbs = [
+  { label: siteName, href: '/' },
+  { label: actor.displayName, href: actorPath(actor.slug) },
+  { label: album.title },
+];
+
+// associatedMedia is only emitted with real assets — a data-URI contentUrl is
+// invalid structured data and worse than omitting the property.
+const media = realCover
+  ? allPosts.map((p) => ({
+      '@type': p.mediaType === 'video' ? 'VideoObject' : 'ImageObject',
+      name: p.altText,
+      description: p.caption ?? p.altText,
+      uploadDate: p.publishedAt,
+      contentUrl: absoluteUrl(postPathFor(p), Astro.site),
+    }))
+  : undefined;
+
+function postPathFor(p: Post) {
+  return `${albumPath(actor!.slug, album!.slug)}/p/${p.id}`;
+}
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'ImageGallery',
+    name: album.title,
+    description: album.description,
+    url: absoluteUrl(path, Astro.site),
+    datePublished: album.publishedAt,
+    dateModified: album.updatedAt,
+    author: { '@type': 'Person', name: actor.displayName, url: absoluteUrl(actorPath(actor.slug), Astro.site) },
+    ...(media ? { associatedMedia: media } : {}),
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: crumbs.map((c, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: c.label,
+      ...(c.href ? { item: absoluteUrl(c.href, Astro.site) } : {}),
+    })),
+  },
+];
+---
+
+<MediaLayout
+  title={title}
+  description={description}
+  path={path}
+  ogType="article"
+  image={realCover ? { url: realCover, width: 1200, height: 900, alt: album.coverAlt } : null}
+  prevPath={result.hasPrev ? albumPath(actor.slug, album.slug, result.page - 1) : null}
+  nextPath={result.hasNext ? albumPath(actor.slug, album.slug, result.page + 1) : null}
+  jsonLd={jsonLd}
+>
+  <main>
+    <div class="container">
+      <Breadcrumbs items={crumbs} />
+
+      <header class="alb-head">
+        <h1 class="alb-title">{album.title}</h1>
+        <p class="alb-desc">{album.description}</p>
+
+        <div class="alb-bar">
+          <a class="alb-owner" href={actorPath(actor.slug)}>
+            <img class="alb-av" src={avatarSrc} width="36" height="36" alt="" loading="lazy" decoding="async" />
+            <span class="alb-handle">{actor.displayName}</span>
+          </a>
+
+          <p class="alb-stats">
+            {album.photoCount > 0 && <span>{album.photoCount} photos</span>}
+            {album.videoCount > 0 && <span>{album.videoCount} videos</span>}
+            {album.isSeries && <span class="alb-series">Series</span>}
+            <span>{album.publishedAt.slice(0, 4)}</span>
+          </p>
+        </div>
+      </header>
+
+      {result.totalItems === 0 ? (
+        <p class="alb-empty">This album doesn’t have any media yet.</p>
+      ) : (
+        <>
+          <div class="feed">
+            {cells.map((cell, i) =>
+              cell.kind === 'ad' ? (
+                <AdSlot ratio="3 / 2" />
+              ) : (
+                <MediaItem
+                  post={cell.post}
+                  actorSlug={actor.slug}
+                  albumSlug={album.slug}
+                  eager={result.page === 1 && i === 0}
+                />
+              ),
+            )}
+          </div>
+
+          <Pagination
+            page={result.page}
+            totalPages={result.totalPages}
+            hasPrev={result.hasPrev}
+            hasNext={result.hasNext}
+            hrefFor={(p) => albumPath(actor.slug, album.slug, p)}
+            label={`${album.title} media`}
+          />
+        </>
+      )}
+
+      {album.tags.length > 0 && (
+        <section class="alb-tags">
+          <h2 class="alb-h2">Tags</h2>
+          <ul class="taglist">
+            {album.tags.map((t) => <li class="tag">{t}</li>)}
+          </ul>
+        </section>
+      )}
+
+      {related.length > 0 && (
+        <section class="alb-related">
+          <h2 class="alb-h2">More from {actor.displayName}</h2>
+          <div class="relgrid">
+            {related.map((a) => <AlbumCard album={a} />)}
+          </div>
+        </section>
+      )}
+    </div>
+  </main>
+</MediaLayout>
+
+<style>
+  .alb-head { margin-bottom: 26px; }
+  .alb-title {
+    font-family: var(--font-serif); font-size: 31px; font-weight: 600;
+    letter-spacing: -0.015em; margin: 0 0 8px; color: var(--text);
+  }
+  .alb-desc { margin: 0 0 15px; color: var(--text-2); font-size: 14.5px; max-width: 620px; text-wrap: pretty; }
+
+  .alb-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 14px; flex-wrap: wrap; padding-bottom: 18px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .alb-owner { display: flex; align-items: center; gap: 9px; flex: none; }
+  .alb-av { border-radius: 50%; object-fit: cover; background: var(--surface); }
+  .alb-handle { font-family: var(--font-serif); font-size: 15px; font-weight: 500; color: var(--accent); white-space: nowrap; }
+
+  .alb-stats {
+    display: flex; align-items: center; gap: 11px; margin: 0;
+    color: var(--muted); font: 600 12.5px var(--font-sans); flex-wrap: wrap;
+  }
+  .alb-series { color: var(--accent); }
+
+  .feed { display: flex; flex-direction: column; gap: 26px; }
+
+  .alb-empty {
+    margin: 40px 0; padding: 34px; text-align: center;
+    border: 1.5px dashed var(--border); border-radius: var(--radius-md);
+    color: var(--muted); background: var(--surface);
+  }
+
+  .alb-tags, .alb-related { margin: 36px 0 0; padding-top: 24px; border-top: 1px solid var(--hairline); }
+  .alb-h2 { font-family: var(--font-serif); font-size: 20px; font-weight: 600; margin: 0 0 14px; color: var(--text); }
+
+  .taglist { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0; }
+  .tag {
+    font-size: 12px; border-radius: 999px; padding: 6px 12px;
+    background: var(--chip-bg); border: 1px solid var(--border-soft); color: var(--text-2);
+  }
+
+  .relgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; }
+</style>

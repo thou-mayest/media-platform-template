@@ -2,7 +2,6 @@
 using Users.Application.Users;
 using Users.Application.Users.Commands.CreateUser;
 using Users.Application.Users.Commands.UpdateUser;
-using static Users.Presentation.Users.UserEndpoints;
 
 namespace Users.Presentation.Users;
 

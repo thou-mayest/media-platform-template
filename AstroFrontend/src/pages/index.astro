@@ -90,7 +90,7 @@ else setHomeCache(Astro.response.headers);
                 <div class="eyebrow">Follow a tag</div>
                 <div class="browse__tags">
                   {facets.tags.slice(0, 12).map((facet) => (
-                    <a class="tag-pill" href={`/tag/${encodeURIComponent(facet.name)}`}>
+                    <a class="tag-pill" href={`/tags/${encodeURIComponent(facet.name)}`}>
                       #{facet.name} <span>{facet.count}</span>
                     </a>
                   ))}

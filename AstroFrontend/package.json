@@ -15,11 +15,13 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/node": "^11.0.2",
-    "astro": "^7.0.9"
+    "@astrojs/node": "^11.1.5",
+    "@fontsource/archivo": "^5.3.0",
+    "@fontsource/spectral": "^5.3.0",
+    "astro": "^7.1.5"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.9",
+    "@astrojs/check": "^0.9.10",
     "@playwright/test": "^1.61.1",
     "typescript": "^5.9.3"
   }

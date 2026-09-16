@@ -14,8 +14,8 @@ The frontend does not require a global Astro installation.
 
 ## Configuration
 
-`POSTS_API_URL` is the server-side base URL of the Posts API. It defaults to
-`http://127.0.0.1:5188`.
+`POSTS_API_URL` is the required server-side base URL of the Posts API. Keeping
+it private prevents the frontend from exposing an internal service address.
 
 PowerShell:
 
@@ -60,13 +60,16 @@ node dist/server/entry.mjs
 | --- | --- |
 | `/` | Most-viewed and newest published posts, categories, and tags |
 | `/explore` | Category/tag filters, sorting, and pagination |
-| `/tag/[tag]` | Published posts for one tag |
+| `/tags` | Tags returned by the Posts API, ordered by published-post activity |
+| `/tags/[tag]` | Published posts for one tag |
 | `/search` | Search form and keyword redirect |
 | `/search/[keyword]` | Server-rendered keyword results |
 | `/posts/[id]` | Published post detail and view recording |
-| `/tags/[tag]` | Permanent redirect to `/tag/[tag]` |
+| `/tag/[tag]` | Permanent redirect to `/tags/[tag]` |
 
-The existing artist, category, and legacy work pages remain statically
+The Posts API and upload flow are owned by their respective teams; this frontend
+only consumes their published-post and facet contracts. The existing artist,
+category, and legacy work pages remain statically
 prerendered from `src/data/gallery.ts` while their backend modules are built.
 
 ## Rendering and browser JavaScript

@@ -1,10 +1,11 @@
 ---
 import AdSlot from '@/components/AdSlot.astro';
+import ExploreForm from '@/components/ExploreForm.astro';
 import Pagination from '@/components/Pagination.astro';
 import PostGrid from '@/components/PostGrid.astro';
 import Layout from '@/layouts/Layout.astro';
-import type { PagedPosts } from '@/lib/server/posts';
-import { getPosts } from '@/lib/server/posts';
+import type { PagedPosts, PostFacets } from '@/lib/server/posts';
+import { getPostFacets, getPosts } from '@/lib/server/posts';
 import { cleanFilter, parsePage, parseSort, setCollectionCache, setNoStore } from '@/lib/server/page';
 
 const category = cleanFilter(Astro.url.searchParams.get('category'), 100);
@@ -14,11 +15,18 @@ const page = parsePage(Astro.url.searchParams.get('page'));
 
 let error = '';
 let result: PagedPosts = { items: [], page, pageSize: 20, totalCount: 0, totalPages: 0 };
+let facets: PostFacets = { categories: [], tags: [] };
 
-try {
-  result = await getPosts({ category, tag, sort, page, pageSize: 20 });
+const [postsResult, facetsResult] = await Promise.allSettled([
+  getPosts({ category, tag, sort, page, pageSize: 20 }),
+  getPostFacets(),
+]);
+
+if (postsResult.status === 'fulfilled') {
+  result = postsResult.value;
+  if (facetsResult.status === 'fulfilled') facets = facetsResult.value;
   setCollectionCache(Astro.response.headers);
-} catch {
+} else {
   error = 'The collection could not be loaded. Please try again shortly.';
   Astro.response.status = 502;
   setNoStore(Astro.response.headers);
@@ -33,7 +41,7 @@ try {
   <main class="container explore-page">
     <header class="explore-page__header">
       <div class="explore-page__intro">
-        <div class="eyebrow">The public index · Volume 04</div>
+        <div class="eyebrow">The public index</div>
         <h1 class="h-display">Explore the collection.</h1>
         <p>A quiet, uninterrupted view of work published by artists across the index.</p>
       </div>
@@ -45,6 +53,10 @@ try {
     </header>
 
     <AdSlot />
+
+    {!error && (
+      <ExploreForm facets={facets} category={category} tag={tag} sort={sort} />
+    )}
 
     <div class="collection-head">
       <div>

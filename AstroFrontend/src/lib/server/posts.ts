@@ -54,14 +54,16 @@ const runtimeEnvironment = (globalThis as {
   process?: { env?: Record<string, string | undefined> };
 }).process?.env;
 
-const API_BASE_URL = (
-  runtimeEnvironment?.POSTS_API_URL ??
-  import.meta.env.POSTS_API_URL ??
-  'http://127.0.0.1:5188'
-).replace(/\/$/, '');
+function getApiBaseUrl(): string {
+  const configuredUrl = runtimeEnvironment?.POSTS_API_URL ?? import.meta.env.POSTS_API_URL;
+  if (!configuredUrl)
+    throw new PostsApiError('POSTS_API_URL is not configured.', 500);
+
+  return configuredUrl.replace(/\/$/, '');
+}
 
 function createUrl(path: string, query?: PostsQuery): URL {
-  const url = new URL(path, `${API_BASE_URL}/`);
+  const url = new URL(path, `${getApiBaseUrl()}/`);
   if (!query) return url;
 
   for (const [key, value] of Object.entries(query)) {

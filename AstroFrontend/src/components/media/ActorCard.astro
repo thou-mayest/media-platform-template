@@ -1,0 +1,32 @@
+---
+import type { Actor } from '@/data/media';
+import { actorPath } from '@/lib/routes';
+import { imageUrl } from '@/lib/images';
+
+interface Props { actor: Actor; }
+const { actor } = Astro.props;
+
+const AV = 148; // 74px at 2x
+const src = imageUrl({ key: actor.avatarKey, id: actor.id }, { width: AV, height: AV, fit: 'cover' });
+---
+
+<a class="relcard" href={actorPath(actor.slug)}>
+  <img class="relav" src={src} width="74" height="74" alt="" loading="lazy" decoding="async" />
+  <span class="relname">{actor.displayName}</span>
+  <span class="relmeta">{actor.profession} · {actor.albumCount} albums</span>
+</a>
+
+<style>
+  .relcard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+  }
+  .relcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: var(--radius-sm); }
+  .relav { border-radius: 50%; object-fit: cover; display: block; }
+  .relname { font-family: var(--font-serif); font-size: 14px; font-weight: 500; color: var(--text); }
+  .relmeta { font-size: 11px; color: var(--muted); }
+  .relcard:hover .relname { color: var(--accent); }
+</style>

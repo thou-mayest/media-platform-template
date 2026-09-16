@@ -68,6 +68,10 @@ namespace Users.Infrastracture.Migrations
 
                             b1.HasKey("UserId");
 
+                            b1.HasIndex("Value")
+                                .IsUnique()
+                                .HasDatabaseName("UX_Users_Email");
+
                             b1.ToTable("Users", "Users");
 
                             b1.WithOwner()

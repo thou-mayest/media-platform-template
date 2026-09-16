@@ -42,4 +42,20 @@ public sealed class PasswordHasher : IPasswordHasher
 
         return CryptographicOperations.FixedTimeEquals(actualHash, expectedHash);
     }
+
+    public void PerformFakeVerification()
+    {
+        byte[] salt = new byte[SaltSize]; // all zeros
+        byte[] dummyHash = Rfc2898DeriveBytes.Pbkdf2(
+            "AN_UNGUESSABLE_DUMMY_PASSWORD",
+            salt,
+            Iterations,
+            Algorithm,
+            HashSize);
+
+        // Compare against an arbitrary byte array of the same length to run FixedTimeEquals.
+        // The result is discarded; we only care about the time taken.
+        byte[] fakeExpectedHash = new byte[HashSize];
+        _ = CryptographicOperations.FixedTimeEquals(dummyHash, fakeExpectedHash);
+    }
 }

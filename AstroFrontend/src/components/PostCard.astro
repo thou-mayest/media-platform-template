@@ -31,7 +31,7 @@ const published = post.publishedAt
     {post.tags.length > 0 && (
       <div class="post-card__tags" aria-label="Post tags">
         {post.tags.slice(0, 3).map((tag) => (
-          <a href={`/tag/${encodeURIComponent(tag)}`}>#{tag}</a>
+          <a href={`/tags/${encodeURIComponent(tag)}`}>#{tag}</a>
         ))}
       </div>
     )}

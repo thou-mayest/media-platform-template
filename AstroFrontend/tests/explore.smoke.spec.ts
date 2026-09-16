@@ -30,11 +30,14 @@ test('Explore renders a clean feed with a reserved ad placement', async ({ page 
   await expect(page.getByRole('heading', { name: 'Explore the collection.' })).toBeVisible();
   await expect(page.getByText('24', { exact: true })).toBeVisible();
   await expect(page.getByLabel('Advertisement')).toBeVisible();
-  await expect(page.getByRole('combobox')).toHaveCount(0);
+  const filters = page.getByRole('form', { name: 'Explore filters' });
+  await expect(filters).toBeVisible();
+  await expect(filters.getByLabel('Category')).toContainText('Painting');
+  await expect(filters.getByLabel('Tag')).toContainText('#abstract');
 });
 
 test('tag page renders a dedicated server-side result page', async ({ page }) => {
-  await page.goto('/tag/abstract');
+  await page.goto('/tags/abstract');
 
   await expect(page.getByRole('heading', { name: '#abstract' })).toBeVisible();
   await expect(page.getByText('6 published works')).toBeVisible();
@@ -46,7 +49,7 @@ test('tag index lists available tags and links to their result pages', async ({ 
   await expect(page.getByRole('heading', { name: 'Follow an idea.' })).toBeVisible();
   await expect(page.locator('.tag-card', { hasText: '#abstract' })).toBeVisible();
   await page.locator('.tag-card', { hasText: '#abstract' }).click();
-  await expect(page).toHaveURL(/\/tag\/abstract$/);
+  await expect(page).toHaveURL(/\/tags\/abstract$/);
 });
 
 test('tag index can be filtered by tag name', async ({ page }) => {
@@ -75,7 +78,7 @@ test('navbar keyword and sort filter create shareable search results', async ({ 
   await page.goto('/explore');
   await page.getByRole('searchbox', { name: 'Keyword' }).fill('studio');
   await page.getByLabel('Filter and sort').click();
-  await page.getByLabel('Most viewed').check();
+  await page.getByRole('radio', { name: 'Most viewed' }).check();
   await page.getByRole('button', { name: /View results/ }).click();
 
   await expect(page).toHaveURL(/\/search\/studio\?sort=popular$/);
@@ -88,7 +91,7 @@ test('public SSR pages send cache headers and only use theme scripts', async ({ 
     { path: '/', maxAge: 60, sharedMaxAge: 300 },
     { path: '/explore', maxAge: 120, sharedMaxAge: 600 },
     { path: '/tags', maxAge: 120, sharedMaxAge: 600 },
-    { path: '/tag/abstract', maxAge: 120, sharedMaxAge: 600 },
+    { path: '/tags/abstract', maxAge: 120, sharedMaxAge: 600 },
     { path: '/search', maxAge: 120, sharedMaxAge: 600 },
     { path: '/search/market', maxAge: 120, sharedMaxAge: 600 },
   ];

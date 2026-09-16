@@ -50,7 +50,7 @@ if (!validId) {
           {post.description && <p>{post.description}</p>}
           <div class="post-page__tags">
             {post.tags.map((tag) => (
-              <a class="tag-pill" href={`/tag/${encodeURIComponent(tag)}`}>#{tag}</a>
+              <a class="tag-pill" href={`/tags/${encodeURIComponent(tag)}`}>#{tag}</a>
             ))}
           </div>
         </div>

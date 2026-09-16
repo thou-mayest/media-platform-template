@@ -1,0 +1,104 @@
+---
+import { siteName, siteOgLocale, twitterHandle, pageTitle } from '@/config/site';
+import { absoluteUrl } from '@/lib/routes';
+
+export type SeoImage = {
+  /** Absolute URL, or a path resolved against the site origin. */
+  url: string;
+  width: number;
+  height: number;
+  alt: string;
+};
+
+interface Props {
+  /** Page-specific title. The site name is appended automatically. */
+  title: string;
+  /** 120–155 characters. Anything longer is truncated in results. */
+  description: string;
+  /** Canonical path from lib/routes. Must include ?page=N on paginated pages. */
+  path: string;
+  ogType?: 'website' | 'profile' | 'article';
+  image?: SeoImage | null;
+  prevPath?: string | null;
+  nextPath?: string | null;
+  noindex?: boolean;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+}
+
+const {
+  title,
+  description,
+  path,
+  ogType = 'website',
+  image = null,
+  prevPath = null,
+  nextPath = null,
+  noindex = false,
+  jsonLd,
+} = Astro.props;
+
+const fullTitle = pageTitle(title);
+const canonical = absoluteUrl(path, Astro.site);
+
+// Social crawlers reject data URIs, so placeholder art is omitted rather than
+// advertised as a preview image.
+const ogImage =
+  image && !image.url.startsWith('data:')
+    ? { ...image, url: absoluteUrl(image.url, Astro.site) }
+    : null;
+
+// max-image-preview:large opts into full-size thumbnails in results — worth
+// real traffic on an image-led site, and off by default.
+const robots = noindex
+  ? 'noindex, nofollow'
+  : 'index, follow, max-image-preview:large, max-snippet:-1';
+
+const blocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+
+/** Escaping '<' prevents a '</script>' inside any string field from closing
+ *  the tag early. JSON.stringify alone does not protect against this. */
+const serialize = (o: Record<string, unknown>) =>
+  JSON.stringify(o).replace(/</g, '\\u003c');
+
+if (import.meta.env.DEV) {
+  const n = description.length;
+  if (n < 120 || n > 155) {
+    console.warn(`[seo] ${path} — description is ${n} chars, target is 120–155.`);
+  }
+}
+---
+
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+<meta name="robots" content={robots} />
+
+{prevPath && <link rel="prev" href={absoluteUrl(prevPath, Astro.site)} />}
+{nextPath && <link rel="next" href={absoluteUrl(nextPath, Astro.site)} />}
+
+<meta property="og:type" content={ogType} />
+<meta property="og:site_name" content={siteName} />
+<meta property="og:locale" content={siteOgLocale} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+
+{ogImage && (
+  <Fragment>
+    <meta property="og:image" content={ogImage.url} />
+    <meta property="og:image:width" content={String(ogImage.width)} />
+    <meta property="og:image:height" content={String(ogImage.height)} />
+    <meta property="og:image:alt" content={ogImage.alt} />
+  </Fragment>
+)}
+
+<meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+{twitterHandle && <meta name="twitter:site" content={twitterHandle} />}
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+{ogImage && <meta name="twitter:image" content={ogImage.url} />}
+{ogImage && <meta name="twitter:image:alt" content={ogImage.alt} />}
+
+{blocks.map((b) => (
+  <script type="application/ld+json" is:inline set:html={serialize(b)} />
+))}
