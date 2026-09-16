@@ -29,3 +29,23 @@ start container without aspire (for persistent container aspire doesnt allow por
 ```bash
 docker run --name postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -v ./postgres-data:/var/lib/postgresql postgres:18.3
 ```
+
+## Development seed data
+
+The API applies migrations and then idempotently creates the users configured in the
+`UserSeed` section. Seeding is enabled only in `appsettings.Development.json` by default.
+Existing users are matched by normalized email and are left unchanged, so restarting the
+API does not create duplicates.
+
+The development accounts are:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | `admin@localhost.test` | `Admin123!` |
+| User | `user@localhost.test` | `User123!` |
+| Premium user | `premium@localhost.test` | `Premium123!` |
+
+Set `UserSeed:Enabled` to `false`, or override the section with user secrets or
+environment variables, when these local-only accounts are not wanted. User creation goes
+through the domain and repository pipeline, so `UserCreated` events are emitted for newly
+seeded users and downstream modules can provision related profiles.
