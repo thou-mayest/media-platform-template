@@ -6,6 +6,7 @@ using Users.Application;
 using Users.Application.Abstractions;
 using Users.Application.Messaging;
 using Users.Domain.Abstractions;
+using Users.Infrastructure.Interceptors;
 using Users.Infrastracture.Persistence;
 using Users.Infrastracture.Security;
 
@@ -30,9 +31,16 @@ internal static class DependencyInjection
     {
         var connectionString = configuration.GetConnectionString("PostgreConnectionString");
 
-        services.AddDbContextPool<UsersDbContext>(options =>
+        services.AddSingleton<ConvertDomainEventsToOutboxMessagesInterceptor>();
+
+        services.AddDbContextPool<UsersDbContext>((sp, options) =>
+        {
+            var interceptor = sp.GetRequiredService<ConvertDomainEventsToOutboxMessagesInterceptor>();
+
             options.UseNpgsql(connectionString, npgsql =>
-        npgsql.MigrationsHistoryTable("__UsersMigrations", "Users")));
+                npgsql.MigrationsHistoryTable("__UsersMigrations", "Users"))
+                   .AddInterceptors(interceptor);
+        });
 
         return services;
     }
