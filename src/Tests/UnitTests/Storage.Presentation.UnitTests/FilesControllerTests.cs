@@ -20,20 +20,29 @@ public sealed class FilesControllerTests
     }
 
     [Fact]
-    public async Task Upload_WithValidFile_ReturnsCreatedWithLocation()
+    public async Task Upload_WithValidFile_ForwardsFileDataToCommand_AndReturnsCreatedWithLocation()
     {
         // Arrange
         var fileId = Guid.NewGuid();
-        var file = CreateFormFile("document.txt", "text/plain", [0x01, 0x02, 0x03]);
+        var (file, stream) = CreateFormFile("document.txt", "text/plain", [0x01, 0x02, 0x03]);
+        UploadFileCommand? sentCommand = null;
 
         _senderMock
             .Setup(s => s.Send(It.IsAny<UploadFileCommand>(), It.IsAny<CancellationToken>()))
+            .Callback<IRequest<Result<Guid>>, CancellationToken>((request, _) =>
+                sentCommand = (UploadFileCommand)request)
             .ReturnsAsync(Result.Success(fileId));
 
         // Act
-        var result = await _controller.Upload(file, CancellationToken.None);
+        var result = await _controller.Upload(file.Object, CancellationToken.None);
 
         // Assert
+        Assert.NotNull(sentCommand);
+        Assert.Equal("document.txt", sentCommand.OriginalFileName);
+        Assert.Equal("text/plain", sentCommand.ContentType);
+        Assert.Equal(stream.Length, sentCommand.FileSize);
+        Assert.Same(stream, sentCommand.FileStream);
+
         var createdResult = Assert.IsType<CreatedResult>(result);
         Assert.Equal($"/api/files/{fileId}", createdResult.Location);
 
@@ -47,7 +56,7 @@ public sealed class FilesControllerTests
     public async Task Upload_WithEmptyFile_ReturnsBadRequest()
     {
         // Arrange
-        var file = CreateFormFile("empty.txt", "text/plain", []);
+        var (file, _) = CreateFormFile("empty.txt", "text/plain", []);
         var error = Error.Validation("File.Empty", "File cannot be empty.");
 
         _senderMock
@@ -55,7 +64,7 @@ public sealed class FilesControllerTests
             .ReturnsAsync(Result.Failure<Guid>(error));
 
         // Act
-        var result = await _controller.Upload(file, CancellationToken.None);
+        var result = await _controller.Upload(file.Object, CancellationToken.None);
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
@@ -65,8 +74,10 @@ public sealed class FilesControllerTests
     [Fact]
     public async Task Upload_WithTooLargeFile_ReturnsBadRequest()
     {
-        // Arrange
-        var file = CreateFormFile("big.bin", "application/octet-stream", []);
+        // Arrange — the file reports a size over the 100 MB limit without allocating real bytes
+        var (file, _) = CreateFormFile(
+            "big.bin", "application/octet-stream", [0x01],
+            lengthOverride: 100L * 1024 * 1024 + 1);
         var error = Error.Validation("File.TooLarge", "File size exceeds 100 MB limit.");
 
         _senderMock
@@ -74,14 +85,15 @@ public sealed class FilesControllerTests
             .ReturnsAsync(Result.Failure<Guid>(error));
 
         // Act
-        var result = await _controller.Upload(file, CancellationToken.None);
+        var result = await _controller.Upload(file.Object, CancellationToken.None);
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal(400, badRequestResult.StatusCode);
     }
 
-    private static IFormFile CreateFormFile(string fileName, string contentType, byte[] content)
+    private static (Mock<IFormFile> File, MemoryStream Stream) CreateFormFile(
+        string fileName, string contentType, byte[] content, long? lengthOverride = null)
     {
         var stream = new MemoryStream(content);
         var fileMock = new Mock<IFormFile>();
@@ -89,8 +101,8 @@ public sealed class FilesControllerTests
         fileMock.Setup(f => f.OpenReadStream()).Returns(stream);
         fileMock.Setup(f => f.FileName).Returns(fileName);
         fileMock.Setup(f => f.ContentType).Returns(contentType);
-        fileMock.Setup(f => f.Length).Returns(stream.Length);
+        fileMock.Setup(f => f.Length).Returns(lengthOverride ?? stream.Length);
 
-        return fileMock.Object;
+        return (fileMock, stream);
     }
 }

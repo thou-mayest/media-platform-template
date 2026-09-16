@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Storage.Application.Abstractions;
 using Storage.Application.Files.Commands.UploadFile;
 using Storage.Infrastracture.Persistence;
@@ -24,7 +25,9 @@ public sealed class UploadFileIntegrationTests(PostgreSqlFixture fixture)
         // Assert
         Assert.True(result.IsSuccess);
 
-        var persistedAsset = await context.MediaAssets.FindAsync(result.Value);
+        // A fresh context forces the data to come from PostgreSQL, not EF Core's change tracker.
+        await using var verificationContext = new StorageDbContext(fixture.DbContextOptions);
+        var persistedAsset = await verificationContext.MediaAssets.FindAsync(result.Value);
         Assert.NotNull(persistedAsset);
         Assert.Equal("document.txt", persistedAsset.OriginalFileName);
         Assert.Equal("text/plain", persistedAsset.ContentType);
@@ -42,6 +45,7 @@ public sealed class UploadFileIntegrationTests(PostgreSqlFixture fixture)
         await using var context = new StorageDbContext(fixture.DbContextOptions);
         var repository = new FileRepository(context);
         var handler = new UploadFileCommandHandler(new FakeFileStorageService(), repository);
+        var countBefore = await context.MediaAssets.CountAsync();
 
         await using var stream = new MemoryStream();
         var command = new UploadFileCommand(stream, "empty.txt", "text/plain", 0);
@@ -52,7 +56,9 @@ public sealed class UploadFileIntegrationTests(PostgreSqlFixture fixture)
         // Assert
         Assert.True(result.IsFailure);
         Assert.Equal("File.Empty", result.Error.Code);
-        Assert.Empty(context.MediaAssets);
+
+        await using var verificationContext = new StorageDbContext(fixture.DbContextOptions);
+        Assert.Equal(countBefore, await verificationContext.MediaAssets.CountAsync());
     }
 
     [Fact]
@@ -62,9 +68,10 @@ public sealed class UploadFileIntegrationTests(PostgreSqlFixture fixture)
         await using var context = new StorageDbContext(fixture.DbContextOptions);
         var repository = new FileRepository(context);
         var handler = new UploadFileCommandHandler(new FakeFileStorageService(), repository);
+        var countBefore = await context.MediaAssets.CountAsync();
 
         await using var stream = new MemoryStream();
-        var command = new UploadFileCommand(stream, "big.bin", "application/octet-stream", 100 * 1024 * 1024 + 1);
+        var command = new UploadFileCommand(stream, "big.bin", "application/octet-stream", 100L * 1024 * 1024 + 1);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -72,7 +79,9 @@ public sealed class UploadFileIntegrationTests(PostgreSqlFixture fixture)
         // Assert
         Assert.True(result.IsFailure);
         Assert.Equal("File.TooLarge", result.Error.Code);
-        Assert.Empty(context.MediaAssets);
+
+        await using var verificationContext = new StorageDbContext(fixture.DbContextOptions);
+        Assert.Equal(countBefore, await verificationContext.MediaAssets.CountAsync());
     }
 
     private sealed class FakeFileStorageService : IFileStorageService
