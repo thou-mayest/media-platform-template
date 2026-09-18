@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using SharedKernel.Messaging;
 using System.Text.Json;
-using Users.Domain.Primitives;
+using SharedKernal.Entities;
 using SharedKernel.Messaging;
 
 namespace Users.Infrastructure.Interceptors;
@@ -28,7 +28,7 @@ public sealed class ConvertDomainEventsToOutboxMessagesInterceptor
             .Select(x => x.Entity)
             .SelectMany(aggregateRoot =>
             {
-                var domainEvents = aggregateRoot.GetDomainEvents();
+                var domainEvents = aggregateRoot.DomainEvents;
                 aggregateRoot.ClearDomainEvents();
                 return domainEvents;
             })
