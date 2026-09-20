@@ -6,6 +6,7 @@ using Users.Application;
 using Users.Application.Abstractions;
 using Users.Application.Messaging;
 using Users.Domain.Abstractions;
+using Users.Infrastructure.Interceptors;
 using Users.Infrastracture.Persistence;
 using Users.Infrastracture.Security;
 
@@ -30,9 +31,18 @@ internal static class DependencyInjection
     {
         var connectionString = configuration.GetConnectionString("PostgreConnectionString");
 
-        services.AddDbContextPool<UsersDbContext>(options =>
+        // Register the interceptor as Scoped to align with the HTTP request and DbContext lifetime
+        services.AddSingleton<ConvertDomainEventsToOutboxMessagesInterceptor>();
+
+        // Configure DbContextPool and register the interceptor
+        services.AddDbContextPool<UsersDbContext>((sp, options) =>
+        {
+            var interceptor = sp.GetRequiredService<ConvertDomainEventsToOutboxMessagesInterceptor>();
+
             options.UseNpgsql(connectionString, npgsql =>
-        npgsql.MigrationsHistoryTable("__UsersMigrations", "Users")));
+                npgsql.MigrationsHistoryTable("__UsersMigrations", "Users"))
+                   .AddInterceptors(interceptor);
+        });
 
         return services;
     }
@@ -41,12 +51,15 @@ internal static class DependencyInjection
     {
         services.InitializeApplication();
 
+        // Configure JWT Options and Security services
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.AddScoped<ITokenService, TokenService>();
 
+        // Register repositories and application services
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
 
+        // Register domain event dispatcher
         services.AddScoped<IDomainEventDispatcher, MediatRDomainEventDispatcher>();
 
         return services;
