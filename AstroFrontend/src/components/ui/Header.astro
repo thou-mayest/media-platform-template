@@ -34,6 +34,7 @@ const navItems = [
           {item.label}
         </a>
       ))}
+      <a href="/login" id="auth-link" aria-current={pathname === '/login' ? 'page' : undefined}>Login</a>
     </nav>
     <form class="search" role="search" action="/search" method="get" data-search-form>
       <label class="search__field">
@@ -160,6 +161,21 @@ const navItems = [
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (event) => {
       if (!savedTheme()) applyTheme(event.matches ? 'dark' : 'light', false);
     });
+
+    const authLink = document.getElementById('auth-link');
+    try {
+      if (authLink && localStorage.getItem('authToken')) {
+        authLink.textContent = 'Logout';
+        authLink.setAttribute('href', '#');
+        authLink.addEventListener('click', (event) => {
+          event.preventDefault();
+          localStorage.removeItem('authToken');
+          window.location.href = '/';
+        });
+      }
+    } catch {
+      // Keep the login link when browser storage is unavailable.
+    }
   })();
 </script>
 

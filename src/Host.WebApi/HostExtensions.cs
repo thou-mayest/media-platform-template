@@ -1,5 +1,6 @@
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using Host.WebApi.ArtworkViews;
 using Posts.Infrastructure;
 using Posts.Infrastructure.Persistence;
 using Posts.Presentation;
@@ -20,6 +21,7 @@ public static class HostExtensions
         await MigrateModuleDbAsync<UsersDbContext>(app);
         await MigrateModuleDbAsync<StorageDbContext>(app);
         await MigrateModuleDbAsync<PostsDbContext>(app);
+        await MigrateModuleDbAsync<ArtworkViewsDbContext>(app);
     }
 
     public static TBuilder RegisterModules<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
