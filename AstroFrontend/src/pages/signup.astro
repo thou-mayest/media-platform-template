@@ -68,7 +68,7 @@ a {
 </style>
 
 <script>
-  import { authApi, ApiError } from '@/api';
+  import { authApi } from '@/api';
   import { setToken } from '@/lib/auth';
 
   document.getElementById('signup-form')!.addEventListener('submit', async (e) => {
@@ -82,13 +82,8 @@ a {
       const { token } = await authApi.register({ name, email, password });
       setToken(token);
       window.location.href = '/';
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 409) {
-        alert('An account with this email already exists.');
-      } else {
-        console.error('Sign up error:', error);
-        alert('An error occurred during sign up.');
-      }
+    } catch {
+      // The shared API client presents a safe, contextual error toast.
     }
   });
 </script>

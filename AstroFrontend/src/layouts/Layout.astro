@@ -1,6 +1,7 @@
 ---
 import Header from '@/components/ui/Header.astro';
 import Footer from '@/components/ui/Footer.astro';
+import ToastContainer from '@/components/ui/ToastContainer.astro';
 
 interface Props {
   title?: string;
@@ -60,6 +61,7 @@ const {
       <slot />
       <Footer />
     </div>
+    <ToastContainer />
 
     <style is:global>
       :root {

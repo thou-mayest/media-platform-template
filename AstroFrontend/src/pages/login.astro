@@ -64,7 +64,7 @@ import Layout from '@/layouts/Layout.astro';
 </style>
 
 <script>
-  import { authApi, ApiError } from '@/api';
+  import { authApi } from '@/api';
   import { setToken } from '@/lib/auth';
 
   document.getElementById('login-form')!.addEventListener('submit', async (e) => {
@@ -77,10 +77,8 @@ import Layout from '@/layouts/Layout.astro';
       const { token } = await authApi.login({ email, password });
       setToken(token);
       window.location.href = '/';
-    } catch (error) {
-      if (error instanceof ApiError) {
-        alert('Login failed. Please check your credentials.');
-      }
+    } catch {
+      // The shared API client presents a safe, contextual error toast.
     }
   });
 </script>
