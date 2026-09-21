@@ -38,3 +38,7 @@ export function absoluteUrl(path: string, site: URL | undefined): string {
   }
   return new URL(path, site).toString();
 }
+
+export function actorsPath(page = 1): string {
+  return withPage(ACTORS, page);
+}
