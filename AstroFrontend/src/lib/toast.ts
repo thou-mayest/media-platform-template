@@ -1,4 +1,4 @@
-import type { ApiError } from '@/api/errors';
+import type { ApiError } from '../api/errors.ts';
 
 export const TOAST_EVENT = 'verso:toast';
 

@@ -1,7 +1,7 @@
-import { createApiError, isAbortError, type ApiErrorMessages } from './errors';
-import { showErrorToast } from '@/lib/toast';
+import { createApiError, isAbortError, type ApiErrorMessages } from './errors.ts';
+import { showErrorToast } from '../lib/toast.ts';
 
-const BASE_URL = import.meta.env.PUBLIC_API_BASE_URL ?? 'http://localhost:5000';
+const BASE_URL = import.meta.env?.PUBLIC_API_BASE_URL ?? 'http://localhost:5000';
 
 type RequestOptions = Omit<RequestInit, 'body'> & {
   body?: unknown;
