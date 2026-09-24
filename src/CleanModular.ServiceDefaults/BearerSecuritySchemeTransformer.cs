@@ -1,12 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace CleanModular.ServiceDefaults
 {
@@ -58,7 +52,7 @@ namespace CleanModular.ServiceDefaults
 
                 // Apply it as a requirement for all operations
                 foreach (var operation in document.Paths.Values
-                             .SelectMany(path => path.Operations))
+                             .SelectMany(path => path.Operations!))
                 {
                     operation.Value.Security ??=
                         new List<OpenApiSecurityRequirement>();

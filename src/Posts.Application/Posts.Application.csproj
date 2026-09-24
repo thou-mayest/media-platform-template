@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="MediatR" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Posts.Domain\Posts.Domain.csproj" />

@@ -1,4 +1,6 @@
 using SharedKernal.Entities;
+using Storage.Domain.DomainEvents;
+using SharedKernal.Results;
 
 namespace Storage.Domain;
 
@@ -45,7 +47,7 @@ public class MediaAsset : AggregateRoot
         Url = null!;
     }
 
-    public static MediaAsset Create(
+    public static Result<MediaAsset> Create(
         string originalFileName,
         string contentType,
         long fileSize,
@@ -56,7 +58,7 @@ public class MediaAsset : AggregateRoot
     {
         var fileName = Guid.NewGuid().ToString("N") + Path.GetExtension(originalFileName);
 
-        return new MediaAsset(
+        var mediaAsset = new MediaAsset(
             Guid.NewGuid(),
             fileName,
             originalFileName,
@@ -66,5 +68,14 @@ public class MediaAsset : AggregateRoot
             bucketName,
             storageKey,
             url);
+
+        mediaAsset.RaiseDomainEvent(new MediaAssetCreatedDomainEvent(mediaAsset.Id));
+
+        return mediaAsset;
+    }
+
+    public void Delete()
+    {
+        RaiseDomainEvent(new MediaAssetDeletedDomainEvent(Id));
     }
 }
