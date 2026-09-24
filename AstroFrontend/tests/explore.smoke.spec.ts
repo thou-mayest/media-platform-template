@@ -86,7 +86,7 @@ test('navbar keyword and sort filter create shareable search results', async ({ 
   await expect(page.getByLabel('Filter and sort')).toHaveClass(/is-active/);
 });
 
-test('public SSR pages send cache headers and only use theme scripts', async ({ page, request }) => {
+test('public SSR pages send cache headers and keep client scripting minimal', async ({ page, request }) => {
   const publicPages = [
     { path: '/', maxAge: 60, sharedMaxAge: 300 },
     { path: '/explore', maxAge: 120, sharedMaxAge: 600 },
@@ -104,7 +104,8 @@ test('public SSR pages send cache headers and only use theme scripts', async ({ 
     expect(cacheControl).toContain('stale-while-revalidate=3600');
 
     await page.goto(path);
-    await expect(page.locator('script:not([data-theme-script])')).toHaveCount(0);
+    await expect(page.locator('script:not([data-theme-script])')).toHaveCount(1);
+    await expect(page.locator('#toast-container')).toHaveCount(0);
   }
 
   const detailResponse = await request.get(
