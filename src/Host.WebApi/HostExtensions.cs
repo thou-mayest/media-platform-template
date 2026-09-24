@@ -1,5 +1,9 @@
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using Host.WebApi.ArtworkViews;
+using Posts.Infrastructure;
+using Posts.Infrastructure.Persistence;
+using Posts.Presentation;
 using Storage.Infrastracture.Persistence;
 using Users.Infrastracture.Persistence;
 using Users.Infrastracture;
@@ -16,12 +20,16 @@ public static class HostExtensions
     {
         await MigrateModuleDbAsync<UsersDbContext>(app);
         await MigrateModuleDbAsync<StorageDbContext>(app);
+        await MigrateModuleDbAsync<PostsDbContext>(app);
+        await MigrateModuleDbAsync<ArtworkViewsDbContext>(app);
     }
 
     public static TBuilder RegisterModules<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
         // register users module
-        builder.Services.AddUsersInfrastructure(builder.Configuration);
+        builder.Services.AddUsersInfrastructure(
+            builder.Configuration,
+            enableSeeding: builder.Environment.IsDevelopment());
         builder.Services.AddUsersPresentation();
 
         builder.Services.AddMessageBus();
@@ -29,6 +37,10 @@ public static class HostExtensions
         // storage module
         builder.Services.AddStorageInfrastructure(builder.Configuration);
         builder.Services.AddStoragePresentation();
+
+        // Posts owns public discovery data and remains isolated from Users and Storage.
+        builder.Services.AddPostsInfrastructure(builder.Configuration);
+        builder.Services.AddPostsPresentation();
 
 
         return builder;

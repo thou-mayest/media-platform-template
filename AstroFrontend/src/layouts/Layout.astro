@@ -9,6 +9,8 @@ interface Props {
   initialQ?: string;
   robots?: string;
   canonical?: string;
+  canonicalPath?: string;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
 const {
@@ -17,7 +19,13 @@ const {
   initialQ = '',
   robots = 'index,follow',
   canonical,
+  canonicalPath,
+  jsonLd,
 } = Astro.props;
+
+const canonicalUrl = canonical ?? (canonicalPath
+  ? new URL(canonicalPath, Astro.site ?? Astro.url.origin).toString()
+  : undefined);
 ---
 
 <!doctype html>
@@ -28,7 +36,8 @@ const {
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="robots" content={robots} />
-    {canonical && <link rel="canonical" href={canonical} />}
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+    {jsonLd && <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
     <meta name="theme-color" content="#f5f2ec" data-theme-color />
     <script is:inline data-theme-script>
       (() => {
@@ -62,6 +71,55 @@ const {
       <Footer />
     </div>
     <ToastContainer />
+
+    <script>
+      type ToggleKind = 'follow' | 'save';
+      const storageKeys: Record<ToggleKind, string> = {
+        follow: 'verso:following',
+        save: 'verso:saved',
+      };
+
+      function readIds(key: string): Set<string> {
+        try {
+          const value = JSON.parse(localStorage.getItem(key) ?? '[]') as unknown;
+          return new Set(Array.isArray(value) ? value.map(String) : []);
+        } catch {
+          return new Set();
+        }
+      }
+
+      function bindToggle(kind: ToggleKind, selector: string, dataKey: 'artistId' | 'workId'): void {
+        document.querySelectorAll<HTMLButtonElement>(selector).forEach((button) => {
+          const id = button.dataset[dataKey];
+          if (!id) return;
+
+          const key = storageKeys[kind];
+          const render = (active: boolean) => {
+            button.textContent = active
+              ? button.dataset[kind === 'follow' ? 'labelFollowing' : 'labelSaved'] ?? (kind === 'follow' ? 'Following' : 'Saved ✓')
+              : button.dataset[kind === 'follow' ? 'labelFollow' : 'labelSave'] ?? (kind === 'follow' ? '+ Follow' : 'Save');
+            button.dataset[kind === 'follow' ? 'following' : 'saved'] = active ? '1' : '0';
+            button.setAttribute('aria-pressed', String(active));
+          };
+
+          render(readIds(key).has(id));
+          button.addEventListener('click', () => {
+            const ids = readIds(key);
+            if (ids.has(id)) ids.delete(id);
+            else ids.add(id);
+            try {
+              localStorage.setItem(key, JSON.stringify([...ids]));
+            } catch {
+              // The control still reflects the current interaction when storage is unavailable.
+            }
+            render(ids.has(id));
+          });
+        });
+      }
+
+      bindToggle('follow', '[data-follow-toggle]', 'artistId');
+      bindToggle('save', '[data-save-toggle]', 'workId');
+    </script>
 
     <style is:global>
       :root {
