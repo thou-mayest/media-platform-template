@@ -11,6 +11,7 @@ interface Props {
   canonical?: string;
   canonicalPath?: string;
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  enableApiFeedback?: boolean;
 }
 
 const {
@@ -21,6 +22,7 @@ const {
   canonical,
   canonicalPath,
   jsonLd,
+  enableApiFeedback = false,
 } = Astro.props;
 
 const canonicalUrl = canonical ?? (canonicalPath
@@ -70,7 +72,7 @@ const canonicalUrl = canonical ?? (canonicalPath
       <slot />
       <Footer />
     </div>
-    <ToastContainer />
+    {enableApiFeedback && <ToastContainer />}
 
     <script>
       type ToggleKind = 'follow' | 'save';
