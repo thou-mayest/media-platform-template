@@ -21,10 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\..\AstroFrontend\src\data\artwork-slugs.json" Link="ArtworkViews\artwork-slugs.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Posts.Infrastructure\Posts.Infrastructure.csproj" />
     <ProjectReference Include="..\Posts.Presentation\Posts.Presentation.csproj" />
     <ProjectReference Include="..\CleanModular.ServiceDefaults\CleanModular.ServiceDefaults.csproj" />
