@@ -1,5 +1,8 @@
 ﻿using Users.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using SharedKernal.Messaging;
+using SharedKernal.Results;
 using Users.Domain;
 using SharedKernal.Messaging.DomainEvents;
 
@@ -36,7 +39,7 @@ internal class UserRepository(UsersDbContext context) : IUserRepository
         context.Users.Remove(user);
     }
 
-    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public async Task<Result<int>> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         return await context.SaveChangesAsync(cancellationToken);
     }

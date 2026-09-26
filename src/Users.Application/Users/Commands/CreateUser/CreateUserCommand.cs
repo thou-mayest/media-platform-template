@@ -1,4 +1,4 @@
-using Users.Common;
+using SharedKernel.Entities.Enums;
 using SharedKernal.Results;
 using SharedKernal.Messaging.Commands;
 

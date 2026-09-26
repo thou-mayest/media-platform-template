@@ -6,6 +6,7 @@ using Users.Application.Abstractions;
 using Users.Application.Messaging;
 using Users.Domain.Abstractions;
 using Users.Infrastracture.Persistence;
+using Users.Infrastracture.Seeding;
 using Users.Infrastracture.Security;
 using SharedKernal.Messaging.DomainEvents;
 using SharedKernal.Messaging.Outbox;
@@ -16,9 +17,10 @@ internal static class DependencyInjection
 {
     public static IServiceCollection AddUsersInfrastructure(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        bool enableSeeding = false)
     {
-        services.AddDbContext(configuration);
+        services.AddDbContext(configuration, enableSeeding);
 
         services.AddUsersApplication(configuration);
 
@@ -27,9 +29,14 @@ internal static class DependencyInjection
 
     private static IServiceCollection AddDbContext(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        bool enableSeeding)
     {
         var connectionString = configuration.GetConnectionString("PostgreConnectionString");
+        var seedOptions = configuration
+            .GetSection(UserSeedOptions.SectionName)
+            .Get<UserSeedOptions>() ?? new UserSeedOptions();
+        var passwordHasher = new PasswordHasher();
 
         // register interceptor
         services.AddTransient<DomainEventsInterceptor>();
@@ -41,6 +48,8 @@ internal static class DependencyInjection
             options.UseNpgsql(connectionString, npgsql =>
                 npgsql.MigrationsHistoryTable("__UsersMigrations", "Users"))
                    .AddInterceptors(sp.GetRequiredService<DomainEventsInterceptor>());
+            if (enableSeeding)
+                UserSeeder.Configure(options, seedOptions, passwordHasher);
         });
 
         return services;
@@ -60,7 +69,6 @@ internal static class DependencyInjection
 
         // Register domain event dispatcher
         services.AddScoped<IDomainEventDispatcher, MediatRDomainEventDispatcher>();
-
         return services;
     }
 }
