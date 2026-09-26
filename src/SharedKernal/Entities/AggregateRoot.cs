@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using SharedKernal.Messaging;
+using SharedKernal.Messaging.DomainEvents;
 
 namespace SharedKernal.Entities
 {

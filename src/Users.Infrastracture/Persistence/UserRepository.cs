@@ -1,11 +1,11 @@
 ﻿using Users.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using SharedKernal.Messaging;
 using Users.Domain;
+using SharedKernal.Messaging.DomainEvents;
 
 namespace Users.Infrastracture.Persistence;
 
-internal class UserRepository(UsersDbContext context, IDomainEventDispatcher dispatcher) : IUserRepository
+internal class UserRepository(UsersDbContext context) : IUserRepository
 {
     public async Task AddAsync(User user, CancellationToken cancellationToken = default)
     {
@@ -38,23 +38,7 @@ internal class UserRepository(UsersDbContext context, IDomainEventDispatcher dis
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        var aggregates = context.ChangeTracker
-            .Entries<User>()
-            .Where(e => e.Entity.DomainEvents.Count > 0)
-            .Select(e => e.Entity)
-            .ToList();
-
-        var domainEvents = aggregates
-            .SelectMany(a => a.DomainEvents)
-            .ToList();
-
-        aggregates.ForEach(a => a.ClearDomainEvents());
-
-        var result = await context.SaveChangesAsync(cancellationToken);
-
-        await dispatcher.DispatchAsync(domainEvents, cancellationToken);
-
-        return result;
+        return await context.SaveChangesAsync(cancellationToken);
     }
 
     public void Update(User user)

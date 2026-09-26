@@ -1,5 +1,5 @@
 using MassTransit;
-using SharedKernal.Messaging;
+using SharedKernal.Messaging.DomainEvents;
 using Users.Contracts.IntegrationEvents;
 using Users.Domain.DomainEvents;
 

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace SharedKernel.Messaging;
+﻿namespace SharedKernal.Messaging.Outbox;
 
 /// <summary>
 /// Represents an event message stored in the database for the Outbox Pattern.

@@ -1,8 +1,5 @@
 using Host.WebApi;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
-using System.Text;
 using System.Text.Json.Serialization;
 
 

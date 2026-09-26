@@ -1,6 +1,6 @@
-using SharedKernal.Messaging;
 using Users.Common;
 using SharedKernal.Results;
+using SharedKernal.Messaging.Commands;
 
 namespace Users.Application.Users.Commands.CreateUser;
 

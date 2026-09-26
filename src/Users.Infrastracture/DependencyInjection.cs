@@ -1,14 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using SharedKernal.Messaging;
 using Users.Application;
 using Users.Application.Abstractions;
 using Users.Application.Messaging;
 using Users.Domain.Abstractions;
-using Users.Infrastructure.Interceptors;
 using Users.Infrastracture.Persistence;
 using Users.Infrastracture.Security;
+using SharedKernal.Messaging.DomainEvents;
+using SharedKernal.Messaging.Outbox;
 
 namespace Users.Infrastracture;
 
@@ -31,17 +31,16 @@ internal static class DependencyInjection
     {
         var connectionString = configuration.GetConnectionString("PostgreConnectionString");
 
-        // Register the interceptor as Scoped to align with the HTTP request and DbContext lifetime
-        services.AddSingleton<ConvertDomainEventsToOutboxMessagesInterceptor>();
+        // register interceptor
+        services.AddTransient<DomainEventsInterceptor>();
 
         // Configure DbContextPool and register the interceptor
-        services.AddDbContextPool<UsersDbContext>((sp, options) =>
+        services.AddDbContext<UsersDbContext>((sp, options) =>
         {
-            var interceptor = sp.GetRequiredService<ConvertDomainEventsToOutboxMessagesInterceptor>();
 
             options.UseNpgsql(connectionString, npgsql =>
                 npgsql.MigrationsHistoryTable("__UsersMigrations", "Users"))
-                   .AddInterceptors(interceptor);
+                   .AddInterceptors(sp.GetRequiredService<DomainEventsInterceptor>());
         });
 
         return services;

@@ -1,8 +1,8 @@
-using SharedKernal.Messaging;
 using Users.Application.Abstractions;
 using Users.Domain;
 using Users.Domain.Abstractions;
 using SharedKernal.Results;
+using SharedKernal.Messaging.Commands;
 namespace Users.Application.Users.Commands.CreateUser;
 
 internal sealed class CreateUserCommandHandler(IUserRepository userRepository, IPasswordHasher passwordHasher)

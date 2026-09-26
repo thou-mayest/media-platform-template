@@ -1,13 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using SharedKernel.Messaging;
-using System.Text.Json;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using SharedKernal.Entities;
-using SharedKernel.Messaging;
+using SharedKernal.Messaging.DomainEvents;
+using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Users.Infrastructure.Interceptors;
+namespace SharedKernal.Messaging.Outbox;
 
-public sealed class ConvertDomainEventsToOutboxMessagesInterceptor
+public sealed class DomainEventsInterceptor
     : SaveChangesInterceptor
 {
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
@@ -22,17 +23,21 @@ public sealed class ConvertDomainEventsToOutboxMessagesInterceptor
             return base.SavingChangesAsync(eventData, result, cancellationToken);
         }
 
-        // Intercept and collect all domain events raised by tracked entities
-        var outboxMessages = dbContext.ChangeTracker
+        var aggregates = dbContext.ChangeTracker
             .Entries<AggregateRoot>()
-            .Select(x => x.Entity)
-            .SelectMany(aggregateRoot =>
-            {
-                var domainEvents = aggregateRoot.DomainEvents;
-                aggregateRoot.ClearDomainEvents();
-                return domainEvents;
-            })
-            .Select(domainEvent => new OutboxMessage
+            .Where(e => e.Entity.DomainEvents.Count > 0)
+            .Select(e => e.Entity)
+            .ToList();
+
+        var domainEvents = aggregates
+            .SelectMany(a => a.DomainEvents)
+            .ToList();
+
+        aggregates.ForEach(e => e.ClearDomainEvents());
+
+        
+
+        var outboxMessages = domainEvents.Select(domainEvent => new OutboxMessage
             {
                 Id = Guid.NewGuid(),
                 OccurredOnUtc = DateTime.UtcNow,
@@ -41,9 +46,19 @@ public sealed class ConvertDomainEventsToOutboxMessagesInterceptor
             })
             .ToList();
 
+        // TODO: handle each event seperatly or MT transactional outbox
+        
+        // save integration events in outbox
         if (outboxMessages.Any())
         {
             dbContext.Set<OutboxMessage>().AddRange(outboxMessages);
+        }
+
+        // dispatch domain events
+        var dispatcherService = dbContext.GetService<IDomainEventDispatcher>();
+        if (dispatcherService is not null)
+        {
+            dispatcherService.DispatchAsync(domainEvents, cancellationToken);
         }
 
         return base.SavingChangesAsync(eventData, result, cancellationToken);

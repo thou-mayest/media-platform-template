@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using SharedKernel.Messaging;
+using SharedKernal.Messaging.Outbox;
 using Users.Domain;
 
 namespace Users.Infrastracture.Persistence;
