@@ -1,10 +1,8 @@
-﻿using Users.Application.Abstractions;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using SharedKernal.Messaging;
 using SharedKernal.Results;
+using Users.Application.Abstractions;
 using Users.Domain;
-using SharedKernal.Messaging.DomainEvents;
 
 namespace Users.Infrastracture.Persistence;
 
@@ -41,7 +39,23 @@ internal class UserRepository(UsersDbContext context) : IUserRepository
 
     public async Task<Result<int>> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        return await context.SaveChangesAsync(cancellationToken);
+        int result;
+        try
+        {
+            result = await context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException exception)
+            when (exception.InnerException is PostgresException
+            {
+                SqlState: PostgresErrorCodes.UniqueViolation,
+                ConstraintName: "UX_Users_Email"
+            })
+        {
+            context.ChangeTracker.Clear();
+            return Error.Conflict("User.EmailExists", "A user with that email already exists.");
+        }
+
+        return result;
     }
 
     public void Update(User user)
