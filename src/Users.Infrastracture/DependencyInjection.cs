@@ -38,9 +38,6 @@ internal static class DependencyInjection
             .Get<UserSeedOptions>() ?? new UserSeedOptions();
         var passwordHasher = new PasswordHasher();
 
-        // register interceptor
-        services.AddTransient<DomainEventsInterceptor>();
-
         // Configure DbContextPool and register the interceptor
         services.AddDbContext<UsersDbContext>((sp, options) =>
         {
@@ -69,6 +66,10 @@ internal static class DependencyInjection
 
         // Register domain event dispatcher
         services.AddScoped<IDomainEventDispatcher, MediatRDomainEventDispatcher>();
+
+        // register interceptor
+        services.AddTransient<DomainEventsInterceptor>();
+
         return services;
     }
 }

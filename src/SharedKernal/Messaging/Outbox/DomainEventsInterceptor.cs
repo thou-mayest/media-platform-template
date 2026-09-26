@@ -11,16 +11,16 @@ namespace SharedKernal.Messaging.Outbox;
 public sealed class DomainEventsInterceptor
     : SaveChangesInterceptor
 {
-    public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
-        DbContextEventData eventData,
-        InterceptionResult<int> result,
-        CancellationToken cancellationToken = default)
+    public override async ValueTask<int> SavedChangesAsync(
+           SaveChangesCompletedEventData eventData,
+           int result,
+           CancellationToken cancellationToken = default)
     {
         DbContext? dbContext = eventData.Context;
 
         if (dbContext is null)
         {
-            return base.SavingChangesAsync(eventData, result, cancellationToken);
+            return result;
         }
 
         var aggregates = dbContext.ChangeTracker
@@ -58,9 +58,9 @@ public sealed class DomainEventsInterceptor
         var dispatcherService = dbContext.GetService<IDomainEventDispatcher>();
         if (dispatcherService is not null)
         {
-            dispatcherService.DispatchAsync(domainEvents, cancellationToken);
+            await dispatcherService.DispatchAsync(domainEvents, cancellationToken);
         }
 
-        return base.SavingChangesAsync(eventData, result, cancellationToken);
+        return result;
     }
 }

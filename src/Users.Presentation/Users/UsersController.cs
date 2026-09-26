@@ -37,7 +37,7 @@ public sealed class UsersController(ISender sender) : ControllerBase
     }
 
     [HttpPost]
-    [AllowAnonymous]
+    [Authorize(Policy = UsersPolicies.RequireAdmin)]
     public async Task<IActionResult> Create([FromBody] CreateUserRequest request, CancellationToken ct)
     {
         var result = await sender.Send(request.ToCommand(), ct);

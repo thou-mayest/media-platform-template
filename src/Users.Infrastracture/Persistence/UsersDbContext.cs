@@ -72,6 +72,8 @@ internal class UsersDbContext : DbContext
 
             builder.Property(x => x.Error)
                 .HasMaxLength(2000);
+
+            builder.HasIndex(x => x.ProcessedOnUtc);
         });
 
         base.OnModelCreating(modelBuilder);
