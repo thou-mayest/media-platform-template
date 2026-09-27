@@ -11,16 +11,16 @@ namespace SharedKernal.Messaging.Outbox;
 public sealed class DomainEventsInterceptor
     : SaveChangesInterceptor
 {
-    public override async ValueTask<int> SavedChangesAsync(
-           SaveChangesCompletedEventData eventData,
-           int result,
+    public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(
+        DbContextEventData eventData,
+        InterceptionResult<int> result,
            CancellationToken cancellationToken = default)
     {
         DbContext? dbContext = eventData.Context;
 
         if (dbContext is null)
         {
-            return result;
+            return await base.SavingChangesAsync(eventData, result, cancellationToken);
         }
 
         var aggregates = dbContext.ChangeTracker
@@ -33,26 +33,10 @@ public sealed class DomainEventsInterceptor
             .SelectMany(a => a.DomainEvents)
             .ToList();
 
+        if (domainEvents.Count == 0)
+            return await base.SavingChangesAsync(eventData, result, cancellationToken);
+
         aggregates.ForEach(e => e.ClearDomainEvents());
-
-        
-
-        var outboxMessages = domainEvents.Select(domainEvent => new OutboxMessage
-            {
-                Id = Guid.NewGuid(),
-                OccurredOnUtc = DateTime.UtcNow,
-                Type = domainEvent.GetType().Name,
-                Content = JsonSerializer.Serialize(domainEvent, domainEvent.GetType())
-            })
-            .ToList();
-
-        // TODO: handle each event seperatly or MT transactional outbox
-        
-        // save integration events in outbox
-        if (outboxMessages.Any())
-        {
-            dbContext.Set<OutboxMessage>().AddRange(outboxMessages);
-        }
 
         // dispatch domain events
         var dispatcherService = dbContext.GetService<IDomainEventDispatcher>();
@@ -61,6 +45,6 @@ public sealed class DomainEventsInterceptor
             await dispatcherService.DispatchAsync(domainEvents, cancellationToken);
         }
 
-        return result;
+        return await base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 }

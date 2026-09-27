@@ -1,3 +1,5 @@
+using SharedKernal.Messaging.DomainEvents;
+
 namespace Users.Contracts.IntegrationEvents;
 
-public sealed record UserDeletedIntegrationEvent(Guid UserId);
+public sealed record UserDeletedIntegrationEvent(Guid UserId) : IIntegrationEvent;

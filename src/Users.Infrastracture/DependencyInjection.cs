@@ -10,6 +10,8 @@ using Users.Infrastracture.Seeding;
 using Users.Infrastracture.Security;
 using SharedKernal.Messaging.DomainEvents;
 using SharedKernal.Messaging.Outbox;
+using Users.Contracts.IntegrationEvents;
+using Users.Domain.DomainEvents;
 
 namespace Users.Infrastracture;
 
@@ -69,6 +71,8 @@ internal static class DependencyInjection
 
         // register interceptor
         services.AddTransient<DomainEventsInterceptor>();
+        services.AddHostedService<OutboxProcessorBackgroundService<UsersDbContext, UserCreatedIntegrationEvent>>();
+        services.AddScoped<IOutboxRepository, OutboxRepository>();
 
         return services;
     }

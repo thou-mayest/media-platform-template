@@ -4,16 +4,10 @@ using Users.Domain;
 
 namespace Users.Infrastracture.Persistence;
 
-internal class UsersDbContext : DbContext
+internal class UsersDbContext(DbContextOptions<UsersDbContext> options) : DbContext(options)
 {
-    // Standard constructor required for DbContext pooling
-    public UsersDbContext(DbContextOptions<UsersDbContext> options) : base(options)
-    {
-    }
-
-    public DbSet<User> Users { get; set; }
-    public DbSet<OutboxMessage> OutboxMessages { get; set; }
-
+    public DbSet<User> Users { get; set; } = null!;
+    public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Set default schema for the Users module
