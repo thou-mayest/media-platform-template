@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="MassTransit" />
     <PackageReference Include="MediatR" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
     <PackageReference Include="Riok.Mapperly">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>

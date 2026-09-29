@@ -56,7 +56,7 @@ internal sealed class FileImportBackgroundService(
             uploadResult.StorageKey,
             uploadResult.Url);
 
-        await fileRepository.AddAsync(mediaAsset, cancellationToken);
+        await fileRepository.AddAsync(mediaAsset.Value, cancellationToken);
         await fileRepository.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation("Imported file {FileName} from {SourceUrl}", fileName, sourceUrl);
