@@ -1,4 +1,4 @@
-﻿using SharedKernal.Messaging;
+﻿using SharedKernal.Messaging.DomainEvents;
 
 namespace Storage.Domain.DomainEvents;
 

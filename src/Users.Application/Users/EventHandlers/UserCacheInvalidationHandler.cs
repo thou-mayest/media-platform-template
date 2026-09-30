@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Caching.Hybrid;
-using SharedKernal.Messaging;
+using SharedKernal.Messaging.DomainEvents;
 using Users.Domain.DomainEvents;
 
 namespace Users.Application.Users.EventHandlers;
