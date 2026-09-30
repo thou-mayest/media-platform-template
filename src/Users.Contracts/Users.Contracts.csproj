@@ -10,4 +10,8 @@
     <PackageReference Include="MassTransit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SharedKernal\SharedKernal.csproj" />
+  </ItemGroup>
+
 </Project>

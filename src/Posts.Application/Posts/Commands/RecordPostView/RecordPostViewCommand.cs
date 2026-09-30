@@ -1,4 +1,4 @@
-using SharedKernal.Messaging;
+using SharedKernal.Messaging.Commands;
 using SharedKernal.Results;
 
 namespace Posts.Application.Posts.Commands.RecordPostView;

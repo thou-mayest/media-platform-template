@@ -1,4 +1,4 @@
-namespace SharedKernal.Messaging;
+namespace SharedKernal.Messaging.DomainEvents;
 
 public interface IDomainEventDispatcher
 {

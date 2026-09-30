@@ -1,6 +1,6 @@
 ﻿using MediatR;
 
-namespace SharedKernal.Messaging
+namespace SharedKernal.Messaging.Commands
 {   
     public interface ICommand : IRequest;
 

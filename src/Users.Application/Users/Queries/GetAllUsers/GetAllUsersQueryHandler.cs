@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Caching.Hybrid;
 using SharedKernal.Messaging;
+using SharedKernal.Messaging.Queries;
 using SharedKernal.Results;
 using Users.Application.Abstractions;
 using Users.Domain;

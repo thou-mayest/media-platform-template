@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SharedKernal.Messaging.Outbox;
 using Storage.Domain;
 
 namespace Storage.Infrastracture.Persistence;
@@ -10,6 +11,7 @@ internal class StorageDbContext : DbContext
     }
 
     public DbSet<MediaAsset> MediaAssets { get; set; }
+    public DbSet<OutboxMessage> OutboxMessages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -52,6 +54,29 @@ internal class StorageDbContext : DbContext
 
             entity.HasIndex(m => m.StorageKey);
             entity.HasIndex(m => m.CreatedDate);
+        });
+
+        // Entity configuration for OutboxMessage
+        modelBuilder.Entity<OutboxMessage>(builder =>
+        {
+            builder.ToTable("OutboxMessages");
+
+            builder.HasKey(x => x.Id);
+
+            builder.Property(x => x.Type)
+                .IsRequired()
+                .HasMaxLength(250);
+
+            builder.Property(x => x.Content)
+                .IsRequired();
+
+            builder.Property(x => x.OccurredOnUtc)
+                .IsRequired();
+
+            builder.Property(x => x.Error)
+                .HasMaxLength(2000);
+
+            builder.HasIndex(x => x.ProcessedOnUtc);
         });
 
         base.OnModelCreating(modelBuilder);
