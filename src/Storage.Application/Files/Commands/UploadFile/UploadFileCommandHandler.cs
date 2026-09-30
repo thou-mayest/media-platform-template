@@ -13,7 +13,7 @@ internal sealed class UploadFileCommandHandler(
     public async Task<Result<Guid>> Handle(UploadFileCommand request, CancellationToken cancellationToken)
     {
         if (request.FileSize <= 0)
-            return Result.Failure<Guid>(Error.Validation("File.Empty", "File cannot be empty."));
+            return Error.Validation("File.Empty", "File cannot be empty.");
 
         if (request.FileSize > 100 * 1024 * 1024)
             return Error.Validation("File.TooLarge", "File size exceeds 100 MB limit."); // TODO: change later
@@ -24,7 +24,7 @@ internal sealed class UploadFileCommandHandler(
             request.ContentType,
             cancellationToken);
 
-        var mediaAsset = MediaAsset.Create(
+        var mediaAssetResult = MediaAsset.Create(
             request.OriginalFileName,
             request.ContentType,
             request.FileSize,
@@ -33,9 +33,16 @@ internal sealed class UploadFileCommandHandler(
             uploadResult.StorageKey,
             uploadResult.Url);
 
-        await fileRepository.AddAsync(mediaAsset, cancellationToken);
+        if (mediaAssetResult.IsFailure)
+        {
+            return mediaAssetResult.Error;
+        }
+
+        var asset = mediaAssetResult.Value;
+
+        await fileRepository.AddAsync(asset, cancellationToken);
         await fileRepository.SaveChangesAsync(cancellationToken);
 
-        return mediaAsset.Id;
+        return asset.Id;
     }
 }

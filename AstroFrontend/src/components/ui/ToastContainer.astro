@@ -1,0 +1,160 @@
+<div
+  id="toast-container"
+  class="toast-container"
+  aria-live="polite"
+  aria-atomic="false"
+  aria-label="Notifications"
+></div>
+
+<style>
+  .toast-container {
+    position: fixed;
+    z-index: 1000;
+    top: 1rem;
+    right: 1rem;
+    display: grid;
+    width: min(24rem, calc(100vw - 2rem));
+    gap: 0.65rem;
+    pointer-events: none;
+  }
+
+  :global(.toast) {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: start;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-left: 3px solid var(--accent);
+    border-radius: 10px;
+    box-shadow: 0 12px 32px var(--shadow);
+    pointer-events: auto;
+    animation: toast-in 180ms ease-out;
+  }
+
+  :global(.toast.is-leaving) {
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity 150ms ease, transform 150ms ease;
+  }
+
+  :global(.toast__icon) {
+    width: 1.15rem;
+    height: 1.15rem;
+    margin-top: 0.05rem;
+    color: var(--accent);
+  }
+
+  :global(.toast__message) {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  :global(.toast__close) {
+    display: grid;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    place-items: center;
+    color: var(--muted);
+    background: transparent;
+    border: 0;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  :global(.toast__close:hover),
+  :global(.toast__close:focus-visible) {
+    color: var(--text);
+    background: var(--chip-bg);
+  }
+
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+  }
+
+  @media (max-width: 500px) {
+    .toast-container {
+      top: 0.75rem;
+      right: 0.75rem;
+      width: calc(100vw - 1.5rem);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(.toast),
+    :global(.toast.is-leaving) {
+      animation: none;
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  import { TOAST_EVENT, type ToastDetail } from '@/lib/toast';
+
+  const container = document.getElementById('toast-container');
+  const recentMessages = new Map<string, number>();
+
+  function dismiss(toast: HTMLElement): void {
+    if (toast.classList.contains('is-leaving')) return;
+    toast.classList.add('is-leaving');
+    window.setTimeout(() => toast.remove(), 160);
+  }
+
+  function createToast(message: string): void {
+    if (!container) return;
+
+    const now = Date.now();
+    const lastShown = recentMessages.get(message) ?? 0;
+    if (now - lastShown < 2000) return;
+    recentMessages.set(message, now);
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.setAttribute('role', 'alert');
+
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('class', 'toast__icon');
+    icon.setAttribute('viewBox', '0 0 24 24');
+    icon.setAttribute('fill', 'none');
+    icon.setAttribute('stroke', 'currentColor');
+    icon.setAttribute('stroke-width', '2');
+    icon.setAttribute('aria-hidden', 'true');
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', '12');
+    circle.setAttribute('cy', '12');
+    circle.setAttribute('r', '9');
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    line.setAttribute('d', 'M12 7v6m0 4h.01');
+    icon.append(circle, line);
+
+    const text = document.createElement('p');
+    text.className = 'toast__message';
+    text.textContent = message;
+
+    const close = document.createElement('button');
+    close.className = 'toast__close';
+    close.type = 'button';
+    close.setAttribute('aria-label', 'Dismiss notification');
+    close.textContent = '×';
+    close.addEventListener('click', () => dismiss(toast));
+
+    toast.append(icon, text, close);
+    container.prepend(toast);
+
+    while (container.childElementCount > 3) container.lastElementChild?.remove();
+    window.setTimeout(() => dismiss(toast), 5000);
+  }
+
+  window.addEventListener(TOAST_EVENT, (event) => {
+    const { message } = (event as CustomEvent<ToastDetail>).detail;
+    createToast(message);
+  });
+</script>

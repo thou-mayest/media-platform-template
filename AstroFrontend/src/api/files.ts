@@ -1,5 +1,7 @@
 import { getToken } from '@/lib/auth';
-import { ApiError } from './client';
+import { apiFetch } from './client';
+import { createApiError } from './errors';
+import { showErrorToast } from '@/lib/toast';
 
 const BASE_URL = import.meta.env.PUBLIC_API_BASE_URL ?? 'http://localhost:5000';
 
@@ -34,7 +36,8 @@ export const filesApi = {
 
       const xhr = new XMLHttpRequest();
       xhr.open('POST', `${BASE_URL}/api/files`);
-      xhr.setRequestHeader('Authorization', authHeaders().Authorization ?? '');
+      const authorization = authHeaders().Authorization;
+      if (authorization) xhr.setRequestHeader('Authorization', authorization);
 
       xhr.upload.addEventListener('progress', (e) => {
         if (e.lengthComputable && onProgress) {
@@ -44,59 +47,46 @@ export const filesApi = {
 
       xhr.addEventListener('load', () => {
         if (xhr.status >= 200 && xhr.status < 300) {
-          resolve(JSON.parse(xhr.responseText) as UploadResponse);
+          try {
+            resolve(JSON.parse(xhr.responseText) as UploadResponse);
+          } catch {
+            const error = createApiError(xhr.status);
+            showErrorToast(error);
+            reject(error);
+          }
         } else {
-          reject(new ApiError(xhr.status, `Upload failed with status ${xhr.status}`));
+          const error = createApiError(xhr.status);
+          showErrorToast(error);
+          reject(error);
         }
       });
-      xhr.addEventListener('error', () => reject(new ApiError(0, 'Network error during upload')));
-      xhr.addEventListener('abort', () => reject(new ApiError(0, 'Upload aborted')));
+      xhr.addEventListener('error', () => {
+        const error = createApiError(0);
+        showErrorToast(error);
+        reject(error);
+      });
+      xhr.addEventListener('abort', () => reject(new DOMException('Upload aborted', 'AbortError')));
 
       xhr.send(formData);
     });
   },
 
   /** List all uploaded files. Requires an authenticated admin. */
-  async list(): Promise<FileDto[]> {
-    const res = await fetch(`${BASE_URL}/api/files`, {
-      headers: authHeaders(),
-    });
-    if (!res.ok) {
-      throw new ApiError(res.status, `API error ${res.status} on /api/files`);
-    }
-    return res.json() as Promise<FileDto[]>;
-  },
+  list: () => apiFetch<FileDto[]>('/api/files', { headers: authHeaders() }),
 
  /**
  * Sends an array of strings to your backend.
  * Replace the URL and adjust the request format as needed.
  */
-  async sendStringList(urls: string[]): Promise<Response> {
-    const response = await fetch(`${BASE_URL}/api/files/import`, {
+  sendStringList: (urls: string[]) =>
+    apiFetch<unknown>('/api/files/import', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        ...authHeaders()
-        // 'Authorization': authHeaders().Authorization ?? ''
+        ...authHeaders(),
       },
-      body: JSON.stringify({ urls }),
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Request failed with status ${response.status}`);
-    }
-
-    return response;
-  },
+      body: { urls },
+    }),
 
   /** Fetch metadata (including the public url) for an uploaded file. */
-  async getById(id: string): Promise<FileDto> {
-    const res = await fetch(`${BASE_URL}/api/files/${id}`, {
-      headers: authHeaders(),
-    });
-    if (!res.ok) {
-      throw new ApiError(res.status, `API error ${res.status} on /api/files/${id}`);
-    }
-    return res.json() as Promise<FileDto>;
-  },
+  getById: (id: string) => apiFetch<FileDto>(`/api/files/${id}`, { headers: authHeaders() }),
 };

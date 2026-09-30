@@ -452,7 +452,7 @@ const {
       renderAll();
       setMessage('URLs sent successfully.', 'success');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to send URLs.';
+      const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
       setMessage(message, 'error');
     } finally {
       sendBtn.replaceChildren(...originalChildren);

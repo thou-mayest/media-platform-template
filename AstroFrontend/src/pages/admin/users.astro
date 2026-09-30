@@ -2,7 +2,7 @@
 import Layout from '@/layouts/Layout.astro';
 ---
 
-<Layout title="Users · Admin" description="Manage platform users">
+<Layout title="Users · Admin" description="Manage platform users" enableApiFeedback>
   <main class="container">
     <header class="page-head">
       <p class="eyebrow">Admin</p>
@@ -161,14 +161,8 @@ import Layout from '@/layouts/Layout.astro';
     try {
       await usersApi.delete(id);
       await loadUsers();
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        alert('You are no longer logged in.');
-      } else if (err instanceof ApiError && err.status === 403) {
-        alert('You do not have permission to delete users.');
-      } else {
-        alert('Failed to delete user. Please try again.');
-      }
+    } catch {
+      // The shared API client presents the failure without blocking the page.
     }
   });
 
