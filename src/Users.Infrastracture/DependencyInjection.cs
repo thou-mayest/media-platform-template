@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using SharedKernal.Messaging;
 using Users.Application;
 using Users.Application.Abstractions;
 using Users.Application.Messaging;
@@ -9,6 +8,10 @@ using Users.Domain.Abstractions;
 using Users.Infrastracture.Persistence;
 using Users.Infrastracture.Seeding;
 using Users.Infrastracture.Security;
+using SharedKernal.Messaging.DomainEvents;
+using SharedKernal.Messaging.Outbox;
+using Users.Contracts.IntegrationEvents;
+using Users.Domain.DomainEvents;
 
 namespace Users.Infrastracture;
 
@@ -37,11 +40,13 @@ internal static class DependencyInjection
             .Get<UserSeedOptions>() ?? new UserSeedOptions();
         var passwordHasher = new PasswordHasher();
 
-        services.AddDbContextPool<UsersDbContext>(options =>
+        // Configure DbContextPool and register the interceptor
+        services.AddDbContext<UsersDbContext>((sp, options) =>
         {
-            options.UseNpgsql(connectionString, npgsql =>
-                npgsql.MigrationsHistoryTable("__UsersMigrations", "Users"));
 
+            options.UseNpgsql(connectionString, npgsql =>
+                npgsql.MigrationsHistoryTable("__UsersMigrations", "Users"))
+                   .AddInterceptors(sp.GetRequiredService<DomainEventsInterceptor>());
             if (enableSeeding)
                 UserSeeder.Configure(options, seedOptions, passwordHasher);
         });
@@ -53,13 +58,22 @@ internal static class DependencyInjection
     {
         services.InitializeApplication();
 
+        // Configure JWT Options and Security services
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.AddScoped<ITokenService, TokenService>();
 
+        // Register repositories and application services
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
 
+        // Register domain event dispatcher
         services.AddScoped<IDomainEventDispatcher, MediatRDomainEventDispatcher>();
+
+        // register interceptor
+        services.AddTransient<DomainEventsInterceptor>();
+        services.AddHostedService<OutboxProcessorBackgroundService<UsersDbContext, UserCreatedIntegrationEvent>>();
+        services.AddScoped<IOutboxRepository, OutboxRepository>();
+
         return services;
     }
 }

@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SharedKernal.Messaging.Outbox;
 using Storage.Application;
 using Storage.Application.Abstractions;
 using Storage.Infrastracture.BackgroundServices;
@@ -28,9 +30,12 @@ internal static class DependencyInjection
     {
         var connectionString = configuration.GetConnectionString("PostgreConnectionString");
 
-        services.AddDbContextPool<StorageDbContext>(options =>
+        services.AddDbContext<StorageDbContext>((sp, options) =>
+        {
             options.UseNpgsql(connectionString, npgsql =>
-                npgsql.MigrationsHistoryTable("__StorageMigrations", "Storage")));
+                npgsql.MigrationsHistoryTable("__StorageMigrations", "Storage"))
+            .AddInterceptors(sp.GetRequiredService<DomainEventsInterceptor>());
+        });
 
         return services;
     }
@@ -47,6 +52,9 @@ internal static class DependencyInjection
 
         services.AddSingleton<IFileImportQueue, FileImportQueue>();
         services.AddHostedService<FileImportBackgroundService>();
+
+        // register interceptor
+        services.AddTransient<DomainEventsInterceptor>();
 
         return services;
     }

@@ -1,4 +1,4 @@
-using SharedKernal.Messaging;
+using SharedKernal.Messaging.Queries;
 
 namespace Posts.Application.Posts.Queries.GetPostFacets;
 

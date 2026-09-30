@@ -1,5 +1,6 @@
 using NetArchTest.Rules;
-using SharedKernal.Messaging;
+using SharedKernal.Messaging.Commands;
+using SharedKernal.Messaging.Queries;
 
 namespace CleanModular.ArchTests;
 

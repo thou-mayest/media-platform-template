@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using SharedKernal.Messaging;
+using SharedKernal.Messaging.DomainEvents;
 using Users.Domain;
 using Users.Domain.Abstractions;
 using Users.Infrastracture.Persistence;
@@ -18,7 +18,7 @@ public sealed class UserRepositoryEmailUniquenessTests(PostgreSqlFixture fixture
         var countBeforeConflict = await CountUsersAsync();
 
         await using var context = new UsersDbContext(fixture.DbContextOptions);
-        var repository = new UserRepository(context, NoOpDomainEventDispatcher.Instance);
+        var repository = new UserRepository(context);
         await repository.AddAsync(CreateUser($" {email.ToUpperInvariant()} "));
 
         var result = await repository.SaveChangesAsync();
@@ -38,7 +38,7 @@ public sealed class UserRepositoryEmailUniquenessTests(PostgreSqlFixture fixture
 
         await using (var context = new UsersDbContext(fixture.DbContextOptions))
         {
-            var repository = new UserRepository(context, NoOpDomainEventDispatcher.Instance);
+            var repository = new UserRepository(context);
             var user = await repository.GetByIdAsync(firstUserId);
 
             Assert.NotNull(user);
@@ -82,7 +82,7 @@ public sealed class UserRepositoryEmailUniquenessTests(PostgreSqlFixture fixture
     public async Task SaveChanges_WhenAnotherDatabaseConstraintFails_DoesNotReturnEmailConflict()
     {
         await using var context = new UsersDbContext(fixture.DbContextOptions);
-        var repository = new UserRepository(context, NoOpDomainEventDispatcher.Instance);
+        var repository = new UserRepository(context);
         var user = CreateUser($"{Guid.NewGuid():N}@example.test");
         await repository.AddAsync(user);
         context.Entry(user).Property(nameof(User.Name)).CurrentValue = new string('x', 201);
@@ -93,7 +93,7 @@ public sealed class UserRepositoryEmailUniquenessTests(PostgreSqlFixture fixture
     private async Task<Guid> AddUserAsync(string email)
     {
         await using var context = new UsersDbContext(fixture.DbContextOptions);
-        var repository = new UserRepository(context, NoOpDomainEventDispatcher.Instance);
+        var repository = new UserRepository(context);
         var user = CreateUser(email);
         await repository.AddAsync(user);
 
@@ -122,14 +122,5 @@ public sealed class UserRepositoryEmailUniquenessTests(PostgreSqlFixture fixture
         public void PerformFakeVerification()
         {
         }
-    }
-
-    private sealed class NoOpDomainEventDispatcher : IDomainEventDispatcher
-    {
-        public static readonly NoOpDomainEventDispatcher Instance = new();
-
-        public Task DispatchAsync(
-            IEnumerable<IDomainEvent> domainEvents,
-            CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 }

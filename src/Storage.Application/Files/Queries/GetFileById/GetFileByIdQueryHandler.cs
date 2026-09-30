@@ -1,3 +1,4 @@
+using SharedKernal.Messaging.Queries;
 using Microsoft.Extensions.Caching.Hybrid;
 using SharedKernal.Messaging;
 using SharedKernal.Results;

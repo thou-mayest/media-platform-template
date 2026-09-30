@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="MassTransit" />
     <PackageReference Include="MediatR" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
 	  <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 

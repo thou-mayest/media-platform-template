@@ -1,5 +1,5 @@
 using MassTransit;
-using SharedKernal.Messaging;
+using SharedKernal.Messaging.Commands;
 using SharedKernal.Results;
 using Users.Application.Abstractions;
 
