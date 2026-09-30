@@ -1,9 +1,8 @@
 using Amazon;
-using Amazon.Runtime.Internal.Endpoints.StandardLibrary;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Transfer;
-using MassTransit.Caching.Internals;
+using SharedKernal.Configurations;
 using Microsoft.Extensions.Options;
 using Storage.Application.Abstractions;
 

@@ -1,4 +1,4 @@
-namespace Users.Infrastracture.Security;
+namespace SharedKernal.Configurations;
 
 public sealed class JwtOptions
 {

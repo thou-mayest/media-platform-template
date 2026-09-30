@@ -1,6 +1,6 @@
-namespace Storage.Infrastracture.Storage;
+namespace SharedKernal.Configurations;
 
-internal sealed class S3Options
+public sealed class S3Options
 {
     public const string SectionName = "S3";
 

@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,6 +7,7 @@ using Storage.Application.Abstractions;
 using Storage.Infrastracture.BackgroundServices;
 using Storage.Infrastracture.Persistence;
 using Storage.Infrastracture.Storage;
+using SharedKernal.Configurations;
 
 namespace Storage.Infrastracture;
 
