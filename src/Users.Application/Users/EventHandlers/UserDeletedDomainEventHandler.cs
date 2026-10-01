@@ -1,7 +1,5 @@
-using MassTransit;
 using SharedKernal.Messaging.DomainEvents;
-using Users.Application.Abstractions;
-using Users.Contracts.IntegrationEvents;
+using SharedKernal.Messaging.Outbox;
 using Users.Domain.DomainEvents;
 
 namespace Users.Application.Users.EventHandlers;

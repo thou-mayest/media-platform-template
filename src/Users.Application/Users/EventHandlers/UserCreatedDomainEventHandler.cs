@@ -1,5 +1,5 @@
 using SharedKernal.Messaging.DomainEvents;
-using Users.Application.Abstractions;
+using SharedKernal.Messaging.Outbox;
 using Users.Domain.DomainEvents;
 
 namespace Users.Application.Users.EventHandlers;

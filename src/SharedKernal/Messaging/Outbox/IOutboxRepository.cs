@@ -1,8 +1,8 @@
 ﻿using SharedKernal.Messaging.DomainEvents;
 
-namespace Users.Application.Abstractions;
+namespace SharedKernal.Messaging.Outbox;
 
-internal interface IOutboxRepository
+public interface IOutboxRepository
 {
     Task AddAsync(IIntegrationEvent integrationEvent);
 }
