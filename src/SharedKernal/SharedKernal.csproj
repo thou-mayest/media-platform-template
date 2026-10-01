@@ -9,14 +9,8 @@
   <ItemGroup>
     <PackageReference Include="MassTransit" />
     <PackageReference Include="MediatR" />
-    <PackageReference Include="Microsoft.AspNetCore.Http" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
 	  <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Validations\" />
-    <Folder Include="Shared\" />
   </ItemGroup>
 
 </Project>

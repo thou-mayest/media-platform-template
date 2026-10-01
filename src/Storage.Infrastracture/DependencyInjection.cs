@@ -1,10 +1,11 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SharedKernal.Configurations;
 using SharedKernal.Messaging.Outbox;
 using Storage.Application;
 using Storage.Application.Abstractions;
+using Storage.Contracts.IntegrationEvents;
 using Storage.Infrastracture.BackgroundServices;
 using Storage.Infrastracture.Persistence;
 using Storage.Infrastracture.Storage;
@@ -55,7 +56,8 @@ internal static class DependencyInjection
 
         // register interceptor
         services.AddTransient<DomainEventsInterceptor>();
-
+        services.AddHostedService<OutboxProcessorBackgroundService<StorageDbContext, FileUploadedIntegrationEvent>>();
+        services.AddScoped<IOutboxRepository, OutboxRepository>();
         return services;
     }
 }

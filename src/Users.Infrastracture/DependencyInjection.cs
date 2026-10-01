@@ -11,7 +11,7 @@ using Users.Infrastracture.Security;
 using SharedKernal.Messaging.DomainEvents;
 using SharedKernal.Messaging.Outbox;
 using Users.Contracts.IntegrationEvents;
-using Users.Domain.DomainEvents;
+using SharedKernal.Configurations;
 
 namespace Users.Infrastracture;
 

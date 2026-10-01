@@ -2,9 +2,9 @@
 using SharedKernal.Messaging.Outbox;
 using System.Text.Json;
 
-namespace Users.Infrastracture.Persistence
+namespace Storage.Infrastracture.Persistence
 {
-    internal class OutboxRepository(UsersDbContext context) : IOutboxRepository
+    internal class OutboxRepository(StorageDbContext context) : IOutboxRepository
     {
         public async Task AddAsync(IIntegrationEvent integrationEvent)
         {

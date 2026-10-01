@@ -10,6 +10,7 @@ using Storage.Infrastracture;
 using Storage.Presentation;
 using Users.Presentation;
 using Microsoft.Extensions.Caching.Hybrid;
+using SharedKernal.Configurations;
 
 namespace Host.WebApi;
 
@@ -25,6 +26,7 @@ public static class HostExtensions
 
     public static TBuilder RegisterModules<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
+
         // host service registrations
         builder.Services.AddMessageBus();
         builder.Services.AddCache();
@@ -43,22 +45,48 @@ public static class HostExtensions
         builder.Services.AddPostsInfrastructure(builder.Configuration);
         builder.Services.AddPostsPresentation();
 
+        builder.AddCors();
+
         return builder;
     }
 
-    /// <summary>
-    /// Registered once for the whole host. AddMassTransit replaces its
-    /// configuration rather than merging it, so a second module calling it
-    /// would silently discard the first module's consumers and endpoints.
-    /// Modules contribute consumers here; they must not configure the bus.
-    /// </summary>
+    public static TBuilder AddCors<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    {
+        builder.Services
+            .AddOptions<CorsOptions>()
+            .Bind(builder.Configuration.GetSection(CorsOptions.SectionName))
+            .Validate(
+                options => options.AllowedOrigins is { Length: > 0 }
+                    && options.AllowedOrigins.All(origin =>
+                        Uri.TryCreate(origin, UriKind.Absolute, out var uri)
+                        && (uri.Scheme == Uri.UriSchemeHttps
+                            || uri.Scheme == Uri.UriSchemeHttp)),
+                $"{CorsOptions.SectionName}:AllowedOrigins must contain at least one valid absolute HTTP/HTTPS URL.")
+            .ValidateOnStart();
+
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy(CorsOptions.CorsFrontendPolicyName, policy =>
+            {
+                var corsOptions = builder.Configuration
+                    .GetSection(CorsOptions.SectionName)
+                    .Get<CorsOptions>()!;
+
+                policy
+                    .WithOrigins(corsOptions.AllowedOrigins)
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+        });
+
+        return builder;
+    }
+
     private static IServiceCollection AddMessageBus(this IServiceCollection services)
     {
         services.AddMassTransit(bus =>
         {
             bus.SetKebabCaseEndpointNameFormatter();
-
-            // Module consumers are registered here as modules gain them.
 
             bus.UsingInMemory((ctx, cfg) =>
             {

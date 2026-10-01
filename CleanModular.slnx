@@ -1,8 +1,12 @@
 <Solution>
   <Folder Name="/Solution Items/">
+    <File Path=".env.example" />
     <File Path="Directory.Packages.props" />
+    <File Path="docker-compose.yml" />
   </Folder>
-  <Folder Name="/src/" />
+  <Folder Name="/src/">
+    <File Path="Dockerfile" />
+  </Folder>
   <Folder Name="/src/BuildingBlocks/">
     <Project Path="src/SharedKernal/SharedKernal.csproj" Id="9ab825b8-c8d4-4439-ac7a-9bc609651398" />
   </Folder>
@@ -13,15 +17,15 @@
   </Folder>
   <Folder Name="/src/Modules/" />
   <Folder Name="/src/Modules/Posts/">
-    <Project Path="src/Posts.Domain/Posts.Domain.csproj" />
     <Project Path="src/Posts.Application/Posts.Application.csproj" />
+    <Project Path="src/Posts.Domain/Posts.Domain.csproj" />
     <Project Path="src/Posts.Infrastructure/Posts.Infrastructure.csproj" />
     <Project Path="src/Posts.Presentation/Posts.Presentation.csproj" />
   </Folder>
   <Folder Name="/src/Modules/Storage/">
-    <Project Path="src/Storage.Domain/Storage.Domain.csproj" Id="a1b2c3d4-e5f6-7890-abcd-ef1234567890" />
     <Project Path="src/Storage.Application/Storage.Application.csproj" Id="b2c3d4e5-f6a7-8901-bcde-f12345678901" />
     <Project Path="src/Storage.Contracts/Storage.Contracts.csproj" Id="c3d4e5f6-a7b8-9012-cdef-123456789012" />
+    <Project Path="src/Storage.Domain/Storage.Domain.csproj" Id="a1b2c3d4-e5f6-7890-abcd-ef1234567890" />
     <Project Path="src/Storage.Infrastracture/Storage.Infrastracture.csproj" Id="d4e5f6a7-b8c9-0123-defa-234567890123" />
     <Project Path="src/Storage.Presentation/Storage.Presentation.csproj" Id="e5f6a7b8-c9d0-1234-efab-345678901234" />
   </Folder>
