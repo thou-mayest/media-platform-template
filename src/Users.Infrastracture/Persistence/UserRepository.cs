@@ -1,11 +1,12 @@
-﻿using Users.Application.Abstractions;
-using Microsoft.EntityFrameworkCore;
-using SharedKernal.Messaging;
+﻿using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using SharedKernal.Results;
+using Users.Application.Abstractions;
 using Users.Domain;
 
 namespace Users.Infrastracture.Persistence;
 
-internal class UserRepository(UsersDbContext context, IDomainEventDispatcher dispatcher) : IUserRepository
+internal class UserRepository(UsersDbContext context) : IUserRepository
 {
     public async Task AddAsync(User user, CancellationToken cancellationToken = default)
     {
@@ -36,23 +37,23 @@ internal class UserRepository(UsersDbContext context, IDomainEventDispatcher dis
         context.Users.Remove(user);
     }
 
-    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public async Task<Result<int>> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        var aggregates = context.ChangeTracker
-            .Entries<User>()
-            .Where(e => e.Entity.DomainEvents.Count > 0)
-            .Select(e => e.Entity)
-            .ToList();
-
-        var domainEvents = aggregates
-            .SelectMany(a => a.DomainEvents)
-            .ToList();
-
-        aggregates.ForEach(a => a.ClearDomainEvents());
-
-        var result = await context.SaveChangesAsync(cancellationToken);
-
-        await dispatcher.DispatchAsync(domainEvents, cancellationToken);
+        int result;
+        try
+        {
+            result = await context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException exception)
+            when (exception.InnerException is PostgresException
+            {
+                SqlState: PostgresErrorCodes.UniqueViolation,
+                ConstraintName: "UX_Users_Email"
+            })
+        {
+            context.ChangeTracker.Clear();
+            return Error.Conflict("User.EmailExists", "A user with that email already exists.");
+        }
 
         return result;
     }

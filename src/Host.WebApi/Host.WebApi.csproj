@@ -15,13 +15,19 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Scalar.AspNetCore" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CleanModular.ServiceDefaults\CleanModular.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Posts.Infrastructure\Posts.Infrastructure.csproj" />
+    <ProjectReference Include="..\Posts.Presentation\Posts.Presentation.csproj" />
     <ProjectReference Include="..\Profiles.Infrastructure\Profiles.Infrastructure.csproj" />
-	<ProjectReference Include="..\Profiles.Presentation\Profiles.Presentation.csproj" />
+    <ProjectReference Include="..\Profiles.Presentation\Profiles.Presentation.csproj" />
+    <ProjectReference Include="..\CleanModular.ServiceDefaults\CleanModular.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Storage.Infrastracture\Storage.Infrastracture.csproj" />
+    <ProjectReference Include="..\Storage.Presentation\Storage.Presentation.csproj" />
     <ProjectReference Include="..\Users.Infrastracture\Users.Infrastracture.csproj" />
     <ProjectReference Include="..\Users.Presentation\Users.Presentation.csproj" />
   </ItemGroup>

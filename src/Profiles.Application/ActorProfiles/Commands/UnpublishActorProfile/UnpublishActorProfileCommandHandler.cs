@@ -1,5 +1,5 @@
 ﻿using Profiles.Application.Abstractions;
-using SharedKernal.Messaging;
+using SharedKernal.Messaging.Commands;
 using SharedKernal.Results;
 
 namespace Profiles.Application.ActorProfiles.Commands.UnpublishActorProfile;

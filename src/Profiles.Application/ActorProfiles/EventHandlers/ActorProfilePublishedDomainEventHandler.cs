@@ -1,7 +1,7 @@
 using MassTransit;
 using Profiles.Contracts.IntegrationEvents;
 using Profiles.Domain.DomainEvents;
-using SharedKernal.Messaging;
+using SharedKernal.Messaging.DomainEvents;
 
 namespace Profiles.Application.ActorProfiles.EventHandlers;
 

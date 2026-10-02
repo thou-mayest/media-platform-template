@@ -5,7 +5,7 @@ using Profiles.Application;
 using Profiles.Application.Abstractions;
 using Profiles.Application.Messaging;
 using Profiles.Infrastructure.Persistence;
-using SharedKernal.Messaging;
+using SharedKernal.Messaging.DomainEvents;
 
 namespace Profiles.Infrastructure;
 

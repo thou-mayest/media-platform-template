@@ -1,6 +1,6 @@
-using SharedKernal.Messaging;
+using SharedKernal.Messaging.Commands;
 using SharedKernal.Results;
-using Users.Common;
+using SharedKernel.Entities.Enums;
 
 namespace Users.Application.Users.Commands.UpdateUser;
 

@@ -1,5 +1,5 @@
 using Profiles.Application.Abstractions;
-using SharedKernal.Messaging;
+using SharedKernal.Messaging.Queries;
 using SharedKernal.Pagination;
 using SharedKernal.Results;
 

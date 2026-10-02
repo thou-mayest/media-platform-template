@@ -1,4 +1,4 @@
-﻿using SharedKernal.Messaging;
+﻿using SharedKernal.Messaging.Queries;
 using SharedKernal.Results;
 
 namespace Profiles.Application.ActorProfiles.Queries.GetActorProfileBySlug;

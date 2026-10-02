@@ -1,8 +1,6 @@
 using Host.WebApi;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
-using System.Text;
+using SharedKernal.Configurations;
 using System.Text.Json.Serialization;
 
 
@@ -18,21 +16,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Converters.Add(new JsonStringEnumConverter(null, false)));
 
 
-var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy(name: MyAllowSpecificOrigins, policy =>
-    {
-        policy.WithOrigins("http://localhost:4321") // get from config
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
-
 var app = builder.Build();
 
 app.MapDefaultEndpoints();
+app.UseForwardedHeaders();
 
 if (app.Environment.IsDevelopment())
 {
@@ -45,7 +32,7 @@ if (app.Environment.IsDevelopment())
 
 await app.ApplyMigrations();
 
-app.UseCors(MyAllowSpecificOrigins);
+app.UseCors(CorsOptions.CorsFrontendPolicyName);
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

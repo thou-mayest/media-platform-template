@@ -1,5 +1,5 @@
 using MediatR;
-using SharedKernal.Messaging;
+using SharedKernal.Messaging.DomainEvents;
 
 namespace Profiles.Application.Messaging;
 

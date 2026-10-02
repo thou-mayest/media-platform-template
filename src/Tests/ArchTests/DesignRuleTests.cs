@@ -1,6 +1,7 @@
 using NetArchTest.Rules;
 using SharedKernal.Entities;
-using SharedKernal.Messaging;
+using SharedKernal.Messaging.Commands;
+using SharedKernal.Messaging.Queries;
 
 namespace CleanModular.ArchTests;
 
@@ -27,6 +28,38 @@ namespace CleanModular.ArchTests;
 /// </summary>
 public class DesignRuleTests : TestBase
 {
+    [Fact]
+    public void PostsHandlers_Should_BeInternal()
+    {
+        Types.InAssembly(PostsApplicationAssembly)
+            .That()
+            .ImplementInterface(typeof(ICommandHandler<>))
+            .Or()
+            .ImplementInterface(typeof(ICommandHandler<,>))
+            .Or()
+            .ImplementInterface(typeof(IQueryHandler<,>))
+            .Should()
+            .NotBePublic()
+            .GetResult()
+            .ShouldBeSuccessful();
+    }
+
+    [Fact]
+    public void PostsCommandsAndQueries_Should_BeSealed()
+    {
+        Types.InAssembly(PostsApplicationAssembly)
+            .That()
+            .ImplementInterface(typeof(ICommand))
+            .Or()
+            .ImplementInterface(typeof(ICommand<>))
+            .Or()
+            .ImplementInterface(typeof(IQuery<>))
+            .Should()
+            .BeSealed()
+            .GetResult()
+            .ShouldBeSuccessful();
+    }
+
     // ── HANDLERS ─────────────────────────────────────────────────
 
     [Fact]

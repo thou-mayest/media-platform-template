@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Users.Common;
+using SharedKernel.Entities.Enums;
 
 namespace Profiles.Presentation.Authorization;
 

@@ -1,15 +1,12 @@
-using MassTransit;
-using SharedKernal.Messaging;
-using Users.Contracts.IntegrationEvents;
+using SharedKernal.Messaging.DomainEvents;
+using SharedKernal.Messaging.Outbox;
 using Users.Domain.DomainEvents;
 
 namespace Users.Application.Users.EventHandlers;
 
-internal sealed class UserDeletedDomainEventHandler(IPublishEndpoint publishEndpoint)
+internal sealed class UserDeletedDomainEventHandler(IOutboxRepository outbox)
     : IDomainEventHandler<UserDeletedDomainEvent>
 {
     public Task Handle(UserDeletedDomainEvent notification, CancellationToken cancellationToken) =>
-        publishEndpoint.Publish(
-            new UserDeletedIntegrationEvent(notification.UserId),
-            cancellationToken);
+        outbox.AddAsync(notification.ToIntegrationEvent());
 }

@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Profiles.Application.Abstractions;
 using Profiles.Domain;
-using SharedKernal.Messaging;
+using SharedKernal.Messaging.DomainEvents;
 using SharedKernal.Pagination;
 
 namespace Profiles.Infrastructure.Persistence;

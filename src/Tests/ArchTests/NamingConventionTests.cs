@@ -1,5 +1,6 @@
 using NetArchTest.Rules;
-using SharedKernal.Messaging;
+using SharedKernal.Messaging.Commands;
+using SharedKernal.Messaging.Queries;
 
 namespace CleanModular.ArchTests;
 
@@ -20,6 +21,30 @@ namespace CleanModular.ArchTests;
 /// </summary>
 public class NamingConventionTests : TestBase
 {
+    [Fact]
+    public void PostsCommandsAndQueries_Should_FollowNamingConventions()
+    {
+        Types.InAssembly(PostsApplicationAssembly)
+            .That().ImplementInterface(typeof(ICommand)).Or().ImplementInterface(typeof(ICommand<>))
+            .Should().HaveNameEndingWith("Command").GetResult().ShouldBeSuccessful();
+
+        Types.InAssembly(PostsApplicationAssembly)
+            .That().ImplementInterface(typeof(IQuery<>))
+            .Should().HaveNameEndingWith("Query").GetResult().ShouldBeSuccessful();
+    }
+
+    [Fact]
+    public void PostsHandlers_Should_FollowNamingConventions()
+    {
+        Types.InAssembly(PostsApplicationAssembly)
+            .That().ImplementInterface(typeof(ICommandHandler<>)).Or().ImplementInterface(typeof(ICommandHandler<,>))
+            .Should().HaveNameEndingWith("CommandHandler").GetResult().ShouldBeSuccessful();
+
+        Types.InAssembly(PostsApplicationAssembly)
+            .That().ImplementInterface(typeof(IQueryHandler<,>))
+            .Should().HaveNameEndingWith("QueryHandler").GetResult().ShouldBeSuccessful();
+    }
+
     [Fact]
     public void Commands_Should_EndWith_Command()
     {
