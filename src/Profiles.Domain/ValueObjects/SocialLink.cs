@@ -26,10 +26,12 @@ public sealed class SocialLink : ValueObject
         if (trimmed.Length > MaxUrlLength)
             return Error.Validation("SocialLink.UrlTooLong", $"URL must not exceed {MaxUrlLength} characters.");
 
-        if (!Uri.TryCreate(trimmed, UriKind.Absolute, out var uri))
+        // A leading '/' is a root-relative path, never an absolute URL. On Linux/macOS
+        // Uri.TryCreate(UriKind.Absolute) accepts it as an implicit file:// path, so it
+        // must be rejected explicitly or the result differs between Windows and CI.
+        if (trimmed.StartsWith('/') || !Uri.TryCreate(trimmed, UriKind.Absolute, out var uri))
             return Error.Validation("SocialLink.UrlInvalid", "URL must be absolute and well-formed.");
 
-       
         if (uri.Scheme != Uri.UriSchemeHttps)
             return Error.Validation("SocialLink.UrlNotHttps", "URL must use https.");
 
