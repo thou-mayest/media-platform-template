@@ -3,6 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using Posts.Infrastructure;
 using Posts.Infrastructure.Persistence;
 using Posts.Presentation;
+using Profiles.Application;
+using Profiles.Infrastructure;
+using Profiles.Infrastructure.Persistence;
+using Profiles.Presentation;
 using Storage.Infrastracture.Persistence;
 using Users.Infrastracture.Persistence;
 using Users.Infrastracture;
@@ -22,6 +26,7 @@ public static class HostExtensions
         await MigrateModuleDbAsync<UsersDbContext>(app);
         await MigrateModuleDbAsync<StorageDbContext>(app);
         await MigrateModuleDbAsync<PostsDbContext>(app);
+        await MigrateModuleDbAsync<ProfilesDbContext>(app);
     }
 
     public static TBuilder RegisterModules<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
@@ -44,6 +49,10 @@ public static class HostExtensions
         // Posts module
         builder.Services.AddPostsInfrastructure(builder.Configuration);
         builder.Services.AddPostsPresentation();
+
+        // profiles module
+        builder.Services.AddProfilesInfrastructure(builder.Configuration);
+        builder.Services.AddProfilesPresentation();
 
         builder.AddCors();
 
@@ -87,6 +96,9 @@ public static class HostExtensions
         services.AddMassTransit(bus =>
         {
             bus.SetKebabCaseEndpointNameFormatter();
+
+            // Module consumers are registered here as modules gain them.
+            bus.AddProfilesConsumers();
 
             bus.UsingInMemory((ctx, cfg) =>
             {

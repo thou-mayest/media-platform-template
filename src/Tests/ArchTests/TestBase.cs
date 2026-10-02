@@ -2,6 +2,8 @@ using System.Reflection;
 using SharedKernal.Entities;
 using Posts.Application.Abstractions;
 using Posts.Domain;
+using Profiles.Application.Abstractions;
+using Profiles.Domain;
 using Storage.Application.Abstractions;
 using Storage.Domain;
 using Users.Application.Abstractions;
@@ -72,5 +74,21 @@ public abstract class TestBase
         StorageApplicationAssembly,
         StorageInfraAssembly,
         StoragePresentationAssembly
+    ];
+
+    // ── Profiles Module ──────────────────────────────────────────
+    protected static readonly Assembly ProfilesDomainAssembly = typeof(ActorProfile).Assembly;
+    protected static readonly Assembly ProfilesContractsAssembly = typeof(Profiles.Contracts.IntegrationEvents.ActorProfilePublishedIntegrationEvent).Assembly;
+    protected static readonly Assembly ProfilesApplicationAssembly = typeof(IActorProfileRepository).Assembly;
+    protected static readonly Assembly ProfilesInfraAssembly = typeof(Profiles.Infrastructure.DependencyInjection).Assembly;
+    protected static readonly Assembly ProfilesPresentationAssembly = typeof(Profiles.Presentation.Extension).Assembly;
+
+    protected static readonly IEnumerable<Assembly> ProfilesModuleAssemblies =
+    [
+        ProfilesDomainAssembly,
+        ProfilesContractsAssembly,
+        ProfilesApplicationAssembly,
+        ProfilesInfraAssembly,
+        ProfilesPresentationAssembly
     ];
 }
