@@ -29,6 +29,13 @@
     <Project Path="src/Storage.Infrastracture/Storage.Infrastracture.csproj" Id="d4e5f6a7-b8c9-0123-defa-234567890123" />
     <Project Path="src/Storage.Presentation/Storage.Presentation.csproj" Id="e5f6a7b8-c9d0-1234-efab-345678901234" />
   </Folder>
+  <Folder Name="/src/Modules/Profiles/">
+    <Project Path="src/Profiles.Application/Profiles.Application.csproj" Id="dfffd8d6-8b1e-4b0c-9e0b-77a4da94e40c" />
+    <Project Path="src/Profiles.Contracts/Profiles.Contracts.csproj" />
+    <Project Path="src/Profiles.Domain/Profiles.Domain.csproj" Id="2e52f22c-c376-4e20-a028-0a135d262990" />
+    <Project Path="src/Profiles.Infrastructure/Profiles.Infrastructure.csproj" />
+    <Project Path="src/Profiles.Presentation/Profiles.Presentation.csproj" Id="0be50210-34de-4deb-bb67-aa75c6641bb6" />
+  </Folder>
   <Folder Name="/src/Modules/Users/">
     <Project Path="src/Users.Application/Users.Application.csproj" Id="e13a39c5-587f-4df6-9012-378224f2aee0" />
     <Project Path="src/Users.Contracts/Users.Contracts.csproj" Id="470187e7-c8b8-4332-b0f5-ffb7bfb4cfef" />
@@ -47,6 +54,7 @@
   </Folder>
   <Folder Name="/src/Tests/UnitTests/">
     <Project Path="src/Tests/UnitTests/Posts.UnitTests/Posts.UnitTests.csproj" />
+    <Project Path="src/Tests/UnitTests/Profiles.Domain.UnitTests/Profiles.Domain.UnitTests.csproj" Id="a9cd09a1-9ecd-48ea-adcd-1b79df4d851a" />
     <Project Path="src/Tests/UnitTests/Storage.Application.UnitTests/Storage.Application.UnitTests.csproj" />
     <Project Path="src/Tests/UnitTests/Storage.Presentation.UnitTests/Storage.Presentation.UnitTests.csproj" />
     <Project Path="src/Tests/UnitTests/Users.Domain.UnitTests/Users.Domain.UnitTests.csproj" />
