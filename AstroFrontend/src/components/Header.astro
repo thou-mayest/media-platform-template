@@ -7,11 +7,12 @@ const { initialQ = '' } = Astro.props;
 
 <header class="site-header">
   <div class="container site-header__inner">
-    <a href="/" class="brand">VERSO</a>
+    <a href="/" class="brand">EROFANCY</a>
     <nav class="nav">
       <a href="/">Discover</a>
-      <a href="/artists">Artists</a>
+      <a href="/artists">Creators</a>
       <a href="/categories">Categories</a>
+      <a href="/admin/categories-tags">Manage</a>
     </nav>
     <form class="search" role="search" action="/search" method="get" data-search-form>
       <svg class="search__icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -22,7 +23,7 @@ const { initialQ = '' } = Astro.props;
         type="search"
         name="q"
         value={initialQ}
-        placeholder="Search artists, works, tags"
+        placeholder="Search creators, works, tags"
         autocomplete="off"
       />
     </form>
@@ -56,7 +57,7 @@ const { initialQ = '' } = Astro.props;
     document.documentElement.setAttribute('data-theme', theme);
     if (persist) {
       try {
-        localStorage.setItem('verso:theme', theme);
+        localStorage.setItem('erofancy:theme', theme);
       } catch {
         /* ignore */
       }
@@ -93,7 +94,7 @@ const { initialQ = '' } = Astro.props;
   const media = window.matchMedia('(prefers-color-scheme: dark)');
   media.addEventListener('change', (e) => {
     try {
-      if (localStorage.getItem('verso:theme')) return;
+      if (localStorage.getItem('erofancy:theme')) return;
     } catch {
       /* ignore */
     }

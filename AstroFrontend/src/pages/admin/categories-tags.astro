@@ -1,0 +1,578 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import { getAllAdminCategories, getAllAdminTags } from '@/lib/catalog-service';
+
+const categories = await getAllAdminCategories();
+const tags = await getAllAdminTags();
+---
+
+<Layout title="Manage Categories & Tags — Erofancy">
+  <main class="container page">
+    <div class="page-header">
+      <div class="eyebrow">Back Office</div>
+      <h1 class="h-display page__h1">Taxonomy Management</h1>
+      <p class="page__lede">
+        Add, modify, and remove categories and tags. Deleting a category safely reassigns works to <strong>Uncategorized</strong>, and deleting tags safely reassigns works with no remaining tags to <strong>Untagged</strong>.
+      </p>
+    </div>
+
+    <!-- Alert Box -->
+    <div id="statusAlert" class="alert hidden" role="alert"></div>
+
+    <div class="sections-grid">
+      <!-- CATEGORIES SECTION -->
+      <section class="panel">
+        <div class="panel__header">
+          <h2 class="panel__title">Categories ({categories.length})</h2>
+        </div>
+
+        <form id="createCategoryForm" class="form-card">
+          <h3 class="form-card__title">Add New Category</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="catName">Name *</label>
+              <input type="text" id="catName" name="name" required placeholder="e.g. Sculpture" />
+            </div>
+            <div class="form-group">
+              <label for="catSlug">Slug (optional)</label>
+              <input type="text" id="catSlug" name="slug" placeholder="e.g. sculpture" />
+            </div>
+          </div>
+          <button type="submit" class="btn btn--primary">Create Category</button>
+        </form>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Slug</th>
+                <th>Works</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {categories.map((c) => {
+                const isDefault = c.slug.toLowerCase() === 'uncategorized';
+                return (
+                  <tr data-cat-id={c.id}>
+                    <td>
+                      <span class="font-medium">{c.name}</span>
+                      {isDefault && <span class="badge badge--default">Default</span>}
+                    </td>
+                    <td><code>{c.slug}</code></td>
+                    <td>{c.workCount}</td>
+                    <td class="table-actions">
+                      <button
+                        type="button"
+                        class="btn-sm btn--edit edit-cat-btn"
+                        data-id={c.id}
+                        data-name={c.name}
+                        data-slug={c.slug}
+                        data-is-default={isDefault ? 'true' : 'false'}
+                      >
+                        Edit
+                      </button>
+                      {!isDefault && (
+                        <button
+                          type="button"
+                          class="btn-sm btn--delete delete-cat-btn"
+                          data-id={c.id}
+                          data-name={c.name}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAGS SECTION -->
+      <section class="panel">
+        <div class="panel__header">
+          <h2 class="panel__title">Tags ({tags.length})</h2>
+        </div>
+
+        <form id="createTagForm" class="form-card">
+          <h3 class="form-card__title">Add New Tag</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="tagName">Name *</label>
+              <input type="text" id="tagName" name="name" required placeholder="e.g. Minimal" />
+            </div>
+            <div class="form-group">
+              <label for="tagSlug">Slug (optional)</label>
+              <input type="text" id="tagSlug" name="slug" placeholder="e.g. minimal" />
+            </div>
+          </div>
+          <button type="submit" class="btn btn--primary">Create Tag</button>
+        </form>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Slug</th>
+                <th>Works</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tags.map((t) => {
+                const isDefault = t.slug.toLowerCase() === 'untagged';
+                return (
+                  <tr data-tag-id={t.id}>
+                    <td>
+                      <span class="font-medium">#{t.name}</span>
+                      {isDefault && <span class="badge badge--default">Default</span>}
+                    </td>
+                    <td><code>{t.slug}</code></td>
+                    <td>{t.workCount}</td>
+                    <td class="table-actions">
+                      <button
+                        type="button"
+                        class="btn-sm btn--edit edit-tag-btn"
+                        data-id={t.id}
+                        data-name={t.name}
+                        data-slug={t.slug}
+                        data-is-default={isDefault ? 'true' : 'false'}
+                      >
+                        Edit
+                      </button>
+                      {!isDefault && (
+                        <button
+                          type="button"
+                          class="btn-sm btn--delete delete-tag-btn"
+                          data-id={t.id}
+                          data-name={t.name}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  function getAuthHeader(): Record<string, string> {
+    const token = localStorage.getItem('erofancy:token') ?? localStorage.getItem('token') ?? '';
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
+  function showAlert(message: string, isError = false) {
+    const el = document.getElementById('statusAlert');
+    if (!el) return;
+    el.textContent = message;
+    el.className = isError ? 'alert alert--error' : 'alert alert--success';
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    setTimeout(() => {
+      el.classList.add('hidden');
+    }, 6000);
+  }
+
+  // CREATE CATEGORY
+  document.getElementById('createCategoryForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const name = (form.elements.namedItem('name') as HTMLInputElement).value.trim();
+    const slug = (form.elements.namedItem('slug') as HTMLInputElement).value.trim() || null;
+
+    try {
+      const res = await fetch('/api/v1/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        body: JSON.stringify({ name, slug }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        showAlert(error?.error ?? error?.title ?? 'Failed to create category', true);
+        return;
+      }
+
+      showAlert(`Category "${name}" created successfully.`);
+      setTimeout(() => location.reload(), 800);
+    } catch {
+      showAlert('Network error while creating category.', true);
+    }
+  });
+
+  // EDIT CATEGORY
+  document.querySelectorAll<HTMLButtonElement>('.edit-cat-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const currentName = btn.dataset.name ?? '';
+      const currentSlug = btn.dataset.slug ?? '';
+      const isDefault = btn.dataset.isDefault === 'true';
+
+      const newName = prompt('Enter updated category name:', currentName);
+      if (!newName || newName.trim() === currentName) return;
+
+      const newSlug = isDefault ? currentSlug : (prompt('Enter updated slug (or leave blank to auto-generate):', currentSlug) || null);
+
+      try {
+        const res = await fetch(`/api/v1/categories/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+          body: JSON.stringify({ name: newName.trim(), slug: newSlug?.trim() || null }),
+        });
+
+        if (!res.ok) {
+          const error = await res.json().catch(() => ({}));
+          showAlert(error?.error ?? error?.title ?? 'Failed to update category', true);
+          return;
+        }
+
+        showAlert(`Category updated.`);
+        setTimeout(() => location.reload(), 800);
+      } catch {
+        showAlert('Network error while updating category.', true);
+      }
+    });
+  });
+
+  // DELETE CATEGORY
+  document.querySelectorAll<HTMLButtonElement>('.delete-cat-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const name = btn.dataset.name ?? '';
+
+      if (!confirm(`Are you sure you want to delete category "${name}"?\nAll associated works will be safely moved to "Uncategorized".`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/v1/categories/${id}`, {
+          method: 'DELETE',
+          headers: { ...getAuthHeader() },
+        });
+
+        if (!res.ok) {
+          const error = await res.json().catch(() => ({}));
+          showAlert(error?.error ?? error?.title ?? 'Failed to delete category', true);
+          return;
+        }
+
+        showAlert(`Category "${name}" deleted.`);
+        setTimeout(() => location.reload(), 800);
+      } catch {
+        showAlert('Network error while deleting category.', true);
+      }
+    });
+  });
+
+  // CREATE TAG
+  document.getElementById('createTagForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const name = (form.elements.namedItem('name') as HTMLInputElement).value.trim();
+    const slug = (form.elements.namedItem('slug') as HTMLInputElement).value.trim() || null;
+
+    try {
+      const res = await fetch('/api/v1/tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        body: JSON.stringify({ name, slug }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        showAlert(error?.error ?? error?.title ?? 'Failed to create tag', true);
+        return;
+      }
+
+      showAlert(`Tag "${name}" created successfully.`);
+      setTimeout(() => location.reload(), 800);
+    } catch {
+      showAlert('Network error while creating tag.', true);
+    }
+  });
+
+  // EDIT TAG
+  document.querySelectorAll<HTMLButtonElement>('.edit-tag-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const currentName = btn.dataset.name ?? '';
+      const currentSlug = btn.dataset.slug ?? '';
+      const isDefault = btn.dataset.isDefault === 'true';
+
+      const newName = prompt('Enter updated tag name:', currentName);
+      if (!newName || newName.trim() === currentName) return;
+
+      const newSlug = isDefault ? currentSlug : (prompt('Enter updated slug (or leave blank to auto-generate):', currentSlug) || null);
+
+      try {
+        const res = await fetch(`/api/v1/tags/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+          body: JSON.stringify({ name: newName.trim(), slug: newSlug?.trim() || null }),
+        });
+
+        if (!res.ok) {
+          const error = await res.json().catch(() => ({}));
+          showAlert(error?.error ?? error?.title ?? 'Failed to update tag', true);
+          return;
+        }
+
+        showAlert(`Tag updated.`);
+        setTimeout(() => location.reload(), 800);
+      } catch {
+        showAlert('Network error while updating tag.', true);
+      }
+    });
+  });
+
+  // DELETE TAG
+  document.querySelectorAll<HTMLButtonElement>('.delete-tag-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const name = btn.dataset.name ?? '';
+
+      if (!confirm(`Are you sure you want to delete tag "${name}"?\nAny works left with no remaining tags will be safely reassigned to "Untagged".`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/v1/tags/${id}`, {
+          method: 'DELETE',
+          headers: { ...getAuthHeader() },
+        });
+
+        if (!res.ok) {
+          const error = await res.json().catch(() => ({}));
+          showAlert(error?.error ?? error?.title ?? 'Failed to delete tag', true);
+          return;
+        }
+
+        showAlert(`Tag "${name}" deleted.`);
+        setTimeout(() => location.reload(), 800);
+      } catch {
+        showAlert('Network error while deleting tag.', true);
+      }
+    });
+  });
+</script>
+
+<style>
+  .page {
+    padding: clamp(32px, 5vw, 64px) 0;
+  }
+  .page-header {
+    margin-bottom: 32px;
+  }
+  .page__h1 {
+    font-size: clamp(30px, 4.5vw, 56px);
+    margin: 0.15em 0 0;
+    line-height: 1.1;
+  }
+  .page__lede {
+    color: var(--muted);
+    font-size: 16px;
+    margin-top: 12px;
+    max-width: 680px;
+  }
+
+  .alert {
+    padding: 12px 18px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .alert--success {
+    background: #e8f5e9;
+    color: #1b5e20;
+    border: 1px solid #c8e6c9;
+  }
+  .alert--error {
+    background: #ffebee;
+    color: #b71c1c;
+    border: 1px solid #ffcdd2;
+  }
+  .hidden {
+    display: none;
+  }
+
+  .sections-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  @media (min-width: 1024px) {
+    .sections-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .panel__title {
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .form-card {
+    background: var(--surface-2, var(--bg));
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .form-card__title {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  @media (min-width: 640px) {
+    .form-row {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-group label {
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .form-group input {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  .btn {
+    padding: 9px 18px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    align-self: flex-start;
+  }
+
+  .btn--primary {
+    background: var(--text);
+    color: var(--bg);
+  }
+
+  .btn-sm {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+  }
+
+  .btn--edit:hover {
+    background: var(--surface-2, rgba(0, 0, 0, 0.05));
+  }
+
+  .btn--delete {
+    color: #d32f2f;
+    border-color: rgba(211, 47, 47, 0.3);
+  }
+
+  .btn--delete:hover {
+    background: rgba(211, 47, 47, 0.08);
+  }
+
+  .table-container {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    text-align: left;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .data-table th {
+    background: var(--surface-2, rgba(0, 0, 0, 0.02));
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .data-table code {
+    font-size: 12px;
+    background: var(--surface-2, rgba(0, 0, 0, 0.04));
+    padding: 2px 5px;
+    border-radius: 4px;
+  }
+
+  .badge {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .badge--default {
+    background: #e3f2fd;
+    color: #1565c0;
+  }
+
+  .table-actions {
+    display: flex;
+    gap: 8px;
+  }
+</style>
+
