@@ -1,6 +1,8 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Posts.Application.Posts;
+using Posts.Application.Posts.Commands.CreatePost;
 using Posts.Application.Posts.Commands.RecordPostView;
 using Posts.Application.Posts.Queries.GetPostById;
 using Posts.Application.Posts.Queries.GetPostFacets;
@@ -13,6 +15,27 @@ namespace Posts.Presentation.Posts;
 [Route("api/posts")]
 public sealed class PostsController(ISender sender) : ControllerBase
 {
+    [HttpPost]
+    [Authorize]
+    public async Task<IActionResult> Create(
+        [FromBody] CreatePostRequest request, CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirst("sub")?.Value, out var authorId)) return Unauthorized();
+
+        var command = new CreatePostCommand(
+            authorId,
+            request.MediaAssetId,
+            request.Title,
+            request.Description,
+            request.CategoryId,
+            request.MediaUrl,
+            request.AltText,
+            request.Tags);
+
+        var result = await sender.Send(command, cancellationToken);
+        return result.Match(id => CreatedAtAction(nameof(GetById), new { id }, id));
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? q,

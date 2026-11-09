@@ -7,6 +7,14 @@ namespace Posts.Infrastructure.Persistence;
 
 internal sealed class PostRepository(PostsDbContext context) : IPostRepository
 {
+    public async Task AddAsync(Post post, CancellationToken cancellationToken)
+    {
+        await context.Posts.AddAsync(post, cancellationToken);
+    }
+
+    public Task SaveChangesAsync(CancellationToken cancellationToken) =>
+        context.SaveChangesAsync(cancellationToken);
+
     public async Task<PagedPostsDto> GetPublishedAsync(
         string? keyword,
         string? category,
