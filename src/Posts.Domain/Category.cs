@@ -35,5 +35,16 @@ public sealed class Category : Entity
 
     public static Category CreateDefault() => new(DefaultId, DefaultName, Normalize(DefaultName));
 
+    public Result Update(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name) || name.Trim().Length is 0 or > 100)
+            return Error.Validation("Category.NameInvalid", "Category name is required and cannot exceed 100 characters.");
+
+        var cleaned = name.Trim();
+        Name = cleaned;
+        NormalizedName = Normalize(cleaned);
+        return Result.Success();
+    }
+
     public static string Normalize(string value) => value.Trim().ToLowerInvariant();
 }
