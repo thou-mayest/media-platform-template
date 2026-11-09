@@ -1,0 +1,1053 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import { getPostFacets } from '@/lib/server/posts';
+import type { PostFacet } from '@/lib/server/posts';
+
+let categories: PostFacet[] = [];
+let availableTags: PostFacet[] = [];
+
+try {
+  const facets = await getPostFacets();
+  categories = facets.categories;
+  availableTags = facets.tags;
+} catch {
+  // Sensible default fallbacks if API is offline during local dev
+  categories = [
+    { name: 'Photography', count: 0 },
+    { name: 'Painting', count: 0 },
+    { name: 'Sculpture', count: 0 },
+    { name: 'Digital', count: 0 },
+    { name: 'Installation', count: 0 },
+    { name: 'Printmaking', count: 0 },
+  ];
+  availableTags = [
+    { name: 'monochrome', count: 0 },
+    { name: 'minimal', count: 0 },
+    { name: 'abstract', count: 0 },
+    { name: 'editorial', count: 0 },
+    { name: 'fashion', count: 0 },
+    { name: 'contemporary', count: 0 },
+  ];
+}
+---
+
+<Layout
+  title="Create New Post — Verso Back Office"
+  description="Publish new visual work or media to the platform directory."
+>
+  <main class="container page">
+    <!-- Breadcrumb & Page Header -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="/admin">Back Office</a>
+      <span class="sep">/</span>
+      <a href="/admin/posts">Posts</a>
+      <span class="sep">/</span>
+      <span class="current">New Post</span>
+    </nav>
+
+    <div class="page-header">
+      <div class="eyebrow">Back Office · Editorial</div>
+      <h1 class="h-display page__h1">Create New Post</h1>
+      <p class="page__lede">
+        Upload high-resolution media, assign structured taxonomy, and publish your work directly to the public directory.
+      </p>
+    </div>
+
+    <!-- Alert / Toast Banner -->
+    <div id="statusAlert" class="alert hidden" role="alert" aria-live="polite"></div>
+
+    <!-- Create Post Form -->
+    <form id="createPostForm" class="editor-grid" novalidate>
+      <!-- LEFT COLUMN: Media Asset & Preview -->
+      <section class="panel panel--media">
+        <div class="panel__header">
+          <h2 class="panel__title">Media Asset</h2>
+          <span class="panel__subtitle">Required</span>
+        </div>
+
+        <!-- Dropzone Container -->
+        <div
+          id="dropZone"
+          class="drop-zone"
+          role="button"
+          tabindex="0"
+          aria-label="Upload visual asset: Drag and drop or press to browse"
+        >
+          <input
+            type="file"
+            id="fileInput"
+            name="mediaFile"
+            accept="image/png,image/jpeg,image/webp,image/gif,video/mp4"
+            hidden
+          />
+
+          <div id="dropEmptyState" class="drop-zone__empty">
+            <div class="drop-zone__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            </div>
+            <p class="drop-zone__prompt">
+              <strong>Click to upload</strong> or drag and drop
+            </p>
+            <p class="drop-zone__sub">
+              WEBP, PNG, JPG, or MP4 (up to 50 MB)
+            </p>
+          </div>
+
+          <!-- Live Preview State -->
+          <div id="dropPreviewState" class="drop-zone__preview hidden">
+            <div class="preview-media-container">
+              <img id="previewImage" src="" alt="Post preview" class="preview-media hidden" />
+              <video id="previewVideo" src="" controls class="preview-media hidden"></video>
+            </div>
+            <div class="preview-actions">
+              <span id="previewFileName" class="preview-filename"></span>
+              <button type="button" id="removeMediaBtn" class="btn btn--danger btn--xs">
+                Remove Media
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hidden input storing generated/uploaded MediaAssetId and MediaUrl -->
+        <input type="hidden" id="mediaAssetId" name="mediaAssetId" value="" />
+        <input type="hidden" id="mediaUrl" name="mediaUrl" value="" />
+
+        <!-- Alternative: Direct URL entry -->
+        <details class="accordion-details">
+          <summary class="accordion-summary">Or link an external media URL</summary>
+          <div class="form-group" style="margin-top: 10px;">
+            <label for="externalMediaUrl">Direct Media URL</label>
+            <input
+              type="url"
+              id="externalMediaUrl"
+              placeholder="https://cdn.example.com/artworks/hero.webp"
+            />
+            <span class="field-help">If hosting externally, paste the full HTTPS media link.</span>
+          </div>
+        </details>
+
+        <!-- Accessibility / Alt Text -->
+        <div class="form-group">
+          <div class="label-with-counter">
+            <label for="altText">Alt Text (Accessibility & SEO) *</label>
+            <span id="altCounter" class="char-counter">0/500</span>
+          </div>
+          <input
+            type="text"
+            id="altText"
+            name="altText"
+            required
+            maxlength="500"
+            placeholder="e.g. Minimalist monochrome sculpture in ambient gallery lighting"
+          />
+          <span class="field-help">A descriptive summary for screen readers and search engines.</span>
+        </div>
+      </section>
+
+      <!-- RIGHT COLUMN: Metadata & Discovery -->
+      <section class="panel panel--meta">
+        <div class="panel__header">
+          <h2 class="panel__title">Post Information</h2>
+        </div>
+
+        <!-- Title -->
+        <div class="form-group">
+          <div class="label-with-counter">
+            <label for="postTitle">Title *</label>
+            <span id="titleCounter" class="char-counter">0/200</span>
+          </div>
+          <input
+            type="text"
+            id="postTitle"
+            name="title"
+            required
+            maxlength="200"
+            placeholder="e.g. Nocturne in Pale Terracotta"
+          />
+        </div>
+
+        <!-- Category -->
+        <div class="form-group">
+          <label for="categorySelect">Category *</label>
+          <select id="categorySelect" name="category" required>
+            <option value="" disabled selected>Select a category...</option>
+            {categories.map((c: PostFacet) => (
+              <option value={c.name}>{c.name}</option>
+            ))}
+          </select>
+          <span class="field-help">
+            Choose the primary gallery classification.
+          </span>
+        </div>
+
+        <!-- Tags / Multi-select Chips -->
+        <div class="form-group">
+          <label for="tagInput">Tags</label>
+          <div id="tagsContainer" class="tags-input-box">
+            <div id="tagChipsList" class="tag-chips-list"></div>
+            <input
+              type="text"
+              id="tagInput"
+              placeholder="Type tag & press Enter or comma..."
+              maxlength="50"
+            />
+          </div>
+          
+          <!-- Suggested quick tags -->
+          <div class="suggested-tags">
+            <span class="suggested-tags__label">Suggested:</span>
+            {availableTags.slice(0, 8).map((t: PostFacet) => (
+              <button
+                type="button"
+                class="tag-pill-btn"
+                data-suggest-tag={t.name}
+              >
+                +{t.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <div class="label-with-counter">
+            <label for="postDescription">Description / Caption *</label>
+            <span id="descCounter" class="char-counter">0/2000</span>
+          </div>
+          <textarea
+            id="postDescription"
+            name="description"
+            rows="5"
+            required
+            maxlength="2000"
+            placeholder="Context, creative medium, artist statement, or visual breakdown..."
+          ></textarea>
+        </div>
+
+        <!-- Submit & Actions Bar -->
+        <div class="form-actions">
+          <button
+            type="button"
+            id="saveDraftBtn"
+            class="btn btn--secondary"
+          >
+            Save as Draft
+          </button>
+          
+          <button
+            type="button"
+            id="publishBtn"
+            class="btn btn--primary"
+          >
+            Publish Post
+          </button>
+
+          <a href="/admin/posts" class="btn btn--ghost">Cancel</a>
+        </div>
+      </section>
+    </form>
+  </main>
+</Layout>
+
+<script>
+  // DOM Elements
+  const statusAlert = document.getElementById('statusAlert') as HTMLDivElement;
+
+  // Media upload elements
+  const dropZone = document.getElementById('dropZone') as HTMLDivElement;
+  const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+  const dropEmptyState = document.getElementById('dropEmptyState') as HTMLDivElement;
+  const dropPreviewState = document.getElementById('dropPreviewState') as HTMLDivElement;
+  const previewImage = document.getElementById('previewImage') as HTMLImageElement;
+  const previewVideo = document.getElementById('previewVideo') as HTMLVideoElement;
+  const previewFileName = document.getElementById('previewFileName') as HTMLSpanElement;
+  const removeMediaBtn = document.getElementById('removeMediaBtn') as HTMLButtonElement;
+  const mediaAssetIdInput = document.getElementById('mediaAssetId') as HTMLInputElement;
+  const mediaUrlInput = document.getElementById('mediaUrl') as HTMLInputElement;
+  const externalMediaUrl = document.getElementById('externalMediaUrl') as HTMLInputElement;
+
+  // Form Fields
+  const titleInput = document.getElementById('postTitle') as HTMLInputElement;
+  const categorySelect = document.getElementById('categorySelect') as HTMLSelectElement;
+  const altTextInput = document.getElementById('altText') as HTMLInputElement;
+  const descTextarea = document.getElementById('postDescription') as HTMLTextAreaElement;
+
+  // Counters
+  const titleCounter = document.getElementById('titleCounter') as HTMLSpanElement;
+  const altCounter = document.getElementById('altCounter') as HTMLSpanElement;
+  const descCounter = document.getElementById('descCounter') as HTMLSpanElement;
+
+  // Tags elements
+  const tagInput = document.getElementById('tagInput') as HTMLInputElement;
+  const tagChipsList = document.getElementById('tagChipsList') as HTMLDivElement;
+  const suggestButtons = document.querySelectorAll<HTMLButtonElement>('[data-suggest-tag]');
+
+  // Action buttons
+  const saveDraftBtn = document.getElementById('saveDraftBtn') as HTMLButtonElement;
+  const publishBtn = document.getElementById('publishBtn') as HTMLButtonElement;
+
+  // State
+  const tagsSet = new Set<string>();
+
+  // Utility: Show Alert
+  function showAlert(msg: string, isError = false): void {
+    statusAlert.textContent = msg;
+    statusAlert.className = `alert ${isError ? 'alert--error' : 'alert--success'}`;
+    statusAlert.classList.remove('hidden');
+    statusAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function hideAlert(): void {
+    statusAlert.classList.add('hidden');
+  }
+
+  // Live Character Counters
+  function updateCounters(): void {
+    titleCounter.textContent = `${titleInput.value.length}/200`;
+    altCounter.textContent = `${altTextInput.value.length}/500`;
+    descCounter.textContent = `${descTextarea.value.length}/2000`;
+  }
+
+  titleInput.addEventListener('input', updateCounters);
+  altTextInput.addEventListener('input', updateCounters);
+  descTextarea.addEventListener('input', updateCounters);
+
+  // TAGS MANAGEMENT
+  function renderTags(): void {
+    tagChipsList.innerHTML = '';
+    tagsSet.forEach((tag) => {
+      const chip = document.createElement('span');
+      chip.className = 'tag-chip';
+      chip.textContent = `#${tag}`;
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'tag-chip__remove';
+      removeBtn.innerHTML = '&times;';
+      removeBtn.setAttribute('aria-label', `Remove tag ${tag}`);
+      removeBtn.addEventListener('click', () => {
+        tagsSet.delete(tag);
+        renderTags();
+      });
+
+      chip.appendChild(removeBtn);
+      tagChipsList.appendChild(chip);
+    });
+  }
+
+  function addTag(raw: string): void {
+    const clean = raw.trim().replace(/^#/, '').toLowerCase();
+    if (clean && clean.length <= 50 && !tagsSet.has(clean)) {
+      tagsSet.add(clean);
+      renderTags();
+    }
+    tagInput.value = '';
+  }
+
+  tagInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      addTag(tagInput.value);
+    } else if (e.key === 'Backspace' && !tagInput.value && tagsSet.size > 0) {
+      const last = Array.from(tagsSet).pop();
+      if (last) {
+        tagsSet.delete(last);
+        renderTags();
+      }
+    }
+  });
+
+  tagInput.addEventListener('blur', () => {
+    if (tagInput.value.trim()) addTag(tagInput.value);
+  });
+
+  suggestButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const tag = btn.dataset.suggestTag;
+      if (tag) addTag(tag);
+    });
+  });
+
+  // MEDIA HANDLING & DROPZONE
+  function setMediaPreview(url: string, name: string, isVideo: boolean): void {
+    dropEmptyState.classList.add('hidden');
+    dropPreviewState.classList.remove('hidden');
+    previewFileName.textContent = name;
+
+    if (isVideo) {
+      previewImage.classList.add('hidden');
+      previewVideo.classList.remove('hidden');
+      previewVideo.src = url;
+    } else {
+      previewVideo.classList.add('hidden');
+      previewImage.classList.remove('hidden');
+      previewImage.src = url;
+    }
+  }
+
+  function clearMedia(): void {
+    dropPreviewState.classList.add('hidden');
+    dropEmptyState.classList.remove('hidden');
+    previewImage.src = '';
+    previewVideo.src = '';
+    previewFileName.textContent = '';
+    mediaAssetIdInput.value = '';
+    mediaUrlInput.value = '';
+    fileInput.value = '';
+  }
+
+  removeMediaBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    clearMedia();
+  });
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      fileInput.click();
+    }
+  });
+
+  ['dragenter', 'dragover'].forEach((eventName) => {
+    dropZone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      dropZone.classList.add('drop-zone--active');
+    });
+  });
+
+  ['dragleave', 'drop'].forEach((eventName) => {
+    dropZone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drop-zone--active');
+    });
+  });
+
+  async function handleFile(file: File): Promise<void> {
+    if (!file) return;
+
+    const isVideo = file.type.startsWith('video/');
+    const localUrl = URL.createObjectURL(file);
+    setMediaPreview(localUrl, file.name, isVideo);
+
+    // Auto-fill Alt Text if empty
+    if (!altTextInput.value.trim()) {
+      const generatedName = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+      altTextInput.value = generatedName.charAt(0).toUpperCase() + generatedName.slice(1);
+      updateCounters();
+    }
+
+    // Upload to backend storage if endpoint is available
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const token = localStorage.getItem('verso:token') ?? localStorage.getItem('erofancy:token');
+      const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const res = await fetch('/api/files/upload', {
+        method: 'POST',
+        headers: authHeaders,
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        mediaAssetIdInput.value = data.id || crypto.randomUUID();
+        mediaUrlInput.value = data.url || localUrl;
+      } else {
+        mediaAssetIdInput.value = crypto.randomUUID();
+        mediaUrlInput.value = localUrl;
+      }
+    } catch {
+      mediaAssetIdInput.value = crypto.randomUUID();
+      mediaUrlInput.value = localUrl;
+    }
+  }
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files && fileInput.files[0]) {
+      handleFile(fileInput.files[0]);
+    }
+  });
+
+  dropZone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    if (dt && dt.files && dt.files[0]) {
+      handleFile(dt.files[0]);
+    }
+  });
+
+  externalMediaUrl.addEventListener('input', () => {
+    const url = externalMediaUrl.value.trim();
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      mediaAssetIdInput.value = crypto.randomUUID();
+      mediaUrlInput.value = url;
+      setMediaPreview(url, 'External URL Media', url.endsWith('.mp4'));
+    }
+  });
+
+  // SUBMIT FLOW
+  async function submitPost(publishImmediately: boolean): Promise<void> {
+    hideAlert();
+
+    const title = titleInput.value.trim();
+    const category = categorySelect.value.trim();
+    const altText = altTextInput.value.trim();
+    const description = descTextarea.value.trim();
+    const mediaAssetId = mediaAssetIdInput.value.trim() || crypto.randomUUID();
+    const mediaUrl = mediaUrlInput.value.trim();
+
+    if (!mediaUrl) {
+      showAlert('Please upload a visual asset or provide a media URL.', true);
+      dropZone.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    if (!title) {
+      showAlert('A post title is required.', true);
+      titleInput.focus();
+      return;
+    }
+
+    if (!category) {
+      showAlert('Please select a category.', true);
+      categorySelect.focus();
+      return;
+    }
+
+    if (!altText) {
+      showAlert('Alt text is required for accessibility and indexing.', true);
+      altTextInput.focus();
+      return;
+    }
+
+    if (!description) {
+      showAlert('Please provide a post description or statement.', true);
+      descTextarea.focus();
+      return;
+    }
+
+    const payload = {
+      mediaAssetId,
+      mediaUrl,
+      title,
+      description,
+      category,
+      altText,
+      tags: Array.from(tagsSet),
+      publishImmediately,
+    };
+
+    const activeBtn = publishImmediately ? publishBtn : saveDraftBtn;
+    const originalText = activeBtn.textContent;
+    activeBtn.disabled = true;
+    activeBtn.textContent = 'Submitting...';
+
+    try {
+      const token = localStorage.getItem('verso:token') ?? localStorage.getItem('erofancy:token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/posts', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const post = await res.json().catch(() => ({}));
+        showAlert(
+          publishImmediately
+            ? 'Post published successfully! Redirecting...'
+            : 'Post saved as Draft. Redirecting...',
+        );
+
+        setTimeout(() => {
+          if (publishImmediately && post?.id) {
+            window.location.href = `/posts/${post.id}`;
+          } else {
+            window.location.href = '/admin/posts';
+          }
+        }, 1000);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showAlert(
+          err.detail || err.title || err.error || 'Server rejected post creation. Please check fields.',
+          true,
+        );
+        activeBtn.disabled = false;
+        activeBtn.textContent = originalText;
+      }
+    } catch {
+      // Offline fallback: save to localStorage so user sees immediate results in development
+      const storedPosts = JSON.parse(localStorage.getItem('verso:custom_posts') || '[]');
+      const newPost = {
+        id: crypto.randomUUID(),
+        ...payload,
+        status: publishImmediately ? 'Published' : 'Draft',
+        createdDate: new Date().toISOString(),
+      };
+      storedPosts.unshift(newPost);
+      localStorage.setItem('verso:custom_posts', JSON.stringify(storedPosts));
+
+      showAlert(
+        `Post saved locally (${publishImmediately ? 'Published' : 'Draft'}). Redirecting to posts directory...`,
+      );
+      setTimeout(() => {
+        window.location.href = '/admin/posts';
+      }, 1000);
+    }
+  }
+
+  saveDraftBtn.addEventListener('click', () => submitPost(false));
+  publishBtn.addEventListener('click', () => submitPost(true));
+</script>
+
+<style>
+  .page {
+    padding: clamp(24px, 4vw, 56px) 0 80px;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .breadcrumb a {
+    color: var(--muted);
+    transition: color 0.15s ease;
+  }
+
+  .breadcrumb a:hover {
+    color: var(--text);
+  }
+
+  .breadcrumb .sep {
+    color: var(--faint);
+  }
+
+  .breadcrumb .current {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .page-header {
+    margin-bottom: 32px;
+  }
+
+  .page__h1 {
+    font-size: clamp(32px, 5vw, 60px);
+    margin: 0.15em 0 0;
+    line-height: 1.05;
+  }
+
+  .page__lede {
+    color: var(--muted);
+    font-size: 16px;
+    line-height: 1.55;
+    margin-top: 12px;
+    max-width: 680px;
+  }
+
+  .alert {
+    padding: 14px 20px;
+    border-radius: 8px;
+    margin-bottom: 28px;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .alert--success {
+    background: rgba(46, 125, 50, 0.12);
+    color: #2e7d32;
+    border: 1px solid rgba(46, 125, 50, 0.3);
+  }
+
+  .alert--error {
+    background: rgba(198, 40, 40, 0.12);
+    color: #c62828;
+    border: 1px solid rgba(198, 40, 40, 0.3);
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  .editor-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+
+  @media (min-width: 1024px) {
+    .editor-grid {
+      grid-template-columns: 1.05fr 1fr;
+      gap: 40px;
+    }
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 14px;
+    padding: clamp(20px, 3vw, 32px);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .panel__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--hairline);
+    padding-bottom: 14px;
+  }
+
+  .panel__title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text);
+  }
+
+  .panel__subtitle {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 36px 20px;
+    text-align: center;
+    background: var(--chip-bg);
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .drop-zone:hover,
+  .drop-zone:focus-visible,
+  .drop-zone--active {
+    border-color: var(--accent);
+    background: rgba(200, 72, 43, 0.04);
+  }
+
+  .drop-zone__icon {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 12px;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .drop-zone__icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .drop-zone__prompt {
+    font-size: 15px;
+    color: var(--text);
+    margin: 0 0 6px;
+  }
+
+  .drop-zone__prompt strong {
+    color: var(--accent);
+  }
+
+  .drop-zone__sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .preview-media-container {
+    max-height: 380px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .preview-media {
+    max-width: 100%;
+    max-height: 380px;
+    object-fit: contain;
+    border-radius: 6px;
+  }
+
+  .preview-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--hairline);
+  }
+
+  .preview-filename {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 240px;
+  }
+
+  .accordion-details {
+    font-size: 13px;
+  }
+
+  .accordion-summary {
+    cursor: pointer;
+    color: var(--muted);
+    user-select: none;
+    transition: color 0.15s ease;
+  }
+
+  .accordion-summary:hover {
+    color: var(--text);
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .label-with-counter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .char-counter {
+    font-size: 11px;
+    color: var(--faint);
+    font-family: monospace;
+  }
+
+  input[type='text'],
+  input[type='url'],
+  select,
+  textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 14px;
+    font-size: 14px;
+    color: var(--text);
+    font-family: inherit;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  input[type='text']:focus,
+  input[type='url']:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(200, 72, 43, 0.12);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 110px;
+    line-height: 1.5;
+  }
+
+  .field-help {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  .tags-input-box {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .tag-chips-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--chip-bg);
+    color: var(--text);
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid var(--border-soft);
+  }
+
+  .tag-chip__remove {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0 2px;
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  .tag-chip__remove:hover {
+    color: var(--accent);
+  }
+
+  .tags-input-box input {
+    border: none;
+    background: none;
+    padding: 4px;
+    outline: none;
+    flex: 1;
+    min-width: 140px;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .suggested-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .suggested-tags__label {
+    font-size: 11px;
+    color: var(--faint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .tag-pill-btn {
+    background: var(--chip-bg);
+    border: 1px solid var(--border-soft);
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .tag-pill-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--hairline);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    border: 1px solid transparent;
+  }
+
+  .btn--primary {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .btn--primary:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
+
+  .btn--secondary {
+    background: var(--chip-bg);
+    color: var(--text);
+    border-color: var(--border);
+  }
+
+  .btn--secondary:hover {
+    background: var(--surface);
+    border-color: var(--text);
+  }
+
+  .btn--ghost {
+    background: transparent;
+    color: var(--muted);
+  }
+
+  .btn--ghost:hover {
+    color: var(--text);
+  }
+
+  .btn--danger {
+    background: rgba(198, 40, 40, 0.1);
+    color: #c62828;
+    border-color: rgba(198, 40, 40, 0.2);
+  }
+
+  .btn--danger:hover {
+    background: #c62828;
+    color: #fff;
+  }
+
+  .btn--xs {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+</style>
