@@ -17,6 +17,7 @@ internal interface IPostRepository
     Task<PostDto?> GetPublishedByIdAsync(Guid id, CancellationToken cancellationToken);
     Task<PostFacetsDto> GetPublishedFacetsAsync(CancellationToken cancellationToken);
     Task<bool> IncrementPublishedViewCountAsync(Guid id, CancellationToken cancellationToken);
+    Task<Post?> GetByMediaAssetIdAsync(Guid mediaAssetId, CancellationToken cancellationToken);
     Task AddAsync(Post post, CancellationToken cancellationToken);
     Task SaveChangesAsync(CancellationToken cancellationToken);
 }

@@ -11,6 +11,11 @@ internal class FileRepository(StorageDbContext context) : IFileRepository
         return await context.MediaAssets.FindAsync([id], cancellationToken);
     }
 
+    public async Task<MediaAsset?> GetByStorageKeyAsync(string storageKey, CancellationToken cancellationToken = default)
+    {
+        return await context.MediaAssets.SingleOrDefaultAsync(m => m.StorageKey == storageKey, cancellationToken);
+    }
+
     public async Task<IReadOnlyList<MediaAsset>> ListAllAsync(CancellationToken cancellationToken = default)
     {
         return await context.MediaAssets

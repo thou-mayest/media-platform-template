@@ -87,6 +87,11 @@ namespace Storage.Infrastracture.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<string>("StorageKey")
                         .IsRequired()
                         .HasMaxLength(1024)

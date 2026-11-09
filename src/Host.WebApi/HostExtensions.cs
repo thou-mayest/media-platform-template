@@ -1,5 +1,6 @@
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using Posts.Application;
 using Posts.Infrastructure;
 using Posts.Infrastructure.Persistence;
 using Posts.Presentation;
@@ -99,6 +100,7 @@ public static class HostExtensions
 
             // Module consumers are registered here as modules gain them.
             bus.AddProfilesConsumers();
+            bus.AddPostsConsumers();
 
             bus.UsingInMemory((ctx, cfg) =>
             {

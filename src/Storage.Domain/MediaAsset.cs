@@ -14,6 +14,7 @@ public class MediaAsset : AggregateRoot
     public string BucketName { get; private set; }
     public string StorageKey { get; private set; }
     public string Url { get; private set; }
+    public MediaAssetStatus Status { get; private set; }
     private MediaAsset(
         Guid id,
         string fileName,
@@ -34,6 +35,7 @@ public class MediaAsset : AggregateRoot
         BucketName = bucketName;
         StorageKey = storageKey;
         Url = url;
+        Status = MediaAssetStatus.Pending;
     }
 
     private MediaAsset()
@@ -77,5 +79,25 @@ public class MediaAsset : AggregateRoot
     public void Delete()
     {
         RaiseDomainEvent(new MediaAssetDeletedDomainEvent(Id));
+    }
+
+    public Result MarkUploadCompleted()
+    {
+        if (Status == MediaAssetStatus.Completed)
+            return Result.Success();
+
+        Status = MediaAssetStatus.Completed;
+        RaiseDomainEvent(new MediaAssetUploadCompletedDomainEvent(Id));
+        return Result.Success();
+    }
+
+    public Result MarkUploadFailed()
+    {
+        if (Status == MediaAssetStatus.Failed)
+            return Result.Success();
+
+        Status = MediaAssetStatus.Failed;
+        RaiseDomainEvent(new MediaAssetUploadFailedDomainEvent(Id));
+        return Result.Success();
     }
 }

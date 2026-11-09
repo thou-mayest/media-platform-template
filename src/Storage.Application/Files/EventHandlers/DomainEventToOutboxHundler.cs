@@ -10,3 +10,17 @@ internal class DomainEventToOutboxHundler(IOutboxRepository outboxRepository) :
 {
     public Task Handle(MediaAssetCreatedDomainEvent notification, CancellationToken cancellationToken) => outboxRepository.AddAsync(notification.ToIntegrationEvent());
 }
+
+internal class MediaAssetUploadCompletedToOutboxHandler(IOutboxRepository outboxRepository) :
+        IDomainEventHandler<MediaAssetUploadCompletedDomainEvent>
+{
+    public Task Handle(MediaAssetUploadCompletedDomainEvent notification, CancellationToken cancellationToken) =>
+        outboxRepository.AddAsync(notification.ToIntegrationEvent());
+}
+
+internal class MediaAssetUploadFailedToOutboxHandler(IOutboxRepository outboxRepository) :
+        IDomainEventHandler<MediaAssetUploadFailedDomainEvent>
+{
+    public Task Handle(MediaAssetUploadFailedDomainEvent notification, CancellationToken cancellationToken) =>
+        outboxRepository.AddAsync(notification.ToIntegrationEvent());
+}

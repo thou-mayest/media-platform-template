@@ -134,6 +134,9 @@ internal sealed class PostRepository(PostsDbContext context) : IPostRepository
         return updated == 1;
     }
 
+    public Task<Post?> GetByMediaAssetIdAsync(Guid mediaAssetId, CancellationToken cancellationToken) =>
+        context.Posts.SingleOrDefaultAsync(post => post.MediaAssetId == mediaAssetId, cancellationToken);
+
     private static IQueryable<PostDto> Project(IQueryable<Post> query) =>
         query.Select(post => new PostDto(
             post.Id,

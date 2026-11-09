@@ -116,4 +116,34 @@ internal sealed class S3FileStorageService : IFileStorageService
         // the AWS SDK generates presigned URLs synchronously
         return Task.FromResult(_s3Client.GetPreSignedURL(request));
     }
+
+    public Task<PresignedUploadResult> GetPresignedUploadUrlAsync(
+        string originalFileName,
+        string contentType,
+        CancellationToken cancellationToken = default)
+    {
+        var storageKey = $"uploads/{DateTime.UtcNow:yyyy/MM/dd}/{Guid.NewGuid():N}{Path.GetExtension(originalFileName)}";
+
+        var request = new GetPreSignedUrlRequest
+        {
+            BucketName = _options.BucketName,
+            Key = storageKey,
+            Verb = HttpVerb.PUT,
+            ContentType = contentType,
+            Expires = DateTime.UtcNow.AddMinutes(_options.PresignedUrlExpiryMinutes)
+        };
+
+        var uploadUrl = _s3Client.GetPreSignedURL(request);
+
+        var url = !string.IsNullOrEmpty(_options.ServiceURL)
+            ? $"{_options.ServiceURL}/{_options.BucketName}/{storageKey}"
+            : $"https://{_options.BucketName}.s3.{_options.Region}.amazonaws.com/{storageKey}";
+
+        return Task.FromResult(new PresignedUploadResult(
+            string.IsNullOrEmpty(_options.ServiceURL) ? "AWS-S3" : "S3-Compatible",
+            _options.BucketName,
+            storageKey,
+            url,
+            uploadUrl));
+    }
 }

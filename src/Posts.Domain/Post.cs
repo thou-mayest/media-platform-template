@@ -95,4 +95,14 @@ public sealed class Post : AggregateRoot
         UpdateDate = PublishedAt;
         return Result.Success();
     }
+
+    public Result MarkFailed()
+    {
+        if (Status == PostStatus.Failed)
+            return Result.Success();
+
+        Status = PostStatus.Failed;
+        UpdateDate = DateTime.UtcNow;
+        return Result.Success();
+    }
 }
