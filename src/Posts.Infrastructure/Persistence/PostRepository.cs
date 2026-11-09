@@ -26,19 +26,19 @@ internal sealed class PostRepository(PostsDbContext context) : IPostRepository
             query = query.Where(post =>
                 EF.Functions.ILike(post.Title, pattern, "\\") ||
                 EF.Functions.ILike(post.Description, pattern, "\\") ||
-                EF.Functions.ILike(post.Category, pattern, "\\") ||
+                EF.Functions.ILike(post.Category!.Name, pattern, "\\") ||
                 post.Tags.Any(value => EF.Functions.ILike(value.Name, pattern, "\\")));
         }
 
         if (category is not null)
         {
-            var normalizedCategory = category.ToLowerInvariant();
-            query = query.Where(post => post.NormalizedCategory == normalizedCategory);
+            var normalizedCategory = Category.Normalize(category);
+            query = query.Where(post => post.Category!.NormalizedName == normalizedCategory);
         }
 
         if (tag is not null)
         {
-            var normalizedTag = Tag.Normalize(tag);
+            var normalizedTag = PostTag.Normalize(tag);
             query = query.Where(post => post.Tags.Any(value => value.NormalizedName == normalizedTag));
         }
 
@@ -76,36 +76,39 @@ internal sealed class PostRepository(PostsDbContext context) : IPostRepository
         var categoryRows = await context.Posts
             .AsNoTracking()
             .Where(post => post.Status == PostStatus.Published)
-            .GroupBy(post => new { post.NormalizedCategory, post.Category })
+            .GroupBy(post => new { post.Category!.NormalizedName, post.Category.Name })
             .Select(group => new
             {
-                group.Key.NormalizedCategory,
-                Name = group.Key.Category,
+                group.Key.NormalizedName,
+                Name = group.Key.Name,
                 Count = group.Count()
             })
             .ToListAsync(cancellationToken);
 
         var categories = categoryRows
-            .GroupBy(row => row.NormalizedCategory)
-            .Select(group => new PostFacetDto(
-                group.OrderByDescending(row => row.Count).ThenBy(row => row.Name).First().Name,
-                group.Sum(row => row.Count)))
+            .Select(row => new PostFacetDto(row.Name, row.Count))
             .OrderByDescending(facet => facet.Count)
             .ThenBy(facet => facet.Name)
             .ToList();
 
-        var tagRows = await context.Tags
+        var tagRows = await context.Posts
             .AsNoTracking()
-            .Where(tag => tag.Posts.Any(post => post.Status == PostStatus.Published))
-            .Select(tag => new
+            .Where(post => post.Status == PostStatus.Published)
+            .SelectMany(post => post.Tags)
+            .GroupBy(tag => new { tag.NormalizedName, tag.Name })
+            .Select(group => new
             {
-                tag.Name,
-                Count = tag.Posts.Count(post => post.Status == PostStatus.Published)
+                group.Key.NormalizedName,
+                Name = group.Key.Name,
+                Count = group.Count()
             })
             .ToListAsync(cancellationToken);
 
         var tags = tagRows
-            .Select(row => new PostFacetDto(row.Name, row.Count))
+            .GroupBy(row => row.NormalizedName)
+            .Select(group => new PostFacetDto(
+                group.OrderByDescending(row => row.Count).ThenBy(row => row.Name).First().Name,
+                group.Sum(row => row.Count)))
             .OrderByDescending(facet => facet.Count)
             .ThenBy(facet => facet.Name)
             .ToList();
@@ -132,7 +135,7 @@ internal sealed class PostRepository(PostsDbContext context) : IPostRepository
             post.Description,
             post.MediaUrl,
             post.AltText,
-            post.Category,
+            post.Category!.Name,
             post.Tags.OrderBy(tag => tag.Name).Select(tag => tag.Name).ToList(),
             post.Status.ToString(),
             post.CreatedDate,

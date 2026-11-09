@@ -5,7 +5,7 @@ namespace Posts.Domain;
 
 public sealed class Post : AggregateRoot
 {
-    private readonly List<Tag> _tags = [];
+    private readonly List<PostTag> _tags = [];
 
     private Post(
         Guid id,
@@ -13,7 +13,7 @@ public sealed class Post : AggregateRoot
         Guid mediaAssetId,
         string title,
         string description,
-        string category,
+        Guid categoryId,
         string mediaUrl,
         string altText) : base(id)
     {
@@ -21,8 +21,7 @@ public sealed class Post : AggregateRoot
         MediaAssetId = mediaAssetId;
         Title = title;
         Description = description;
-        Category = category;
-        NormalizedCategory = NormalizeCategory(category);
+        CategoryId = categoryId;
         MediaUrl = mediaUrl;
         AltText = altText;
         Status = PostStatus.Draft;
@@ -32,8 +31,6 @@ public sealed class Post : AggregateRoot
     {
         Title = null!;
         Description = null!;
-        Category = null!;
-        NormalizedCategory = null!;
         MediaUrl = null!;
         AltText = null!;
     }
@@ -42,21 +39,21 @@ public sealed class Post : AggregateRoot
     public Guid MediaAssetId { get; private set; }
     public string Title { get; private set; }
     public string Description { get; private set; }
-    public string Category { get; private set; }
-    public string NormalizedCategory { get; private set; }
+    public Guid CategoryId { get; private set; }
+    public Category? Category { get; private set; }
     public string MediaUrl { get; private set; }
     public string AltText { get; private set; }
     public PostStatus Status { get; private set; }
     public DateTime? PublishedAt { get; private set; }
     public long ViewCount { get; private set; }
-    public IReadOnlyCollection<Tag> Tags => _tags.AsReadOnly();
+    public IReadOnlyCollection<PostTag> Tags => _tags.AsReadOnly();
 
     public static Result<Post> Create(
         Guid authorId,
         Guid mediaAssetId,
         string? title,
         string? description,
-        string? category,
+        Guid? categoryId,
         string? mediaUrl,
         string? altText)
     {
@@ -68,23 +65,20 @@ public sealed class Post : AggregateRoot
             return Error.Validation("Post.TitleInvalid", "Title is required and cannot exceed 200 characters.");
         if (string.IsNullOrWhiteSpace(description) || description.Trim().Length > 2_000)
             return Error.Validation("Post.DescriptionInvalid", "Description is required and cannot exceed 2000 characters.");
-        if (string.IsNullOrWhiteSpace(category) || category.Trim().Length > 100)
-            return Error.Validation("Post.CategoryInvalid", "Category is required and cannot exceed 100 characters.");
         if (string.IsNullOrWhiteSpace(mediaUrl) || mediaUrl.Trim().Length > 2_048)
             return Error.Validation("Post.MediaUrlInvalid", "Media URL is required and cannot exceed 2048 characters.");
         if (string.IsNullOrWhiteSpace(altText) || altText.Trim().Length > 500)
             return Error.Validation("Post.AltTextInvalid", "Alt text is required and cannot exceed 500 characters.");
 
+        var resolvedCategoryId = categoryId is null || categoryId == Guid.Empty ? Category.DefaultId : categoryId.Value;
+
         return new Post(
-            Guid.NewGuid(), authorId, mediaAssetId, title.Trim(), description.Trim(), category.Trim(),
+            Guid.NewGuid(), authorId, mediaAssetId, title.Trim(), description.Trim(), resolvedCategoryId,
             mediaUrl.Trim(), altText.Trim());
     }
 
-    public Result AddTag(Tag tag)
+    public Result AddTag(PostTag tag)
     {
-        if (string.IsNullOrWhiteSpace(tag.Name) || tag.Name.Length > 50)
-            return Result.Failure(Error.Validation("Post.TagInvalid", "Tags cannot be empty or exceed 50 characters."));
-
         if (_tags.All(existing => existing.NormalizedName != tag.NormalizedName))
             _tags.Add(tag);
 
@@ -101,6 +95,4 @@ public sealed class Post : AggregateRoot
         UpdateDate = PublishedAt;
         return Result.Success();
     }
-
-    private static string NormalizeCategory(string value) => value.Trim().ToLowerInvariant();
 }
