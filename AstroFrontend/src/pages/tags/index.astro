@@ -64,6 +64,7 @@ const visibleTags = normalizedQuery
         </header>
 
         <div class="search-panel">
+          <span class="search-panel__decor" aria-hidden="true"></span>
           <div class="search-panel__intro">
             <span class="search-panel__number">01</span>
             <div>
@@ -73,7 +74,13 @@ const visibleTags = normalizedQuery
             </div>
           </div>
 
-          <form class="tag-search" action="/tags" method="get" role="search">
+          <form
+            class="tag-search"
+            action="/tags"
+            method="get"
+            role="search"
+            data-tags={JSON.stringify(tags.map(({ name, count }) => ({ name, count })))}
+          >
             <label class="sr-only" for="tag-query">Search tags</label>
             <div class="tag-search__field">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
@@ -87,6 +94,10 @@ const visibleTags = normalizedQuery
                 value={query}
                 placeholder="Search the tag archive"
                 autocomplete="off"
+                role="combobox"
+                aria-autocomplete="list"
+                aria-controls="tag-suggestions"
+                aria-expanded="false"
               />
               {query && <a class="tag-search__clear" href="/tags" aria-label="Clear tag search">Clear</a>}
               <button type="submit" aria-label="Find tags">
@@ -96,6 +107,7 @@ const visibleTags = normalizedQuery
                 </svg>
               </button>
             </div>
+            <ul id="tag-suggestions" class="tag-suggest" role="listbox" aria-label="Matching tags" hidden></ul>
           </form>
 
           <div class="search-panel__suggestions">
@@ -146,6 +158,166 @@ const visibleTags = normalizedQuery
     )}
   </main>
 </Layout>
+
+<script>
+  type TagOption = { name: string; count: number };
+
+  const form = document.querySelector<HTMLFormElement>('form.tag-search[data-tags]');
+  const input = document.getElementById('tag-query') as HTMLInputElement | null;
+  const list = document.getElementById('tag-suggestions') as HTMLUListElement | null;
+
+  if (form && input && list) {
+    let tags: TagOption[] = [];
+    try {
+      tags = JSON.parse(form.dataset.tags || '[]');
+    } catch {
+      tags = [];
+    }
+
+    const MAX_RESULTS = 8;
+    let matches: TagOption[] = [];
+    let activeIndex = -1;
+
+    const tagHref = (name: string) => `/tags/${encodeURIComponent(name.toLowerCase())}`;
+
+    function findMatches(raw: string): TagOption[] {
+      const q = raw.trim().replace(/^#+/, '').toLocaleLowerCase();
+      if (!q) return [];
+      const prefix: TagOption[] = [];
+      const contains: TagOption[] = [];
+      for (const tag of tags) {
+        const name = tag.name.toLocaleLowerCase();
+        if (name.startsWith(q)) prefix.push(tag);
+        else if (name.includes(q)) contains.push(tag);
+      }
+      // `tags` is already sorted by count desc, so each bucket keeps that order.
+      return [...prefix, ...contains].slice(0, MAX_RESULTS);
+    }
+
+    function close(): void {
+      list!.hidden = true;
+      list!.innerHTML = '';
+      input!.setAttribute('aria-expanded', 'false');
+      input!.removeAttribute('aria-activedescendant');
+      matches = [];
+      activeIndex = -1;
+    }
+
+    function setActive(index: number): void {
+      const items = list!.querySelectorAll<HTMLLIElement>('.tag-suggest__item');
+      items.forEach((item, i) => {
+        const active = i === index;
+        item.classList.toggle('is-active', active);
+        item.setAttribute('aria-selected', String(active));
+        if (active) item.scrollIntoView({ block: 'nearest' });
+      });
+      activeIndex = index;
+      if (index >= 0) input!.setAttribute('aria-activedescendant', `tag-suggest-${index}`);
+      else input!.removeAttribute('aria-activedescendant');
+    }
+
+    function render(): void {
+      const q = input!.value.trim().replace(/^#+/, '');
+      matches = findMatches(q);
+      list!.innerHTML = '';
+      activeIndex = -1;
+
+      if (matches.length === 0) {
+        close();
+        return;
+      }
+
+      matches.forEach((tag, i) => {
+        const li = document.createElement('li');
+        li.id = `tag-suggest-${i}`;
+        li.className = 'tag-suggest__item';
+        li.setAttribute('role', 'option');
+        li.setAttribute('aria-selected', 'false');
+
+        const name = document.createElement('span');
+        name.className = 'tag-suggest__name';
+        const start = tag.name.toLocaleLowerCase().indexOf(q.toLocaleLowerCase());
+        name.append('#');
+        if (start >= 0) {
+          name.append(tag.name.slice(0, start));
+          const mark = document.createElement('mark');
+          mark.textContent = tag.name.slice(start, start + q.length);
+          name.append(mark, tag.name.slice(start + q.length));
+        } else {
+          name.append(tag.name);
+        }
+
+        const count = document.createElement('span');
+        count.className = 'tag-suggest__count';
+        count.textContent = `${tag.count} ${tag.count === 1 ? 'work' : 'works'}`;
+
+        li.append(name, count);
+        // mousedown (not click) so selection happens before the input blurs.
+        li.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          select(i);
+        });
+        li.addEventListener('mousemove', () => {
+          if (activeIndex !== i) setActive(i);
+        });
+        list!.appendChild(li);
+      });
+
+      list!.hidden = false;
+      input!.setAttribute('aria-expanded', 'true');
+    }
+
+    function select(index: number): void {
+      const tag = matches[index];
+      if (!tag) return;
+      input!.value = tag.name;
+      close();
+      window.location.href = tagHref(tag.name);
+    }
+
+    input.addEventListener('input', render);
+    input.addEventListener('focus', () => {
+      if (input.value.trim()) render();
+    });
+    input.addEventListener('blur', close);
+
+    input.addEventListener('keydown', (e) => {
+      if (list.hidden) {
+        if (e.key === 'ArrowDown' && input.value.trim()) {
+          e.preventDefault();
+          render();
+          if (matches.length) setActive(0);
+        }
+        return;
+      }
+
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setActive((activeIndex + 1) % matches.length);
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setActive(activeIndex <= 0 ? matches.length - 1 : activeIndex - 1);
+          break;
+        case 'Enter':
+          // With no highlighted option, fall through to the normal search submit.
+          if (activeIndex >= 0) {
+            e.preventDefault();
+            select(activeIndex);
+          }
+          break;
+        case 'Escape':
+          e.preventDefault();
+          close();
+          break;
+        case 'Tab':
+          close();
+          break;
+      }
+    });
+  }
+</script>
 
 <style>
   .tags-page {
@@ -213,11 +385,19 @@ const visibleTags = normalizedQuery
     display: grid;
     gap: clamp(24px, 4vw, 46px);
     margin-bottom: 22px;
-    overflow: hidden;
     padding: clamp(26px, 4vw, 52px);
     position: relative;
+    z-index: 2;
   }
-  .search-panel::after {
+  /* Decoration is clipped in its own layer so the panel itself can let the
+     autocomplete dropdown overflow. */
+  .search-panel__decor {
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    position: absolute;
+  }
+  .search-panel__decor::after {
     border: 1px solid var(--border-soft);
     border-radius: 999px;
     content: '';
@@ -333,6 +513,54 @@ const visibleTags = normalizedQuery
     text-transform: uppercase;
   }
   .tag-search__clear:hover { color: var(--accent); }
+  .tag-search { position: relative; }
+  .tag-suggest {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    box-shadow: 0 18px 40px -18px color-mix(in srgb, var(--ink) 35%, transparent);
+    left: 0;
+    list-style: none;
+    margin: 6px 0 0;
+    max-height: 340px;
+    overflow-y: auto;
+    padding: 6px 0;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    z-index: 10;
+  }
+  .tag-suggest[hidden] { display: none; }
+  .tag-suggest__item {
+    align-items: baseline;
+    cursor: pointer;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    padding: 11px clamp(16px, 2.5vw, 28px);
+  }
+  .tag-suggest__item.is-active {
+    background: var(--ink);
+    color: var(--on-ink);
+  }
+  .tag-suggest__name {
+    font-family: 'Spectral', serif;
+    font-size: 19px;
+    font-style: italic;
+    overflow-wrap: anywhere;
+  }
+  .tag-suggest__name mark {
+    background: transparent;
+    color: var(--accent);
+  }
+  .tag-suggest__count {
+    color: var(--muted);
+    flex: 0 0 auto;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .tag-suggest__item.is-active .tag-suggest__count { color: var(--on-ink); opacity: 0.7; }
   .search-panel__suggestions {
     align-items: center;
     display: flex;
