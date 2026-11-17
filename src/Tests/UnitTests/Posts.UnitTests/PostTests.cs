@@ -18,12 +18,12 @@ public sealed class PostTests
     {
         var post = CreatePost();
 
-        post.AddTag(PostTag.Create(" Abstract ").Value);
-        post.AddTag(PostTag.Create("#abstract").Value);
+        post.AddTag(Tag.Create(" Abstract ").Value);
+        post.AddTag(Tag.Create("#abstract").Value);
 
         var tag = Assert.Single(post.Tags);
-        Assert.Equal("Abstract", tag.Name);
-        Assert.Equal("abstract", tag.NormalizedName);
+        Assert.Equal("Abstract", tag.Tag!.Name);
+        Assert.Equal("abstract", tag.Tag!.NormalizedName);
     }
 
     [Fact]

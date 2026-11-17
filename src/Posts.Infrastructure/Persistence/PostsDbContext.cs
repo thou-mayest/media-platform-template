@@ -7,6 +7,7 @@ internal sealed class PostsDbContext(DbContextOptions<PostsDbContext> options) :
 {
     public DbSet<Post> Posts => Set<Post>();
     public DbSet<Category> Categories => Set<Category>();
+    public DbSet<Tag> Tags => Set<Tag>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -35,16 +36,36 @@ internal sealed class PostsDbContext(DbContextOptions<PostsDbContext> options) :
                 .HasForeignKey(value => value.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            post.OwnsMany(value => value.Tags, tag =>
-            {
-                tag.ToTable("PostTags", "Posts");
-                tag.WithOwner().HasForeignKey("PostId");
-                tag.HasKey("PostId", "NormalizedName");
-                tag.Property(value => value.Name).HasMaxLength(50).IsRequired();
-                tag.Property(value => value.NormalizedName).HasMaxLength(50).IsRequired();
-            });
+            post.HasMany(value => value.Tags)
+                .WithOne()
+                .HasForeignKey(value => value.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             post.Navigation(value => value.Tags).UsePropertyAccessMode(PropertyAccessMode.Field);
+        });
+
+        modelBuilder.Entity<Tag>(tag =>
+        {
+            tag.ToTable("Tags");
+            tag.HasKey(value => value.Id);
+            tag.Property(value => value.Id).ValueGeneratedNever();
+            tag.Property(value => value.Name).HasMaxLength(Tag.MaxNameLength).IsRequired();
+            tag.Property(value => value.NormalizedName).HasMaxLength(Tag.MaxNameLength).IsRequired();
+            tag.Property(value => value.UsageCount).HasDefaultValue(0).IsRequired();
+            tag.Property(value => value.CreatedDate).HasColumnName("CreatedAt");
+            tag.HasIndex(value => value.NormalizedName).IsUnique();
+        });
+
+        modelBuilder.Entity<PostTag>(postTag =>
+        {
+            postTag.ToTable("PostTags");
+            postTag.HasKey(value => new { value.PostId, value.TagId });
+            postTag.HasIndex(value => new { value.TagId, value.PostId });
+
+            postTag.HasOne(value => value.Tag)
+                .WithMany()
+                .HasForeignKey(value => value.TagId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Category>(category =>

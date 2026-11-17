@@ -22,17 +22,21 @@ try {
   Astro.response.status = 502;
   setNoStore(Astro.response.headers);
 }
+
+// The URL slug is lowercase; show the tag's canonical display name when a result carries it.
+const displayTag =
+  result.items.flatMap((post) => post.tags).find((name) => name.toLowerCase() === tag) ?? tag;
 ---
 
 <Layout
-  title={`#${tag} — Verso`}
-  description={`Published work tagged ${tag}.`}
+  title={`#${displayTag} — Verso`}
+  description={`Published work tagged ${displayTag}.`}
   canonical={`${Astro.url.origin}/tags/${encodeURIComponent(tag)}`}
 >
   <main class="container tag-page">
     <a class="back-link" href="/explore">← Explore</a>
     <div class="eyebrow">Tag</div>
-    <h1 class="h-display">#{tag}</h1>
+    <h1 class="h-display">#{displayTag}</h1>
 
     <form class="tag-tools" action={`/tags/${encodeURIComponent(tag)}`} method="get">
       <p><strong>{result.totalCount}</strong> published {result.totalCount === 1 ? 'work' : 'works'}</p>
@@ -52,7 +56,7 @@ try {
       <div class="error-state" role="alert">{error}</div>
     ) : (
       <>
-        <PostGrid posts={result.items} emptyMessage={`No published works use #${tag} yet.`} />
+        <PostGrid posts={result.items} emptyMessage={`No published works use #${displayTag} yet.`} />
         <Pagination
           page={result.page}
           totalPages={result.totalPages}

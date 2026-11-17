@@ -31,6 +31,9 @@ if (postsResult.status === 'fulfilled') {
   Astro.response.status = 502;
   setNoStore(Astro.response.headers);
 }
+
+// The query value is lowercased; show the tag's canonical display name from the facets when available.
+const displayTag = facets.tags.find((facet) => facet.name.toLowerCase() === tag)?.name ?? tag;
 ---
 
 <Layout
@@ -72,7 +75,7 @@ if (postsResult.status === 'fulfilled') {
 
     {(category || tag) && (
       <div class="active-view">
-        Showing {category ? category : 'all categories'}{tag ? ` · #${tag}` : ''}
+        Showing {category ? category : 'all categories'}{tag ? ` · #${displayTag}` : ''}
       </div>
     )}
 

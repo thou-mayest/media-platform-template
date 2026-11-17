@@ -12,7 +12,7 @@ public sealed class PostRepositoryTests(PostsDatabaseFixture fixture) : IAsyncLi
     {
         await using var context = fixture.CreateContext();
         await context.Database.ExecuteSqlRawAsync(
-            "TRUNCATE TABLE \"Posts\".\"Posts\" CASCADE; DELETE FROM \"Posts\".\"Categories\" WHERE \"Id\" <> '00000000-0000-0000-0000-000000000001'");
+            "TRUNCATE TABLE \"Posts\".\"Posts\", \"Posts\".\"Tags\" CASCADE; DELETE FROM \"Posts\".\"Categories\" WHERE \"Id\" <> '00000000-0000-0000-0000-000000000001'");
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
@@ -22,8 +22,9 @@ public sealed class PostRepositoryTests(PostsDatabaseFixture fixture) : IAsyncLi
     {
         await using var context = fixture.CreateContext();
         var painting = Category.Create("Painting").Value;
-        var published = CreatePost("Market at Noon", painting, PostTag.Create("Abstract").Value, true);
-        var draft = CreatePost("Hidden draft", painting, PostTag.Create("Abstract").Value, false);
+        var abstractTag = Tag.Create("Abstract").Value;
+        var published = CreatePost("Market at Noon", painting, abstractTag, true);
+        var draft = CreatePost("Hidden draft", painting, abstractTag, false);
         context.AddRange(painting, published, draft);
         await context.SaveChangesAsync();
         var repository = new PostRepository(context);
@@ -43,8 +44,8 @@ public sealed class PostRepositoryTests(PostsDatabaseFixture fixture) : IAsyncLi
         var visibleCategory = Category.Create("Painting").Value;
         var hiddenCategory = Category.Create("Private").Value;
         context.AddRange(visibleCategory, hiddenCategory);
-        context.Add(CreatePost("Visible", visibleCategory, PostTag.Create("Abstract").Value, true));
-        context.Add(CreatePost("Hidden", hiddenCategory, PostTag.Create("Hidden").Value, false));
+        context.Add(CreatePost("Visible", visibleCategory, Tag.Create("Abstract").Value, true));
+        context.Add(CreatePost("Hidden", hiddenCategory, Tag.Create("Hidden").Value, false));
         await context.SaveChangesAsync();
         var repository = new PostRepository(context);
 
@@ -60,8 +61,8 @@ public sealed class PostRepositoryTests(PostsDatabaseFixture fixture) : IAsyncLi
         await using var context = fixture.CreateContext();
         var paintingCategory = Category.Create("Painting").Value;
         var digitalCategory = Category.Create("Digital").Value;
-        var published = CreatePost("Visible", paintingCategory, PostTag.Create("One").Value, true);
-        var draft = CreatePost("Hidden", digitalCategory, PostTag.Create("Two").Value, false);
+        var published = CreatePost("Visible", paintingCategory, Tag.Create("One").Value, true);
+        var draft = CreatePost("Hidden", digitalCategory, Tag.Create("Two").Value, false);
         context.AddRange(paintingCategory, digitalCategory, published, draft);
         await context.SaveChangesAsync();
         var repository = new PostRepository(context);
@@ -77,11 +78,11 @@ public sealed class PostRepositoryTests(PostsDatabaseFixture fixture) : IAsyncLi
     {
         await using var context = fixture.CreateContext();
         var painting = Category.Create("Painting").Value;
-        var oldest = CreatePost("Oldest", painting, PostTag.Create("oldest").Value, true,
+        var oldest = CreatePost("Oldest", painting, Tag.Create("oldest").Value, true,
             new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
-        var popular = CreatePost("Popular", painting, PostTag.Create("popular").Value, true,
+        var popular = CreatePost("Popular", painting, Tag.Create("popular").Value, true,
             new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc));
-        var newest = CreatePost("Newest", painting, PostTag.Create("newest").Value, true,
+        var newest = CreatePost("Newest", painting, Tag.Create("newest").Value, true,
             new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc));
         context.AddRange(painting, oldest, popular, newest);
         await context.SaveChangesAsync();
@@ -105,8 +106,8 @@ public sealed class PostRepositoryTests(PostsDatabaseFixture fixture) : IAsyncLi
     {
         await using var context = fixture.CreateContext();
         var painting = Category.Create("Painting").Value;
-        var published = CreatePost("Visible", painting, PostTag.Create("visible").Value, true);
-        var draft = CreatePost("Hidden", painting, PostTag.Create("hidden").Value, false);
+        var published = CreatePost("Visible", painting, Tag.Create("visible").Value, true);
+        var draft = CreatePost("Hidden", painting, Tag.Create("hidden").Value, false);
         context.AddRange(painting, published, draft);
         await context.SaveChangesAsync();
         var repository = new PostRepository(context);
@@ -118,7 +119,7 @@ public sealed class PostRepositoryTests(PostsDatabaseFixture fixture) : IAsyncLi
     private static Post CreatePost(
         string title,
         Category category,
-        PostTag tag,
+        Tag tag,
         bool publish,
         DateTime? publishedAt = null)
     {

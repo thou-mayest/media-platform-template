@@ -269,6 +269,9 @@ if (availableTags.length === 0) {
 </Layout>
 
 <script>
+  import { filesApi, postsApi, ApiError } from '@/api';
+  import type { CreatePostRequest } from '@/api';
+
   // DOM Elements
   const statusAlert = document.getElementById('statusAlert') as HTMLDivElement;
 
@@ -354,9 +357,14 @@ if (availableTags.length === 0) {
     });
   }
 
+  // Mirrors backend Tag.Create: trim, strip leading '#'s, max 50 chars.
+  // Casing is preserved (the first spelling becomes the tag's display name);
+  // duplicates are detected case-insensitively, like the backend NormalizedName.
   function addTag(raw: string): void {
-    const clean = raw.trim().replace(/^#/, '').toLowerCase();
-    if (clean && clean.length <= 50 && !tagsSet.has(clean)) {
+    const clean = raw.trim().replace(/^#+/, '').trim();
+    const key = clean.toLowerCase();
+    const isDuplicate = Array.from(tagsSet).some((existing) => existing.toLowerCase() === key);
+    if (clean && clean.length <= 50 && !isDuplicate) {
       tagsSet.add(clean);
       renderTags();
     }
@@ -404,7 +412,22 @@ if (availableTags.length === 0) {
     }
   }
 
+  // Upload state: the post may only be submitted once mediaAssetId/mediaUrl come from a finished upload.
+  let isUploading = false;
+  let currentUploadId = 0; // bumped on every new file/clear so stale upload results are ignored
+  let previewObjectUrl: string | null = null;
+
+  function releasePreviewObjectUrl(): void {
+    if (previewObjectUrl) {
+      URL.revokeObjectURL(previewObjectUrl);
+      previewObjectUrl = null;
+    }
+  }
+
   function clearMedia(): void {
+    currentUploadId++;
+    isUploading = false;
+    releasePreviewObjectUrl();
     dropPreviewState.classList.add('hidden');
     dropEmptyState.classList.remove('hidden');
     previewImage.src = '';
@@ -446,8 +469,9 @@ if (availableTags.length === 0) {
     if (!file) return;
 
     const isVideo = file.type.startsWith('video/');
-    const localUrl = URL.createObjectURL(file);
-    setMediaPreview(localUrl, file.name, isVideo);
+    releasePreviewObjectUrl();
+    previewObjectUrl = URL.createObjectURL(file);
+    setMediaPreview(previewObjectUrl, file.name, isVideo);
 
     // Auto-fill Alt Text if empty
     if (!altTextInput.value.trim()) {
@@ -456,31 +480,34 @@ if (availableTags.length === 0) {
       updateCounters();
     }
 
-    // Upload to backend storage if endpoint is available
+    // Upload to S3 through the storage API, then use the stored media asset's id and S3 url for the post.
+    const uploadId = ++currentUploadId;
+    mediaAssetIdInput.value = '';
+    mediaUrlInput.value = '';
+    isUploading = true;
+    hideAlert();
+
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const token = localStorage.getItem('verso:token') ?? localStorage.getItem('erofancy:token');
-      const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-
-      const res = await fetch('/api/files/upload', {
-        method: 'POST',
-        headers: authHeaders,
-        body: formData,
+      const { id } = await filesApi.upload(file, (percent) => {
+        if (uploadId === currentUploadId) previewFileName.textContent = `${file.name} — uploading ${percent}%`;
       });
+      const asset = await filesApi.getById(id);
 
-      if (res.ok) {
-        const data = await res.json();
-        mediaAssetIdInput.value = data.id || crypto.randomUUID();
-        mediaUrlInput.value = data.url || localUrl;
-      } else {
-        mediaAssetIdInput.value = crypto.randomUUID();
-        mediaUrlInput.value = localUrl;
-      }
-    } catch {
-      mediaAssetIdInput.value = crypto.randomUUID();
-      mediaUrlInput.value = localUrl;
+      if (uploadId !== currentUploadId) return; // superseded by another file or removed
+
+      mediaAssetIdInput.value = asset.id;
+      mediaUrlInput.value = asset.url;
+      previewFileName.textContent = file.name;
+    } catch (error) {
+      if (uploadId !== currentUploadId) return;
+
+      clearMedia();
+      showAlert(
+        error instanceof ApiError ? `Upload failed: ${error.message}` : 'Upload failed. Please try again.',
+        true,
+      );
+    } finally {
+      if (uploadId === currentUploadId) isUploading = false;
     }
   }
 
@@ -500,6 +527,9 @@ if (availableTags.length === 0) {
   externalMediaUrl.addEventListener('input', () => {
     const url = externalMediaUrl.value.trim();
     if (url.startsWith('http://') || url.startsWith('https://')) {
+      currentUploadId++;
+      isUploading = false;
+      releasePreviewObjectUrl();
       mediaAssetIdInput.value = crypto.randomUUID();
       mediaUrlInput.value = url;
       setMediaPreview(url, 'External URL Media', url.endsWith('.mp4'));
@@ -514,10 +544,15 @@ if (availableTags.length === 0) {
     const categoryId = categorySelect.value.trim();
     const altText = altTextInput.value.trim();
     const description = descTextarea.value.trim();
-    const mediaAssetId = mediaAssetIdInput.value.trim() || crypto.randomUUID();
+    const mediaAssetId = mediaAssetIdInput.value.trim();
     const mediaUrl = mediaUrlInput.value.trim();
 
-    if (!mediaUrl) {
+    if (isUploading) {
+      showAlert('Please wait for the media upload to finish.', true);
+      return;
+    }
+
+    if (!mediaAssetId || !mediaUrl) {
       showAlert('Please upload a visual asset or provide a media URL.', true);
       dropZone.scrollIntoView({ behavior: 'smooth' });
       return;
@@ -550,16 +585,14 @@ if (availableTags.length === 0) {
     const selectedOption = categorySelect.options[categorySelect.selectedIndex];
     const categoryName = selectedOption ? selectedOption.text : 'Uncategorized';
 
-    const payload = {
+    const request: CreatePostRequest = {
       mediaAssetId,
       mediaUrl,
       title,
       description,
       categoryId,
-      category: categoryName,
       altText,
       tags: Array.from(tagsSet),
-      publishImmediately,
     };
 
     const activeBtn = publishImmediately ? publishBtn : saveDraftBtn;
@@ -568,48 +601,36 @@ if (availableTags.length === 0) {
     activeBtn.textContent = 'Submitting...';
 
     try {
-      const token = localStorage.getItem('verso:token') ?? localStorage.getItem('erofancy:token');
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+      await postsApi.create(request);
 
-      const res = await fetch('/api/posts', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(payload),
-      });
+      showAlert(
+        publishImmediately
+          ? 'Post published successfully! Redirecting...'
+          : 'Post saved as Draft. Redirecting...',
+      );
 
-      if (res.ok) {
-        const post = await res.json().catch(() => ({}));
+      // New posts are created as drafts and are not publicly viewable yet, so return to the directory.
+      setTimeout(() => {
+        window.location.href = '/admin/posts';
+      }, 1000);
+    } catch (error) {
+      // apiFetch already shows an error toast; only a network failure falls through to the offline fallback.
+      if (!(error instanceof ApiError) || error.kind !== 'network') {
         showAlert(
-          publishImmediately
-            ? 'Post published successfully! Redirecting...'
-            : 'Post saved as Draft. Redirecting...',
-        );
-
-        setTimeout(() => {
-          if (publishImmediately && post?.id) {
-            window.location.href = `/posts/${post.id}`;
-          } else {
-            window.location.href = '/admin/posts';
-          }
-        }, 1000);
-      } else {
-        const err = await res.json().catch(() => ({}));
-        showAlert(
-          err.detail || err.title || err.error || 'Server rejected post creation. Please check fields.',
+          error instanceof ApiError ? error.message : 'Server rejected post creation. Please check fields.',
           true,
         );
         activeBtn.disabled = false;
         activeBtn.textContent = originalText;
+        return;
       }
-    } catch {
+
       // Offline fallback: save to localStorage so user sees immediate results in development
       const storedPosts = JSON.parse(localStorage.getItem('verso:custom_posts') || '[]');
       const newPost = {
         id: crypto.randomUUID(),
-        ...payload,
+        ...request,
+        category: categoryName,
         status: publishImmediately ? 'Published' : 'Draft',
         createdDate: new Date().toISOString(),
       };

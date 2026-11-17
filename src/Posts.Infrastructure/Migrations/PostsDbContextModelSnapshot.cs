@@ -140,6 +140,59 @@ namespace Posts.Infrastructure.Migrations
                     b.ToTable("Posts", "Posts");
                 });
 
+            modelBuilder.Entity("Posts.Domain.PostTag", b =>
+                {
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TagId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("PostId", "TagId");
+
+                    b.HasIndex("TagId", "PostId");
+
+                    b.ToTable("PostTags", "Posts");
+                });
+
+            modelBuilder.Entity("Posts.Domain.Tag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreatedAt");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("UpdateDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UsageCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<Guid>("Version")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique();
+
+                    b.ToTable("Tags", "Posts");
+                });
+
             modelBuilder.Entity("Posts.Domain.Post", b =>
                 {
                     b.HasOne("Posts.Domain.Category", "Category")
@@ -148,36 +201,34 @@ namespace Posts.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.OwnsMany("Posts.Domain.PostTag", "Tags", b1 =>
-                        {
-                            b1.Property<Guid>("PostId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("NormalizedName")
-                                .HasMaxLength(50)
-                                .HasColumnType("character varying(50)");
-
-                            b1.Property<string>("Name")
-                                .IsRequired()
-                                .HasMaxLength(50)
-                                .HasColumnType("character varying(50)");
-
-                            b1.HasKey("PostId", "NormalizedName");
-
-                            b1.ToTable("PostTags", "Posts");
-
-                            b1.WithOwner()
-                                .HasForeignKey("PostId");
-                        });
-
                     b.Navigation("Category");
+                });
 
-                    b.Navigation("Tags");
+            modelBuilder.Entity("Posts.Domain.PostTag", b =>
+                {
+                    b.HasOne("Posts.Domain.Post", null)
+                        .WithMany("Tags")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Posts.Domain.Tag", "Tag")
+                        .WithMany()
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Tag");
                 });
 
             modelBuilder.Entity("Posts.Domain.Category", b =>
                 {
                     b.Navigation("Posts");
+                });
+
+            modelBuilder.Entity("Posts.Domain.Post", b =>
+                {
+                    b.Navigation("Tags");
                 });
 #pragma warning restore 612, 618
         }

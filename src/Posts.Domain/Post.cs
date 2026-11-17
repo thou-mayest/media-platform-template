@@ -77,10 +77,11 @@ public sealed class Post : AggregateRoot
             mediaUrl.Trim(), altText.Trim());
     }
 
-    public Result AddTag(PostTag tag)
+    public Result AddTag(Tag tag)
     {
-        if (_tags.All(existing => existing.NormalizedName != tag.NormalizedName))
-            _tags.Add(tag);
+        if (_tags.All(existing =>
+                existing.TagId != tag.Id && existing.Tag?.NormalizedName != tag.NormalizedName))
+            _tags.Add(new PostTag(Id, tag));
 
         return Result.Success();
     }
