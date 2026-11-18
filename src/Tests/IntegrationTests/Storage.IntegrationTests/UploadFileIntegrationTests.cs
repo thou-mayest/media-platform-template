@@ -114,5 +114,13 @@ public sealed class UploadFileIntegrationTests(PostgreSqlFixture fixture)
         {
             throw new NotSupportedException();
         }
+
+        public Task<PresignedUploadResult> GetPresignedUploadUrlAsync(
+            string originalFileName,
+            string contentType,
+            CancellationToken cancellationToken = default)
+        {
+            throw new NotSupportedException();
+        }
     }
 }

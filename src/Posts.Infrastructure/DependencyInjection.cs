@@ -22,6 +22,8 @@ public static class DependencyInjection
 
         services.AddPostsApplication();
         services.AddScoped<IPostRepository, PostRepository>();
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<ITagRepository, TagRepository>();
         return services;
     }
 }

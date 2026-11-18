@@ -7,7 +7,7 @@ public sealed class PostTests
     [Fact]
     public void Create_RejectsMissingRequiredMetadata()
     {
-        var result = Post.Create(Guid.Empty, Guid.NewGuid(), "Title", "Description", "Art", "https://media/post", "Alt");
+        var result = Post.Create(Guid.Empty, Guid.NewGuid(), "Title", "Description", Guid.NewGuid(), "https://media/post", "Alt");
 
         Assert.True(result.IsFailure);
         Assert.Equal("Post.AuthorRequired", result.Error.Code);
@@ -22,8 +22,8 @@ public sealed class PostTests
         post.AddTag(Tag.Create("#abstract").Value);
 
         var tag = Assert.Single(post.Tags);
-        Assert.Equal("Abstract", tag.Name);
-        Assert.Equal("abstract", tag.NormalizedName);
+        Assert.Equal("Abstract", tag.Tag!.Name);
+        Assert.Equal("abstract", tag.Tag!.NormalizedName);
     }
 
     [Fact]
@@ -43,6 +43,6 @@ public sealed class PostTests
     }
 
     private static Post CreatePost() => Post.Create(
-        Guid.NewGuid(), Guid.NewGuid(), "A title", "A description", "Painting",
+        Guid.NewGuid(), Guid.NewGuid(), "A title", "A description", Guid.NewGuid(),
         "https://media.example/post.jpg", "An accessible description").Value;
 }

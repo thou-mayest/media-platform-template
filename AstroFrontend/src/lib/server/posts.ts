@@ -27,6 +27,11 @@ export interface PostFacet {
   count: number;
 }
 
+export interface CategoryItem {
+  id: string;
+  name: string;
+}
+
 export interface PostFacets {
   categories: PostFacet[];
   tags: PostFacet[];
@@ -102,6 +107,10 @@ export function getPost(id: string): Promise<PostSummary> {
 
 export function getPostFacets(): Promise<PostFacets> {
   return request<PostFacets>('/api/posts/facets');
+}
+
+export function getCategories(): Promise<CategoryItem[]> {
+  return request<CategoryItem[]>('/api/categories');
 }
 
 export async function recordPostView(id: string): Promise<void> {

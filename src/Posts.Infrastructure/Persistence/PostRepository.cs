@@ -7,6 +7,14 @@ namespace Posts.Infrastructure.Persistence;
 
 internal sealed class PostRepository(PostsDbContext context) : IPostRepository
 {
+    public async Task AddAsync(Post post, CancellationToken cancellationToken)
+    {
+        await context.Posts.AddAsync(post, cancellationToken);
+    }
+
+    public Task SaveChangesAsync(CancellationToken cancellationToken) =>
+        context.SaveChangesAsync(cancellationToken);
+
     public async Task<PagedPostsDto> GetPublishedAsync(
         string? keyword,
         string? category,
@@ -26,20 +34,20 @@ internal sealed class PostRepository(PostsDbContext context) : IPostRepository
             query = query.Where(post =>
                 EF.Functions.ILike(post.Title, pattern, "\\") ||
                 EF.Functions.ILike(post.Description, pattern, "\\") ||
-                EF.Functions.ILike(post.Category, pattern, "\\") ||
-                post.Tags.Any(value => EF.Functions.ILike(value.Name, pattern, "\\")));
+                EF.Functions.ILike(post.Category!.Name, pattern, "\\") ||
+                post.Tags.Any(value => EF.Functions.ILike(value.Tag!.Name, pattern, "\\")));
         }
 
         if (category is not null)
         {
-            var normalizedCategory = category.ToLowerInvariant();
-            query = query.Where(post => post.NormalizedCategory == normalizedCategory);
+            var normalizedCategory = Category.Normalize(category);
+            query = query.Where(post => post.Category!.NormalizedName == normalizedCategory);
         }
 
         if (tag is not null)
         {
             var normalizedTag = Tag.Normalize(tag);
-            query = query.Where(post => post.Tags.Any(value => value.NormalizedName == normalizedTag));
+            query = query.Where(post => post.Tags.Any(value => value.Tag!.NormalizedName == normalizedTag));
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -76,31 +84,30 @@ internal sealed class PostRepository(PostsDbContext context) : IPostRepository
         var categoryRows = await context.Posts
             .AsNoTracking()
             .Where(post => post.Status == PostStatus.Published)
-            .GroupBy(post => new { post.NormalizedCategory, post.Category })
+            .GroupBy(post => new { post.Category!.NormalizedName, post.Category.Name })
             .Select(group => new
             {
-                group.Key.NormalizedCategory,
-                Name = group.Key.Category,
+                group.Key.NormalizedName,
+                Name = group.Key.Name,
                 Count = group.Count()
             })
             .ToListAsync(cancellationToken);
 
         var categories = categoryRows
-            .GroupBy(row => row.NormalizedCategory)
-            .Select(group => new PostFacetDto(
-                group.OrderByDescending(row => row.Count).ThenBy(row => row.Name).First().Name,
-                group.Sum(row => row.Count)))
+            .Select(row => new PostFacetDto(row.Name, row.Count))
             .OrderByDescending(facet => facet.Count)
             .ThenBy(facet => facet.Name)
             .ToList();
 
-        var tagRows = await context.Tags
+        var tagRows = await context.Posts
             .AsNoTracking()
-            .Where(tag => tag.Posts.Any(post => post.Status == PostStatus.Published))
-            .Select(tag => new
+            .Where(post => post.Status == PostStatus.Published)
+            .SelectMany(post => post.Tags)
+            .GroupBy(postTag => new { postTag.TagId, postTag.Tag!.Name })
+            .Select(group => new
             {
-                tag.Name,
-                Count = tag.Posts.Count(post => post.Status == PostStatus.Published)
+                group.Key.Name,
+                Count = group.Count()
             })
             .ToListAsync(cancellationToken);
 
@@ -123,6 +130,9 @@ internal sealed class PostRepository(PostsDbContext context) : IPostRepository
         return updated == 1;
     }
 
+    public Task<Post?> GetByMediaAssetIdAsync(Guid mediaAssetId, CancellationToken cancellationToken) =>
+        context.Posts.SingleOrDefaultAsync(post => post.MediaAssetId == mediaAssetId, cancellationToken);
+
     private static IQueryable<PostDto> Project(IQueryable<Post> query) =>
         query.Select(post => new PostDto(
             post.Id,
@@ -132,8 +142,8 @@ internal sealed class PostRepository(PostsDbContext context) : IPostRepository
             post.Description,
             post.MediaUrl,
             post.AltText,
-            post.Category,
-            post.Tags.OrderBy(tag => tag.Name).Select(tag => tag.Name).ToList(),
+            post.Category!.Name,
+            post.Tags.Select(postTag => postTag.Tag!.Name).OrderBy(name => name).ToList(),
             post.Status.ToString(),
             post.CreatedDate,
             post.UpdateDate,

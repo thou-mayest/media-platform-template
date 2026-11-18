@@ -5,10 +5,13 @@ namespace Posts.Domain;
 
 public sealed class Tag : Entity
 {
+    public const int MaxNameLength = 50;
+
     private Tag(Guid id, string name, string normalizedName) : base(id)
     {
         Name = name;
         NormalizedName = normalizedName;
+        UsageCount = 0;
     }
 
     private Tag()
@@ -17,18 +20,25 @@ public sealed class Tag : Entity
         NormalizedName = null!;
     }
 
+    /// <summary>Display form, taken from the first time the tag was used (e.g. "DotNet").</summary>
     public string Name { get; private set; }
+
+    /// <summary>Unique lookup key (e.g. "dotnet").</summary>
     public string NormalizedName { get; private set; }
-    public ICollection<Post> Posts { get; private set; } = new List<Post>();
+
+    /// <summary>Denormalized number of posts using this tag; maintained asynchronously.</summary>
+    public int UsageCount { get; private set; }
 
     public static Result<Tag> Create(string? name)
     {
-        if (string.IsNullOrWhiteSpace(name) || name.Trim().TrimStart('#').Length is 0 or > 50)
-            return Error.Validation("Tag.NameInvalid", "Tag name is required and cannot exceed 50 characters.");
+        var cleaned = Clean(name);
+        if (cleaned.Length is 0 or > MaxNameLength)
+            return Error.Validation("Tag.NameInvalid", $"Tag name is required and cannot exceed {MaxNameLength} characters.");
 
-        var cleaned = name.Trim().TrimStart('#');
         return new Tag(Guid.NewGuid(), cleaned, Normalize(cleaned));
     }
 
-    public static string Normalize(string value) => value.Trim().TrimStart('#').ToLowerInvariant();
+    public static string Normalize(string value) => Clean(value).ToLowerInvariant();
+
+    private static string Clean(string? value) => (value ?? string.Empty).Trim().TrimStart('#').Trim();
 }

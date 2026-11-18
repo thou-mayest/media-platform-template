@@ -1,0 +1,64 @@
+---
+import PostGrid from './PostGrid.astro';
+import type { PostSummary } from '@/lib/server/posts';
+
+interface Props {
+  posts: PostSummary[];
+  title: string;
+  eyebrow?: string;
+  /** Optional header link, e.g. { href: '/explore', label: 'Explore all works →' }. */
+  link?: { href: string; label: string };
+  emptyMessage?: string;
+  /** Show the number of posts next to the title. */
+  showCount?: boolean;
+}
+
+const { posts, title, eyebrow, link, emptyMessage, showCount = false } = Astro.props;
+---
+
+<section class="container post-section">
+  <header class="post-section__head">
+    <div>
+      {eyebrow && <div class="eyebrow">{eyebrow}</div>}
+      <h2 class="h-section">
+        {title}
+        {showCount && <span class="post-section__count">{posts.length}</span>}
+      </h2>
+    </div>
+    {link && <a href={link.href}>{link.label}</a>}
+  </header>
+  <PostGrid posts={posts} emptyMessage={emptyMessage} />
+</section>
+
+<style>
+  .post-section {
+    padding: clamp(48px, 7vw, 90px) 0 clamp(58px, 8vw, 105px);
+  }
+  .post-section__head {
+    align-items: end;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    justify-content: space-between;
+    margin-bottom: 34px;
+  }
+  .post-section__head h2 {
+    font-size: clamp(30px, 4.2vw, 54px);
+    margin-top: 8px;
+  }
+  .post-section__count {
+    color: var(--faint);
+    font-family: 'Archivo', sans-serif;
+    font-size: 13px;
+    margin-left: 10px;
+    vertical-align: super;
+  }
+  .post-section__head > a {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .post-section__head > a:hover { color: var(--accent); }
+</style>

@@ -52,6 +52,11 @@ internal class StorageDbContext : DbContext
                 .IsRequired()
                 .HasMaxLength(2048);
 
+            entity.Property(m => m.Status)
+                .HasConversion<string>()
+                .HasMaxLength(32)
+                .IsRequired();
+
             entity.HasIndex(m => m.StorageKey);
             entity.HasIndex(m => m.CreatedDate);
         });

@@ -4,5 +4,6 @@ public enum PostStatus
 {
     Draft = 0,
     Published = 1,
-    Archived = 2
+    Archived = 2,
+    Failed = 3
 }

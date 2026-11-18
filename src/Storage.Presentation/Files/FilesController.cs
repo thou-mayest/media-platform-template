@@ -34,6 +34,17 @@ public sealed class FilesController(ISender sender) : ControllerBase
         );
     }
 
+    [HttpPost("upload-url")]
+    [Authorize(Policy = StoragePolicies.RequireAdmin)]
+    public async Task<IActionResult> RequestUploadUrl([FromBody] RequestUploadUrlRequest request, CancellationToken ct)
+    {
+        var result = await sender.Send(request.ToCommand(), ct);
+
+        return result.Match(
+            value => Ok(new UploadUrlResponse(value.MediaAssetId, value.UploadUrl))
+        );
+    }
+
     [HttpPost("import")]
     [Authorize(Policy = StoragePolicies.RequireAdmin)]
     public async Task<IActionResult> Import([FromBody] ImportFilesRequest request, CancellationToken ct)

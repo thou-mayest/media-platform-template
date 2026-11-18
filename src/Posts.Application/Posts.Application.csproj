@@ -5,11 +5,13 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="MassTransit" />
     <PackageReference Include="MediatR" />
     <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Posts.Domain\Posts.Domain.csproj" />
     <ProjectReference Include="..\SharedKernal\SharedKernal.csproj" />
+    <ProjectReference Include="..\Storage.Contracts\Storage.Contracts.csproj" />
   </ItemGroup>
 </Project>

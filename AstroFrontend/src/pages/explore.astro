@@ -1,36 +1,42 @@
 ---
 import AdSlot from '@/components/AdSlot.astro';
 import ExploreForm from '@/components/ExploreForm.astro';
-import Pagination from '@/components/Pagination.astro';
 import PostGrid from '@/components/PostGrid.astro';
 import Layout from '@/layouts/Layout.astro';
-import type { PagedPosts, PostFacets } from '@/lib/server/posts';
-import { getPostFacets, getPosts } from '@/lib/server/posts';
-import { cleanFilter, parsePage, parseSort, setCollectionCache, setNoStore } from '@/lib/server/page';
+import type { PostFacets, PostSummary } from '@/lib/server/posts';
+import { getPostFacets } from '@/lib/server/posts';
+import { cleanFilter, parseSort, setNoStore } from '@/lib/server/page';
+
+export const prerender = false;
 
 const category = cleanFilter(Astro.url.searchParams.get('category'), 100);
 const tag = cleanFilter(Astro.url.searchParams.get('tag'), 50).toLowerCase();
 const sort = parseSort(Astro.url.searchParams.get('sort'));
-const page = parsePage(Astro.url.searchParams.get('page'));
 
-let error = '';
-let result: PagedPosts = { items: [], page, pageSize: 20, totalCount: 0, totalPages: 0 };
 let facets: PostFacets = { categories: [], tags: [] };
-
-const [postsResult, facetsResult] = await Promise.allSettled([
-  getPosts({ category, tag, sort, page, pageSize: 20 }),
-  getPostFacets(),
-]);
-
-if (postsResult.status === 'fulfilled') {
-  result = postsResult.value;
-  if (facetsResult.status === 'fulfilled') facets = facetsResult.value;
-  setCollectionCache(Astro.response.headers);
-} else {
-  error = 'The collection could not be loaded. Please try again shortly.';
-  Astro.response.status = 502;
-  setNoStore(Astro.response.headers);
+try {
+  facets = await getPostFacets();
+} catch {
+  // Filters are optional; posts are loaded in the browser.
 }
+setNoStore(Astro.response.headers);
+
+const templatePost: PostSummary = {
+  id: '__id__',
+  authorId: '',
+  title: '__title__',
+  description: '__description__',
+  mediaUrl: '__media__',
+  category: '__category__',
+  tags: ['__tag__'],
+  status: '',
+  createdDate: '',
+  updateDate: null,
+  publishedAt: '2000-01-01T00:00:00Z',
+};
+
+// The query value is lowercased; show the tag's canonical display name from the facets when available.
+const displayTag = facets.tags.find((facet) => facet.name.toLowerCase() === tag)?.name ?? tag;
 ---
 
 <Layout
@@ -47,16 +53,14 @@ if (postsResult.status === 'fulfilled') {
       </div>
       <div class="explore-page__edition" aria-label="Collection details">
         <span>In the archive</span>
-        <strong>{result.totalCount}</strong>
-        <span>{result.totalCount === 1 ? 'published work' : 'published works'}</span>
+        <strong id="total-count">–</strong>
+        <span id="total-label">published works</span>
       </div>
     </header>
 
     <AdSlot />
 
-    {!error && (
-      <ExploreForm facets={facets} category={category} tag={tag} sort={sort} />
-    )}
+    <ExploreForm facets={facets} category={category} tag={tag} sort={sort} />
 
     <div class="collection-head">
       <div>
@@ -72,25 +76,136 @@ if (postsResult.status === 'fulfilled') {
 
     {(category || tag) && (
       <div class="active-view">
-        Showing {category ? category : 'all categories'}{tag ? ` · #${tag}` : ''}
+        Showing {category ? category : 'all categories'}{tag ? ` · #${displayTag}` : ''}
       </div>
     )}
 
-    {error ? (
-      <div class="error-state" role="alert">{error}</div>
-    ) : (
-      <>
-        <PostGrid posts={result.items} />
-        <Pagination
-          page={result.page}
-          totalPages={result.totalPages}
-          basePath="/explore"
-          params={{ category, tag, sort: sort === 'newest' ? undefined : sort }}
-        />
-      </>
-    )}
-  </main>
-</Layout>
+    <div id="explore-results" aria-live="polite"></div>
+        <div class="load-more" id="load-more" hidden>
+          <button class="btn btn-ghost" type="button" id="load-more-button">Load more</button>
+        </div>
+
+        <template id="grid-template"><PostGrid posts={[templatePost]} /></template>
+        <template id="empty-template"><PostGrid posts={[]} /></template>
+        <template id="error-template">
+          <div class="error-state" role="alert">The collection could not be loaded. Please try again shortly.</div>
+        </template>
+      </main>
+    </Layout>
+
+    <script>
+      import type { PagedPosts, PostSummary } from '@/lib/server/posts';
+
+      const apiBaseUrl = (import.meta.env.PUBLIC_API_BASE_URL || 'https://localhost:7021').replace(/\/$/, '');
+      const results = document.getElementById('explore-results')!;
+      const loadMore = document.getElementById('load-more')!;
+      const loadMoreButton = document.getElementById('load-more-button') as HTMLButtonElement;
+      const totalCount = document.getElementById('total-count')!;
+      const totalLabel = document.getElementById('total-label')!;
+      const template = (id: string) =>
+        (document.getElementById(id) as HTMLTemplateElement).content.cloneNode(true) as DocumentFragment;
+
+      const params = new URLSearchParams(location.search);
+      let page = Math.max(1, Number.parseInt(params.get('page') ?? '1', 10) || 1);
+      let grid: HTMLElement | null = null;
+      let cardTemplate: HTMLElement;
+
+      function buildCard(post: PostSummary): HTMLElement {
+        const card = cardTemplate.cloneNode(true) as HTMLElement;
+        const media = card.querySelector<HTMLAnchorElement>('.post-card__media')!;
+        media.href = `/posts/${post.id}`;
+        media.setAttribute('aria-label', `View ${post.title}`);
+        const img = media.querySelector('img');
+        if (post.mediaUrl && img) {
+          img.src = post.mediaUrl;
+        } else if (img) {
+          const placeholder = document.createElement('span');
+          placeholder.className = 'post-card__placeholder';
+          placeholder.setAttribute('aria-hidden', 'true');
+          for (const attr of Array.from(img.attributes))
+            if (attr.name.startsWith('data-astro-cid')) placeholder.setAttribute(attr.name, attr.value);
+          img.replaceWith(placeholder);
+        }
+
+        const category = card.querySelector<HTMLAnchorElement>('.post-card__overline a')!;
+        category.href = `/explore?category=${encodeURIComponent(post.category)}`;
+        category.textContent = post.category;
+
+        const time = card.querySelector('time');
+        if (time && post.publishedAt) {
+          time.dateTime = post.publishedAt;
+          time.textContent = new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short', year: 'numeric' })
+            .format(new Date(post.publishedAt));
+        } else {
+          time?.remove();
+        }
+
+        const title = card.querySelector<HTMLAnchorElement>('h3 a')!;
+        title.href = `/posts/${post.id}`;
+        title.textContent = post.title;
+
+        const description = card.querySelector('.post-card__body > p');
+        if (post.description && description) description.textContent = post.description;
+        else description?.remove();
+
+        const tags = card.querySelector('.post-card__tags');
+        const tagTemplate = tags?.querySelector<HTMLAnchorElement>('a');
+        if (tags && tagTemplate) {
+          const visible = post.tags.slice(0, 3);
+          if (visible.length === 0) {
+            tags.remove();
+          } else {
+            tags.replaceChildren(...visible.map((tag) => {
+              const link = tagTemplate.cloneNode(true) as HTMLAnchorElement;
+              link.href = `/tags/${encodeURIComponent(tag)}`;
+              link.textContent = `#${tag}`;
+              return link;
+            }));
+          }
+        }
+
+        return card;
+      }
+
+      async function load() {
+        loadMoreButton.disabled = true;
+        const query = new URLSearchParams(location.search);
+        query.set('page', String(page));
+
+        try {
+          query.set('pageSize', '20');
+          const response = await fetch(`${apiBaseUrl}/api/posts?${query}`, { headers: { Accept: 'application/json' } });
+          if (!response.ok) throw new Error(String(response.status));
+          const data = (await response.json()) as PagedPosts;
+
+          totalCount.textContent = String(data.totalCount);
+          totalLabel.textContent = data.totalCount === 1 ? 'published work' : 'published works';
+
+          if (!grid) {
+            if (data.items.length === 0) {
+              results.replaceChildren(template('empty-template'));
+              return;
+            }
+            const fragment = template('grid-template');
+            grid = fragment.querySelector<HTMLElement>('.post-grid')!;
+            cardTemplate = grid.querySelector<HTMLElement>('.post-card')!;
+            grid.replaceChildren();
+            results.replaceChildren(fragment);
+          }
+
+          grid.append(...data.items.map(buildCard));
+          loadMore.hidden = data.page >= data.totalPages;
+          page = data.page + 1;
+        } catch {
+          if (!grid) results.replaceChildren(template('error-template'));
+        } finally {
+          loadMoreButton.disabled = false;
+        }
+      }
+
+      loadMoreButton.addEventListener('click', load);
+      load();
+    </script>
 
 <style>
   .explore-page {

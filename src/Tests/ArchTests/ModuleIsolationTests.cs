@@ -44,11 +44,15 @@ public class ModuleIsolationTests : TestBase
     }
 
     [Fact]
-    public void PostsModule_ShouldNot_Reference_StorageModule()
+    public void PostsModule_ShouldOnly_Reference_StorageContracts()
     {
         Types.InAssemblies(PostsModuleAssemblies)
             .Should()
-            .NotHaveDependencyOn("Storage")
+            .NotHaveDependencyOnAny(
+                "Storage.Domain",
+                "Storage.Application",
+                "Storage.Infrastracture",
+                "Storage.Presentation")
             .GetResult()
             .ShouldBeSuccessful();
     }
